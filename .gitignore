@@ -1,0 +1,7 @@
+# War Room 1942 - Git Ignore
+*.log
+*.tmp
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

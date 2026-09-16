@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WAR ROOM 1942 | 2. Dünya Savaşı Sıra Tabanlı Strateji</title>
+    <meta name="description" content="2. Dünya Savaşı temalı, sıra tabanlı, WebRTC P2P çok oyunculu ve tek oyunculu web strateji oyunu. Gerçekçi Avrupa ve Akdeniz haritası, taktiksel harekat ve dinamik stratejik komuta sistemi.">
+    
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="css/style.css">
+
+    <!-- PeerJS CDN for WebRTC DataChannels P2P Networking -->
+    <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+</head>
+<body>
+
+    <!-- TOP MILITARY COMMAND BAR -->
+    <header class="top-header" id="top-command-header">
+        <div class="brand-section">
+            <div class="brand-logo">
+                ⚔️ WAR ROOM <span>1942</span>
+            </div>
+            <div class="header-status-badge">
+                <div class="badge-item">
+                    <span class="badge-label">DURUM</span>
+                    <span class="badge-value highlight-cyan" id="hud-turn-number">TUR 1</span>
+                </div>
+            </div>
+            <div class="header-status-badge">
+                <div class="badge-item">
+                    <span class="badge-label">KOMUTAN / SIRA</span>
+                    <span class="badge-value" id="hud-active-faction-name">🦅 Almanya</span>
+                </div>
+            </div>
+            <div class="header-status-badge">
+                <div class="badge-item">
+                    <span class="badge-label">SANAYI PUANI</span>
+                    <span class="badge-value highlight-amber" id="hud-ip-balance">14 IP</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="header-status-badge">
+            <div class="badge-item">
+                <span class="badge-label">HAREKAT AŞAMASI</span>
+                <span class="badge-value" id="hud-phase-indicator">AŞAMA 1: ÜRETİM & TAKVİYE</span>
+            </div>
+        </div>
+
+        <div class="header-controls">
+            <button class="btn-tactical btn-primary" id="btn-next-phase">⚔️ HAREKAT AŞAMASINA GEÇ</button>
+            <button class="btn-tactical" id="btn-sound-toggle">🔊 Ses: Açık</button>
+            <button class="btn-tactical" id="btn-save-game" title="Oyunu Tarayıcıya Kaydet">💾 Kaydet</button>
+            <button class="btn-tactical" id="btn-load-game" title="Kayıtlı Oyunu Yükle">📂 Yükle</button>
+            <button class="btn-tactical" id="btn-copy-room-code" title="Oda Kodunu Kopyala">
+                🔑 Oda: <span id="hud-room-code">LOCAL</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- MAIN GAMEPLAY CANVAS & DOCK -->
+    <main class="game-viewport">
+        <!-- Interactive Canvas Map -->
+        <canvas id="map-canvas"></canvas>
+
+        <!-- Floating Map Controls -->
+        <div style="position: absolute; bottom: 20px; left: 20px; display: flex; gap: 8px; z-index: 30;">
+            <button class="btn-tactical" id="btn-zoom-in" title="Yakınlaş">+</button>
+            <button class="btn-tactical" id="btn-zoom-out" title="Uzaklaş">-</button>
+            <button class="btn-tactical" id="btn-zoom-reset" title="Görünümü Sıfırla">⟲ Haritayı Ortala</button>
+        </div>
+
+        <!-- Side Command Dock -->
+        <aside class="side-command-dock" id="side-command-dock">
+            <!-- Command Tabs -->
+            <nav class="cmd-tab-header">
+                <button class="cmd-tab-btn active" data-tab="tab-production">🪖 ÜRETİM</button>
+                <button class="cmd-tab-btn" data-tab="tab-combat">⚔️ TAARRUZ</button>
+                <button class="cmd-tab-btn" data-tab="tab-movement">🚚 İNTİKAL</button>
+                <button class="cmd-tab-btn" data-tab="tab-intel">📊 İSTİHBARAT</button>
+                <button class="cmd-tab-btn" data-tab="tab-radio">📻 TELSİZ</button>
+            </nav>
+
+            <div class="cmd-tab-body">
+                <!-- TAB 1: PRODUCTION & DEPLOYMENT -->
+                <div class="cmd-tab-content active" id="tab-production">
+                    <div class="panel-card">
+                        <div class="panel-title">
+                            <span>SEÇİLİ GARNİZON ÜSSÜ</span>
+                        </div>
+                        <h3 id="prod-selected-region-name" style="font-family: var(--font-tactical); color: var(--accent-cyan); margin-bottom: 6px;">
+                            Berlin & Brandenburg
+                        </h3>
+                        <p style="font-size: 0.8rem; color: var(--text-muted);">
+                            Haritadan asker takviyesi yapmak istediğiniz kontrolünüzdeki bir bölgeye tıklayın.
+                        </p>
+                    </div>
+
+                    <div class="panel-card">
+                        <div class="panel-title">
+                            <span>BİRİM TEDARİK VE REZERV</span>
+                            <span id="prod-total-cost" style="color: var(--accent-amber); font-weight: bold;">0 IP</span>
+                        </div>
+
+                        <!-- Infantry Row -->
+                        <div class="unit-buy-row">
+                            <div class="unit-info-col">
+                                <span class="unit-icon">🪖</span>
+                                <div class="unit-desc">
+                                    <h4>Piyade Taburu</h4>
+                                    <p>Maliyet: 3 IP | Savunma Odaklı</p>
+                                </div>
+                            </div>
+                            <div class="stepper-controls">
+                                <button class="btn-step" id="btn-prod-inf-minus">-</button>
+                                <input type="text" class="stepper-input" id="input-prod-inf" value="0" readonly>
+                                <button class="btn-step" id="btn-prod-inf-plus">+</button>
+                            </div>
+                        </div>
+
+                        <!-- Armor Row -->
+                        <div class="unit-buy-row">
+                            <div class="unit-info-col">
+                                <span class="unit-icon">🚜</span>
+                                <div class="unit-desc">
+                                    <h4>Panzer / Zırhlı Birlik</h4>
+                                    <p>Maliyet: 6 IP | Taarruz Yarma Gücü</p>
+                                </div>
+                            </div>
+                            <div class="stepper-controls">
+                                <button class="btn-step" id="btn-prod-arm-minus">-</button>
+                                <input type="text" class="stepper-input" id="input-prod-arm" value="0" readonly>
+                                <button class="btn-step" id="btn-prod-arm-plus">+</button>
+                            </div>
+                        </div>
+
+                        <!-- Air Row -->
+                        <div class="unit-buy-row">
+                            <div class="unit-info-col">
+                                <span class="unit-icon">✈️</span>
+                                <div class="unit-desc">
+                                    <h4>Taktik Hava Filosu</h4>
+                                    <p>Maliyet: 8 IP | Bombardıman & Hava Desteği</p>
+                                </div>
+                            </div>
+                            <div class="stepper-controls">
+                                <button class="btn-step" id="btn-prod-air-minus">-</button>
+                                <input type="text" class="stepper-input" id="input-prod-air" value="0" readonly>
+                                <button class="btn-step" id="btn-prod-air-plus">+</button>
+                            </div>
+                        </div>
+
+                        <button class="btn-tactical btn-primary" id="btn-execute-deploy" style="width: 100%; margin-top: 10px; justify-content: center;">
+                            🎖️ BİRLİKLERİ BÖLGEYE KONUŞLANDIR
+                        </button>
+                    </div>
+                </div>
+
+                <!-- TAB 2: COMBAT & ASSAULT -->
+                <div class="cmd-tab-content" id="tab-combat">
+                    <div class="panel-card">
+                        <div class="panel-title">
+                            <span>HAREKAT PLANLAMASI</span>
+                        </div>
+                        <div class="combat-info-panel">
+                            <div class="combat-region-box box-origin">
+                                <span style="font-size: 0.75rem; color: var(--accent-amber);">ÇIKIŞ MEVZİSİ (SALDIRAN):</span>
+                                <div id="combat-origin-info" style="font-family: var(--font-tactical); font-size: 1.05rem;">
+                                    Haritadan kendi bölgenizi seçin
+                                </div>
+                            </div>
+                            <div class="combat-region-box box-target">
+                                <span style="font-size: 0.75rem; color: var(--accent-red);">HEDEF MEVZİ (SAVUNAN):</span>
+                                <div id="combat-target-info" style="font-family: var(--font-tactical); font-size: 1.05rem;">
+                                    Haritadan komşu düşman bölgesini seçin
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Unit Allocation Sliders -->
+                        <div class="combat-slider-group">
+                            <div class="combat-slider-label">
+                                <span>🪖 Taarruz Piyadesi</span>
+                                <span id="combat-inf-label">0</span>
+                            </div>
+                            <input type="range" class="combat-slider" id="combat-inf-commit" min="0" max="10" value="0">
+                        </div>
+
+                        <div class="combat-slider-group">
+                            <div class="combat-slider-label">
+                                <span>🚜 Taarruz Panzeri</span>
+                                <span id="combat-arm-label">0</span>
+                            </div>
+                            <input type="range" class="combat-slider" id="combat-arm-commit" min="0" max="10" value="0">
+                        </div>
+
+                        <div class="combat-slider-group">
+                            <div class="combat-slider-label">
+                                <span>✈️ Hava Desteği Sortisi</span>
+                                <span id="combat-air-label">0</span>
+                            </div>
+                            <input type="range" class="combat-slider" id="combat-air-commit" min="0" max="5" value="0">
+                        </div>
+
+                        <div class="odds-gauge" id="combat-odds-ratio">
+                            Kuvvet Oranı: <strong>Seçim Yapılmadı</strong>
+                        </div>
+
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn-tactical btn-danger" id="btn-launch-assault" style="flex: 1; justify-content: center;">
+                                💥 TAARRUZU BAŞLAT
+                            </button>
+                            <button class="btn-tactical" id="btn-air-strike" title="Yalnızca Hava Saldırısı ile Savunmayı Yumuşat">
+                                ✈️ HAVA SORTİSİ
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 3: TACTICAL MOVEMENT -->
+                <div class="cmd-tab-content" id="tab-movement">
+                    <div class="panel-card">
+                        <div class="panel-title">
+                            <span>DOST CEPHE İNTİKALİ</span>
+                        </div>
+                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">
+                            Kontrolünüzdeki iki komşu bölge arasında birlik kaydırın. (Köken bölgede en az 1 garnizon kalmalıdır).
+                        </p>
+
+                        <div class="combat-slider-group">
+                            <div class="combat-slider-label">
+                                <span>🪖 Taşınacak Piyade</span>
+                                <span id="move-inf-label">0</span>
+                            </div>
+                            <input type="range" class="combat-slider" id="move-inf-input" min="0" max="10" value="0">
+                        </div>
+
+                        <div class="combat-slider-group">
+                            <div class="combat-slider-label">
+                                <span>🚜 Taşınacak Panzer</span>
+                                <span id="move-arm-label">0</span>
+                            </div>
+                            <input type="range" class="combat-slider" id="move-arm-input" min="0" max="10" value="0">
+                        </div>
+
+                        <div class="combat-slider-group">
+                            <div class="combat-slider-label">
+                                <span>✈️ Taşınacak Uçak</span>
+                                <span id="move-air-label">0</span>
+                            </div>
+                            <input type="range" class="combat-slider" id="move-air-input" min="0" max="5" value="0">
+                        </div>
+
+                        <button class="btn-tactical btn-primary" id="btn-execute-move" style="width: 100%; margin-top: 10px; justify-content: center;">
+                            🚚 İNTİKAL EMRİ VER
+                        </button>
+                    </div>
+                </div>
+
+                <!-- TAB 4: INTELLIGENCE & VICTORY STATS -->
+                <div class="cmd-tab-content" id="tab-intel">
+                    <div class="panel-card">
+                        <div class="panel-title">
+                            <span>AVRUPA SANAYİ VE HAKİMİYET DENGESİ</span>
+                        </div>
+                        <div class="dominance-labels">
+                            <span id="intel-axis-pct" style="color: #cbd5e1;">Mihver: %50</span>
+                            <span id="intel-allies-pct" style="color: #60a5fa;">Müttefikler: %50</span>
+                        </div>
+                        <div class="dominance-bar-container">
+                            <div class="dominance-segment axis" id="intel-axis-bar" style="width: 50%;"></div>
+                            <div class="dominance-segment allies" id="intel-allies-bar" style="width: 50%;"></div>
+                        </div>
+                        <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 6px;">
+                            Zafer Koşulu: Toplam sanayinin %70'ine hakim olmak veya düşman ittifakın iki ana başkentini ele geçirmek.
+                        </p>
+                    </div>
+
+                    <div class="panel-card">
+                        <div class="panel-title">
+                            <span>STRATEJİK BAŞKENTLER</span>
+                        </div>
+                        <div class="capitals-list" id="intel-capitals-list">
+                            <!-- Populated dynamically by HUD -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 5: RADIO TERMINAL & CHAT -->
+                <div class="cmd-tab-content" id="tab-radio">
+                    <div class="panel-card">
+                        <div class="panel-title">
+                            <span>ASKERİ TELSİZ VE CERİDE RAPORLARI</span>
+                        </div>
+                        <div class="radio-logs-terminal" id="hud-radio-logs">
+                            <!-- Populated by gameState action history -->
+                        </div>
+                        <div class="chat-input-bar">
+                            <input type="text" class="chat-input" id="chat-input" placeholder="Telsiz mesajı girin..." maxlength="80">
+                            <button class="btn-tactical btn-primary" id="btn-send-chat">GÖNDER</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </main>
+
+    <!-- MODAL: LOBBY / MATCH SETUP -->
+    <div class="modal-backdrop visible" id="modal-lobby">
+        <div class="modal-dialog">
+            <h2 class="modal-title">⚔️ 2. DÜNYA SAVAŞI KOMUTA MERKEZİ</h2>
+            <p style="text-align: center; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;">
+                WebRTC P2P Sıra Tabanlı Strateji Motoru. Lobi kurarak arkadaşlarınızı davet edin veya doğrudan bilgisayara karşı tek oyunculu sefere başlayın.
+            </p>
+
+            <div class="lobby-choice-grid">
+                <!-- SINGLEPLAYER -->
+                <div class="lobby-choice-card" id="card-mode-singleplayer">
+                    <div style="font-size: 2rem; margin-bottom: 8px;">🎖️</div>
+                    <h3 style="font-family: var(--font-heading); color: var(--accent-cyan); margin-bottom: 4px;">TEK OYUNCULU</h3>
+                    <p style="font-size: 0.8rem; color: var(--text-muted);">
+                        Bilgisayara karşı tek başınıza hemen oynayın. İnternet veya sunucu gerektirmez (%100 Çevrimdışı).
+                    </p>
+                </div>
+
+                <!-- MULTIPLAYER HOST -->
+                <div class="lobby-choice-card" id="card-mode-host">
+                    <div style="font-size: 2rem; margin-bottom: 8px;">🌐</div>
+                    <h3 style="font-family: var(--font-heading); color: var(--accent-amber); margin-bottom: 4px;">LOBİ KUR (HOST)</h3>
+                    <p style="font-size: 0.8rem; color: var(--text-muted);">
+                        6 haneli oda kodu üretir. Oyun motorunun otoriter sunucusu (Authoritative Host) olun.
+                    </p>
+                </div>
+            </div>
+
+            <!-- MULTIPLAYER JOIN OPTION -->
+            <div class="panel-card" style="margin-top: 16px;">
+                <div class="panel-title">
+                    <span>ODAYA KATIL (CLIENT)</span>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <input type="text" class="lobby-input" id="lobby-join-code-input" placeholder="6 Haneli Oda Kodu (Örn: W2-7A9B)" style="flex: 2; text-transform: uppercase;">
+                    <button class="btn-tactical btn-primary" id="btn-lobby-join" style="flex: 1; justify-content: center;">
+                        BAĞLAN
+                    </button>
+                </div>
+            </div>
+
+            <!-- FACTION SELECTION -->
+            <div class="lobby-form-group">
+                <label>KOMUTA EDİLECEK ÜLKE SEÇİMİ:</label>
+                <select class="lobby-input" id="lobby-faction-select">
+                    <option value="germany">🦅 Almanya (Mihver - Yüksek Başlangıç Panzer Gücü)</option>
+                    <option value="uk">🦁 Birleşik Krallık (Müttefikler - Atlantik & Kraliyet Donanması)</option>
+                    <option value="ussr">⭐ Sovyetler Birliği (Müttefikler - Muazzam İnsan Gücü & Sanayi)</option>
+                    <option value="italy">👑 İtalya (Mihver - Akdeniz & Kuzey Afrika Cephesi)</option>
+                </select>
+            </div>
+
+            <div class="lobby-form-group">
+                <label>KOMUTAN ADI:</label>
+                <input type="text" class="lobby-input" id="lobby-player-name" value="General">
+            </div>
+
+            <div style="text-align: center; margin-top: 20px;">
+                <button class="btn-tactical btn-primary" id="btn-start-singleplayer-quick" style="width: 100%; padding: 12px; font-size: 1.1rem; justify-content: center;">
+                    🚀 HAREKATI HEMEN BAŞLAT
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: COMBAT REPORT (AAR) -->
+    <div class="modal-backdrop" id="modal-combat-report">
+        <div class="modal-dialog">
+            <h2 class="modal-title" id="combat-modal-title">⚔️ MUHAREBE RAPORU</h2>
+            <div id="combat-modal-body">
+                <!-- Dynamically filled by HUD -->
+            </div>
+            <div style="text-align: center; margin-top: 16px;">
+                <button class="btn-tactical btn-primary" id="btn-close-combat-modal" style="min-width: 140px; justify-content: center;">
+                    TAMAM (DEVAM ET)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: GAME OVER -->
+    <div class="modal-backdrop" id="modal-game-over">
+        <div class="modal-dialog" style="text-align: center;">
+            <h2 class="modal-title" id="game-over-title" style="color: var(--accent-amber); font-size: 1.6rem;">
+                🏆 ZAFER!
+            </h2>
+            <p id="game-over-desc" style="font-size: 1.1rem; color: var(--text-primary); margin: 16px 0;">
+                Avrupa sanayisinin %70'i ele geçirildi!
+            </p>
+            <button class="btn-tactical btn-primary" id="btn-restart-game" style="padding: 12px 24px; font-size: 1.1rem; margin-top: 10px;">
+                🔄 YENİDEN OYNA
+            </button>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div id="toast-container"></div>
+
+    <!-- MAIN APP SCRIPT -->
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>
