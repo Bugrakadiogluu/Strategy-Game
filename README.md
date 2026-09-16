@@ -1,113 +1,126 @@
-# 🎖️ WAR ROOM 1942 - OYUN KILAVUZU & HAREKAT REHBERİ
+# 🌍 WAR ROOM 1942 | Strategy Game
 
-**WAR ROOM 1942**, 2. Dünya Savaşı Avrupa ve Akdeniz cephesinde geçen, sıra tabanlı, taktiksel harita ve ordu yönetimi odaklı bir strateji oyunudur. 
-
-Hiçbir harici yazılım, veritabanı veya karmaşık kurulum gerektirmez. Doğrudan web tarayıcınız üzerinden tek tıkla çalışır.
+[🇹🇷 Türkçe](#-türkçe) | [🇬🇧 English](#-english)
 
 ---
 
-## 🚀 1. OYUN NASIL BAŞLATILIR?
+## 🇹🇷 TÜRKÇE
 
-1. Oyun klasöründeki **`OYNA.bat`** dosyasına çift tıklayın.
-2. Arka planda hafif yerel sunucu otomatik olarak ayağa kalkar ve varsayılan web tarayıcınızda oyun açılır:
-   - Alternatif olarak tarayıcınızın adres çubuğuna şu adresi yazabilirsiniz:  
-     👉 **`http://localhost:51942/`**
-3. Karşınıza gelen harekat merkezinden oyun modunuzu seçin:
-   - **🎖️ TEK OYUNCULU:** Doğrudan bilgisayara karşı tek başınıza hemen sefere başlayın (%100 çevrimdışı çalışır).
-   - **🌐 LOBİ KUR (HOST):** Arkadaşlarınızla oynamak için 6 haneli bir oda kodu üretir (Örn: `NORM42`).
-   - **🔗 LOBİYE KATIL:** Arkadaşınızın kurduğu lobinin 6 haneli kodunu girerek oyuna dahil olun.
+Selamlar! 👋 
+
+Bu projeyi geliştirirken tek bir amacım vardı: **Hiçbir şey yüklemekle, veritabanı kurmakla veya sunucu yapılandırmakla uğraşmadan**, doğrudan tarayıcı üzerinden açıp arkadaşlarımla ya da tek başıma oynayabileceğim keyifli bir **2. Dünya Savaşı sıra tabanlı strateji oyunu** yapmak.
+
+Haritayı basit karelerden veya kutulardan ibaret bırakmak istemedim; İtalya çizmesinden Bretonya burunlarına, Normandiya kıyılarından Anadolu ve Kırım'a kadar gerçekçi kıyı çizgileriyle yaşayan bir Avrupa cephesi çizdim.
 
 ---
 
-## 🗺️ 2. HARİTA VE KOMUTA KONTROLLERİ
+### ✨ Öne Çıkan Özellikler
 
-Oyun haritası, 1942 yılı Avrupa, Akdeniz, Kuzey Afrika ve Doğu Cephesi'nin gerçek coğrafi sınırlarını kapsar:
-
-- **Haritada Gezinme (Pan):** Fare sol tuşuna basılı tutarak haritayı dilediğiniz yöne sürükleyebilirsiniz.
-- **Yakınlaştırma (Zoom):** Fare tekerleğini ileri/geri çevirerek haritayı yakınlaştırıp uzaklaştırabilirsiniz (veya sol alttaki `+` ve `-` butonlarını kullanabilirsiniz).
-- **Haritayı Ortala:** Sol alttaki **"Haritayı Ortala"** butonu haritayı başlangıç konumuna getirir.
-- **Bölge Seçimi:** Haritadaki herhangi bir ülkeye veya bölgeye tıkladığınızda o bölgenin garnizon durumu, sanayi kapasitesi ve arazisi sağ panelde açılır.
-
----
-
-## ⏳ 3. SIRA VE AŞAMA (FAZ) DÖNGÜSÜ
-
-Her tur 3 ana askeri aşamadan meydana gelir:
-
-```
-[ AŞAMA 1: ÜRETİM ] ➔ [ AŞAMA 2: TAARRUZ ] ➔ [ AŞAMA 3: İNTİKAL ] ➔ [ TURU BİTİR ]
-```
-
-### 🏭 Aşama 1: Üretim ve Takviye (Production)
-- Tur başında kontrol ettiğiniz tüm bölgelerin sanayi kapasitesi toplanarak size **Sanayi Puanı (IP)** olarak verilir.
-- Haritada kontrolünüz altında olan bir bölgeye tıklayın.
-- Sağ paneldeki **ÜRETİM** sekmesinden takviye etmek istediğiniz birlikleri seçin ve **"Birlikleri Bölgeye Konuşlandır"** butonuna basın.
-
-#### Askeri Birimler ve Maliyetleri:
-| Birim | Maliyet | Rolü ve Taktik Özelliği |
-| :--- | :---: | :--- |
-| 🪖 **Piyade Taburu** | **3 IP** | Savunmada güçlüdür. Savunma zarlarında 4, 5 ve 6 atarak düşmanı püskürtür. |
-| 🚜 **Panzer (Zırhlı)** | **6 IP** | Taarruzun bel kemiğidir. Hücumda 3, 4, 5 ve 6 atarak vurur. Her 2 panzer taarruz gücünüze +1 ilave bonus sağlar. |
-| ✈️ **Taktik Hava Filosu**| **8 IP** | Kara muharebesinden önce düşman mevzilerine hava sortisi düzenleyerek garnizonu yıpratır. |
+- 🚀 **Sıfır Kurulum & Sıfır Altyapı:** Ne Redis, ne SQL veritabanı ne de ekstra bir sunucu. Tıkla ve hemen oyna.
+- 🗺️ **Gerçekçi Avrupa & Akdeniz Haritası:** Kare kutular yok! Birbiriyle kenetli gerçek kıyı sınırları, fiyortlar, yarımadalar ve denizler.
+- 🌐 **Arkadaşınla Oyna (P2P WebRTC):** Oda kuran kişi otomatik olarak oyunun sunucusu olur. 6 haneli oda kodunu arkadaşına gönder, aynı lobide buluşun.
+- 🎖️ **Tek Kişilik Sefer Modu:** İnternetin olmasa bile bilgisayara karşı tek başına cephe yönet.
+- 🔊 **Prosedürel Ses Motoru:** MP3 dosyalarıyla uğraşmadan, tarayıcının Web Audio API'siyle kod tarafından gerçek zamanlı üretilen topçu, telsiz ve uçak sesleri.
+- 💾 **Kayıt Sistemi:** Oyunu kapatman gerekirse tek tıkla tarayıcının hafızasına kaydet, sonra kaldığın yerden devam et.
 
 ---
 
-### ⚔️ Aşama 2: Taarruz ve Muharebe (Combat)
-Üretimi tamamladıktan sonra üst bardaki **"Harekat Aşamasına Geç"** butonuna basın.
+### 🕹️ Nasıl Başlatılır?
 
-1. **Çıkış Bölgesini Seçin (Origin):** Taarruzu başlatacağınız kendi bölgenize tıklayın (Sarı renkle parıldar).
-2. **Hedef Bölgeyi Seçin (Target):** Saldırmak istediğiniz komşu düşman veya tarafsız bölgeye tıklayın (Kırmızı renkle parıldar).
-3. **Hava Sortisi (İsteğe Bağlı):** Bölgenizde avcı/bombardıman uçağı varsa önce **"Hava Sortisi Başlat"** butonuna basarak düşman hatlarını bombalayabilirsiniz.
-4. **Taarruzu Başlatın:** Saldırıya katılacak piyade ve panzer sayısını belirleyip **"TAARRUZ EMRİNİ VER"** butonuna tıklayın.
-
-#### Muharebe Mekaniği ve Zar Sistemi:
-- Muharebe başladığında her iki tarafın birlikleri için otomatik olarak 6 yüzlü zarlar (D6) atılır.
-- **Arazi Primi:** Şehirlerde ve dağlık arazilerde savunan taraf korugan avantajına sahiptir (+1 savunma primi).
-- Muharebe sonucunda **AAR (After Action Report)** muharebe ceridesi açılır. Her iki tarafın kayıpları listelenir.
-- Düşmanın tüm savunma hatları kırıldığında bölge ele geçirilir ve saldıran birlikleriniz yeni toprağa intikal eder!
+1. Projeyi bilgisayarına indir.
+2. Klasördeki **`OYNA.bat`** dosyasına çift tıkla.
+3. Yerel servis anında başlar ve tarayıcın otomatik açılır:  
+   👉 `http://localhost:51942/`
+4. Lobiden ister tek kişilik seferi seç, ister arkadaşların için lobi kur!
 
 ---
 
-### 🚚 Aşama 3: Stratejik İntikal (Maneuver)
-- Muharebeler tamamlandıktan sonra üst bardaki butona basarak intikal aşamasına geçebilirsiniz.
-- Bu aşamada, cephe gerisindeki dost birliklerinizi sınır boylarındaki sıcak çatışma bölgelerine aktarabilirsiniz.
-- İşleminiz bitince **"Turu Bitir"** butonuna basarak sırayı bir sonraki komutana devredin.
+### 🎯 Oyun Nasıl Oynanır?
+
+Oyun sıra tabanlıdır ve her tur 3 ana aşamadan oluşur:
+
+#### 1. Üretim Aşaması (Takviye)
+Tur başında sahip olduğun bölgelerden sanayi puanı (IP) kazanırsın. Kendi toprağına tıklayıp asker satın alarak garnizonunu güçlendir:
+- 🪖 **Piyade (3 IP):** Savunması kuvvetli, ucuz ve güvenilir omurga birliği.
+- 🚜 **Panzer (6 IP):** Taarruzun ana gücü. Her 2 panzer saldırılarına +1 zar avantajı sağlar.
+- ✈️ **Taktik Hava Filosu (8 IP):** Kara saldırısından önce düşman hatlarını bombalayıp yıpratır.
+
+#### 2. Taarruz Aşaması (Muharebe)
+- Saldırı yapacağın kendi bölgene tıkla, ardından komşu düşman bölgesini seç.
+- Uçağın varsa önce hava sortisi ile düşmanı zayıflat.
+- Asker sayını belirleyip taarruzu başlat. Zarlar atılır; şehir ve dağ arazileri savunan tarafa avantaj sağlar. Düşman garnizonu bittiğinde o toprak senindir!
+
+#### 3. İntikal Aşaması (Manevra)
+- Çatışmalar bitince cephe gerisinde kalan askerlerini dost komşu bölgelere kaydırabilir, sınırlarını sağlama alabilirsin.
+- Ardından **"Turu Bitir"** diyerek sırayı devret.
+
+#### 🏆 Zafer Şartı
+Avrupa sanayisinin en az **%70'ini** kontrolü altına alan veya tüm düşman başkentlerini (Berlin, Londra, Moskova, Roma) işgal eden taraf savaşı kazanır.
+
+---
+---
+
+## 🇬🇧 ENGLISH
+
+Hey there! 👋 
+
+I built **WAR ROOM 1942** with a clear goal in mind: creating an authentic, browser-based **WW2 turn-based strategy game** that requires **zero external servers, zero databases, and zero tedious installations**. Just pure tactical gameplay you can jump into instantly alone or with friends.
+
+Instead of generic square tiles or grid boxes, I crafted a seamless, organic European map featuring authentic coastlines—from the rugged fjords of Norway and the Brittany peninsula to the Italian boot, Sicily, Crimea, and Anatolia.
 
 ---
 
-## 🚩 4. BÜYÜK DEVLETLER (FACTIONS)
+### ✨ Core Features
 
-| Bayrak & Devlet | Başkent | Başlangıç Durumu ve Strateji |
-| :--- | :--- | :--- |
-| 🇩🇪 **Almanya (Mihver)** | **Berlin** | Yüksek sanayi kapasitesi ve ölümcül panzer tümenleri. Doğu ve Batı cephelerinde hızlı yarma harekatı yapmalıdır. |
-| 🇬🇧 **Birleşik Krallık (Müttefik)** | **Londra** | Atlantik konvoy hattı, İngiltere adası ve Akdeniz boğazlarını (Cebelitarık, Mısır) elinde tutar. Deniz ve hava üstünlüğü hedefler. |
-| 🇷🇺 **Sovyetler Birliği (Müttefik)** | **Moskova** | Geniş bozkırlar, derin savunma hatları ve yüksek insan gücü rezervi. Stalingrad ve Urallar sanayisiyle yıpratma savaşı yürütür. |
-| 🇮🇹 **İtalya (Mihver)** | **Roma** | Akdeniz havzası ve Kuzey Afrika çöl harekatı. Trablusgarp ve Balkanlar üzerinde hakimiyet kurmayı hedefler. |
-| ⚪ **Tarafsız Ülkeler** | - | İspanya, İsviçre, Türkiye, İsveç gibi tarafsız devletler. İşgal edilirlerse direnirler ancak fethedildiklerinde değerli sanayi puanı sağlarlar. |
-
----
-
-## 🏆 5. ZAFER ŞARTLARI
-
-Oyunu kazanmak için iki yoldan birini tamamlamalısınız:
-
-1. **Ekonomik ve Sanayi Hakimiyeti:** Haritadaki toplam sanayi kapasitesinin en az **%70'ini** ele geçirip kontrol altına almak.
-2. **Mutlak Askeri Zafer:** Tüm düşman başkentlerini (Berlin, Londra, Moskova, Roma) işgal ederek rakiplerinizi tamamen haritadan silmek.
+- 🚀 **Zero Dependency & Plug-and-Play:** No Redis, no SQL, no backend infrastructure needed. Runs directly in any modern browser.
+- 🗺️ **Handcrafted Continental Map:** Seamless territory borders with natural peninsulas, bays, and accurate historical theaters.
+- 🌐 **P2P Multiplayer (WebRTC):** The lobby host acts as the authoritative game server. Share a 6-digit room code with a friend to play together.
+- 🎖️ **Singleplayer Campaign:** Offline-ready mode with automated strategic commanders controlling enemy nations.
+- 🔊 **Procedural Web Audio:** No audio files loaded over the network; artillery booms, radio chirps, and sirens are synthesized in real-time.
+- 💾 **Local Save / Load:** Save your campaign state straight to browser storage and resume whenever you want.
 
 ---
 
-## 💾 6. KAYIT VE YÜKLEME (SAVE / LOAD)
+### 🕹️ Quick Start
 
-- **Oyun Kaydetme:** Üst komuta panelindeki **"💾 Kaydet"** butonuna bastığınızda, mevcut oyun durumu, birimler, sınırlar ve tur geçmişi tarayıcınızın yerel hafızasına (`localStorage`) şifrelenmiş olarak yazılır.
-- **Kayıt Yükleme:** İstediğiniz zaman **"📂 Yükle"** butonuna basarak daha önce kaydettiğiniz sefere kaldığınız yerden kesintisiz devam edebilirsiniz.
-
----
-
-## 📻 7. TELSİZ CERİDESİ VE İSTİHBARAT
-
-- Sağ dock panelindeki **İSTİHBARAT** sekmesinden tüm devletlerin toplam bölge sayısı, canlı birlik mevcudu ve sanayi gelirlerini anlık grafiklerle takip edebilirsiniz.
-- **TELSİZ** sekmesinden savaş boyunca gerçekleşen tüm sınır çatışmalarını, fetihleri ve diplomatik gelişmeleri kronolojik askeri ceride olarak okuyabilirsiniz.
+1. Clone or download this repository.
+2. Double-click **`OYNA.bat`** (Windows).
+3. The lightweight server starts automatically and opens your browser:  
+   👉 `http://localhost:51942/`
+4. Choose **Singleplayer** or create a **Multiplayer Lobby** and start conquering!
 
 ---
 
-*İyi harekatlar, Komutan! Zafer stratejinizde saklıdır.*
+### 🎯 Gameplay Rules
+
+Each turn follows a 3-phase strategic sequence:
+
+#### 1. Production Phase
+Collect Industry Points (IP) from your regions at the start of your turn. Select any friendly territory to recruit reinforcements:
+- 🪖 **Infantry (3 IP):** Defense specialist; cost-effective garrison backbone.
+- 🚜 **Armor / Tank (6 IP):** Offensive powerhouse; every 2 armor units grant a +1 roll combat bonus.
+- ✈️ **Fighter Squadron (8 IP):** Conducts preliminary air raids to soften up enemy defenses before ground invasion.
+
+#### 2. Combat Phase
+- Select your attacking territory, then click an adjacent hostile territory.
+- Optionally launch an air strike to weaken defenders.
+- Commit your infantry and armor to assault. Dice are rolled with terrain modifiers (cities and mountains provide defensive bonuses). Wipe out defenders to capture the region!
+
+#### 3. Maneuver Phase
+- Relocate rear-guard troops to reinforce newly conquered frontlines.
+- Click **End Turn** to pass command to the next faction.
+
+#### 🏆 Victory Condition
+Control at least **70% of total European industry** or capture all enemy capitals (Berlin, London, Moscow, Rome) to claim total victory.
+
+---
+
+### 🛠️ Tech Stack
+
+- **Frontend:** Vanilla HTML5, Canvas 2D (`Path2D` vector topology), Modern CSS3 (military glassmorphism war room theme).
+- **Audio:** Web Audio API (procedural synthesis).
+- **Networking:** PeerJS / WebRTC DataChannels (P2P zero-server multiplayer).
+- **Local Server:** Built-in lightweight PowerShell / Node.js static listeners.
+
+---
+*Created by [Bugra Kadioglu](https://github.com/Bugrakadiogluu). Feedback and contributions are welcome!*
