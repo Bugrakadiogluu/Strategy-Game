@@ -9,7 +9,7 @@ echo.
 echo Proje dosyalari gonderiliyor...
 echo (Eger ilk kez gonderiyorsaniz karsiniza cikacak GitHub oturum acma penceresini onaylayin)
 echo.
-"C:\Program Files\Git\cmd\git.exe" push -u origin main
+"C:\Program Files\Git\cmd\git.exe" push -u origin main --force
 echo.
 if %ERRORLEVEL% EQU 0 (
     echo =========================================================
