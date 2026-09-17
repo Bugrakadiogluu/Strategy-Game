@@ -49,8 +49,10 @@ class WW2GameApp {
         this._initZoomButtons();
         this._updateFactionOptionsI18n();
 
-        // Initial HUD render
+        // Initial HUD render & viewport fit
         this.hud.update(null, null);
+        setTimeout(() => this.renderer.fitToScreen(), 100);
+        setTimeout(() => this.renderer.fitToScreen(), 400);
     }
 
     /* ======================================================================
@@ -294,7 +296,7 @@ class WW2GameApp {
     _validateTurnAuthorization() {
         const curFaction = this.gameState.getCurrentFaction();
         if (curFaction.id !== this.userFactionId) {
-            this.hud.showToast(`Sıra sizde değil! Şu an ${curFaction.nameTr} sırası.`, 'warning');
+            this.hud.showToast(`Sıra sizde değil! Şu an ${i18n.getFactionName(curFaction.id)} sırası.`, 'warning');
             return false;
         }
         if (this.isAiRunning) {
@@ -398,7 +400,7 @@ class WW2GameApp {
         }
 
         this.isAiRunning = true;
-        this.hud.showToast(`🎖️ ${currentFaction.nameTr} (Stratejik Komuta) harekatını planlıyor...`, 'info');
+        this.hud.showToast(`🎖️ ${i18n.getFactionName(currentFaction.id)} (Stratejik Komuta) harekatını planlıyor...`, 'info');
 
         await StrategicAI.playTurn(this.gameState, (step) => {
             if (step.type === 'AI_DEPLOY') {
@@ -434,7 +436,7 @@ class WW2GameApp {
             this.checkAndRunAI();
         } else {
             this.sound.playRadioBeep();
-            this.hud.showToast(`🚩 Sıra Sizde! Komutan: ${this.gameState.getCurrentFaction().nameTr}`, 'success');
+            this.hud.showToast(`🚩 ${i18n.t('toast_turn_yours')} ${i18n.getFactionName(this.gameState.getCurrentFaction().id)}`, 'success');
         }
     }
 
@@ -538,6 +540,7 @@ class WW2GameApp {
                 this.sound.playVictory();
                 this.hud.showToast('⚔️ Harekat Başladı! İyi şanslar komutan!', 'success');
                 this.hud.update(null, null);
+                setTimeout(() => this.renderer.fitToScreen(), 80);
                 break;
 
             case MSG_TYPES.HOTJOIN_REQUEST:
@@ -597,7 +600,7 @@ class WW2GameApp {
                 // If turn just arrived for client, notify with radio beep and toast
                 if (newFaction === this.userFactionId && newFaction !== prevFaction) {
                     this.sound.playRadioBeep();
-                    this.hud.showToast(`🚩 Sıra Sizde! Komutan: ${this.gameState.getCurrentFaction().nameTr}`, 'success');
+                    this.hud.showToast(`🚩 ${i18n.t('toast_turn_yours')} ${i18n.getFactionName(this.gameState.getCurrentFaction().id)}`, 'success');
                 }
 
                 this.hud.update(this.selectedOriginId, this.selectedTargetId);
@@ -710,6 +713,11 @@ class WW2GameApp {
             const badgeEl = document.getElementById(`slot-badge-${fId}`);
             const nameEl = document.getElementById(`slot-name-${fId}`);
             const cardEl = document.getElementById(`slot-card-${fId}`);
+            const nameLabelEl = document.getElementById(`slot-name-label-${fId}`);
+
+            if (nameLabelEl) {
+                nameLabelEl.textContent = i18n.getFactionName(fId);
+            }
 
             if (slot && !slot.isAI) {
                 if (cardEl) cardEl.classList.add('slot-active');
@@ -720,21 +728,21 @@ class WW2GameApp {
                 if (badgeEl) {
                     if (slot.isHost) {
                         badgeEl.className = 'slot-badge badge-host';
-                        badgeEl.textContent = '👑 HOST';
+                        badgeEl.textContent = i18n.t('slot_host_badge');
                     } else {
                         badgeEl.className = 'slot-badge badge-player';
-                        badgeEl.textContent = '👤 OYUNCU';
+                        badgeEl.textContent = i18n.t('slot_player_badge');
                     }
                 }
             } else {
                 if (cardEl) cardEl.classList.remove('slot-active');
                 if (nameEl) {
-                    nameEl.textContent = '🤖 Yapay Zeka (Bot)';
+                    nameEl.textContent = i18n.t('slot_bot_name');
                     nameEl.classList.add('text-muted');
                 }
                 if (badgeEl) {
                     badgeEl.className = 'slot-badge badge-bot';
-                    badgeEl.textContent = '🤖 BOT';
+                    badgeEl.textContent = i18n.t('slot_bot_badge');
                 }
             }
         });
@@ -809,6 +817,7 @@ class WW2GameApp {
                 this.isGameStarted = true;
                 this.gameState.startGame(this.userFactionId);
                 document.getElementById('modal-waiting-room')?.classList.remove('visible');
+                setTimeout(() => this.renderer.fitToScreen(), 80);
 
                 // Broadcast GAME_START to all connected clients
                 this.network.broadcast(MSG_TYPES.GAME_START, {
@@ -935,6 +944,7 @@ class WW2GameApp {
 
                 this.hud.showToast(`🎖️ ${i18n.getFactionName(selectedClaimFaction)} komutasını devraldınız!`, 'success');
                 this.hud.update(null, null);
+                setTimeout(() => this.renderer.fitToScreen(), 80);
             };
         }
     }
@@ -1063,6 +1073,7 @@ class WW2GameApp {
             this.isGameStarted = true;
             this.gameState.startGame(this.userFactionId);
             modal.classList.remove('visible');
+            setTimeout(() => this.renderer.fitToScreen(), 80);
 
             document.getElementById('hud-room-code').textContent = 'OFFLINE';
             const fName = i18n.getFactionName(this.userFactionId);
@@ -1227,7 +1238,9 @@ class WW2GameApp {
         }
         if (btnReset) {
             btnReset.onclick = () => {
+                this.sound.playClick();
                 this.renderer.fitToScreen();
+                this.hud.showToast(i18n.t('toast_map_centered'), 'info');
             };
         }
     }

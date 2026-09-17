@@ -5,6 +5,7 @@
  */
 
 import { FACTIONS } from '../network/protocol.js';
+import { i18n } from '../i18n/translations.js';
 
 export class MapRenderer {
     constructor(canvas, gameState) {
@@ -48,21 +49,23 @@ export class MapRenderer {
     fitToScreen() {
         if (!this.canvas) return;
         const rect = this.canvas.getBoundingClientRect();
-        // Use exact client bounding rect of the canvas element itself (not parent)
-        this.canvas.width = Math.round(rect.width) || 1000;
-        this.canvas.height = Math.round(rect.height) || 750;
+        const displayW = Math.round(rect.width) > 50 ? Math.round(rect.width) : Math.max(800, window.innerWidth - 420);
+        const displayH = Math.round(rect.height) > 50 ? Math.round(rect.height) : Math.max(600, window.innerHeight - 60);
+
+        this.canvas.width = displayW;
+        this.canvas.height = displayH;
 
         // Center map
-        const mapW = this.gameState.dimensions.width;
-        const mapH = this.gameState.dimensions.height;
+        const mapW = this.gameState?.dimensions?.width || 1400;
+        const mapH = this.gameState?.dimensions?.height || 900;
 
-        const scaleX = this.canvas.width / mapW;
-        const scaleY = this.canvas.height / mapH;
-        this.scale = Math.min(scaleX, scaleY) * 0.95;
+        const scaleX = displayW / mapW;
+        const scaleY = displayH / mapH;
+        this.scale = Math.min(scaleX, scaleY) * 0.94;
         this.scale = Math.max(this.minScale, Math.min(this.scale, this.maxScale));
 
-        this.offsetX = (this.canvas.width - mapW * this.scale) / 2;
-        this.offsetY = (this.canvas.height - mapH * this.scale) / 2;
+        this.offsetX = (displayW - mapW * this.scale) / 2;
+        this.offsetY = (displayH - mapH * this.scale) / 2;
     }
 
     getCanvasMousePos(e) {
@@ -80,6 +83,12 @@ export class MapRenderer {
 
         // Resize observer
         window.addEventListener('resize', () => this.fitToScreen());
+        if (typeof ResizeObserver !== 'undefined' && this.canvas) {
+            this._resizeObserver = new ResizeObserver(() => {
+                this.fitToScreen();
+            });
+            this._resizeObserver.observe(this.canvas);
+        }
 
         // Mouse Pan & Drag
         c.addEventListener('mousedown', (e) => {
@@ -348,26 +357,27 @@ export class MapRenderer {
 
     _renderSeaNames(ctx) {
         const seas = [
-            { name: 'KUZEY ATLANTİK OKYANUSU', x: 150, y: 410, angle: -0.15 },
-            { name: 'KUZEY DENİZİ', x: 470, y: 280, angle: 0 },
-            { name: 'BALTIK DENİZİ', x: 740, y: 230, angle: 0.25 },
-            { name: 'BATI AKDENİZ', x: 460, y: 720, angle: 0 },
-            { name: 'ORTA VE DOĞU AKDENİZ', x: 750, y: 750, angle: 0 },
-            { name: 'KARADENİZ', x: 990, y: 550, angle: 0 },
-            { name: 'HAZAR DENİZİ', x: 1330, y: 580, angle: 0.1 }
+            { id: 'atlantic_ocean', x: 150, y: 410, angle: -0.15 },
+            { id: 'north_sea', x: 470, y: 280, angle: 0 },
+            { id: 'baltic_sea', x: 740, y: 230, angle: 0.25 },
+            { id: 'west_med', x: 460, y: 720, angle: 0 },
+            { id: 'east_med', x: 750, y: 750, angle: 0 },
+            { id: 'black_sea', x: 990, y: 550, angle: 0 },
+            { id: 'caspian_sea', x: 1330, y: 580, angle: 0.1 }
         ];
 
         ctx.save();
-        ctx.font = 'bold 13px "Orbitron", monospace, sans-serif';
+        ctx.font = 'bold 13px "Orbitron", "Hiragino Sans", "Meiryo", monospace, sans-serif';
         ctx.fillStyle = 'rgba(56, 189, 248, 0.25)';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
 
         for (const s of seas) {
+            const seaName = i18n.getSeaName ? i18n.getSeaName(s.id) : s.id;
             ctx.save();
             ctx.translate(s.x, s.y);
             ctx.rotate(s.angle || 0);
-            ctx.fillText(s.name, 0, 0);
+            ctx.fillText(seaName, 0, 0);
             ctx.restore();
         }
         ctx.restore();
@@ -568,16 +578,17 @@ export class MapRenderer {
             ctx.save();
 
             // 1. Regional Name Tag
-            ctx.font = 'bold 12px "Rajdhani", "Roboto", sans-serif';
+            ctx.font = 'bold 12px "Rajdhani", "Hiragino Sans", "Meiryo", "Roboto", sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
 
-            const name = r.name.toUpperCase();
-            // Cache text width per region to avoid 2,100 measureText calls per second
-            if (r._cachedNameWidth === undefined) {
-                r._cachedNameWidth = ctx.measureText(name).width;
+            const localizedName = (i18n.getRegionName(r.id) || r.name).toUpperCase();
+            if (!r._cachedNameWidths) r._cachedNameWidths = {};
+            const lang = i18n.currentLang || 'tr';
+            if (r._cachedNameWidths[lang] === undefined) {
+                r._cachedNameWidths[lang] = ctx.measureText(localizedName).width;
             }
-            const textWidth = r._cachedNameWidth;
+            const textWidth = r._cachedNameWidths[lang];
 
             // Name Tag Badge Background
             ctx.fillStyle = 'rgba(15, 23, 42, 0.88)';
@@ -587,7 +598,7 @@ export class MapRenderer {
             ctx.strokeRect(cx - textWidth / 2 - 8, cy - 26, textWidth + 16, 18);
 
             ctx.fillStyle = '#f8fafc';
-            ctx.fillText(name, cx, cy - 17);
+            ctx.fillText(localizedName, cx, cy - 17);
 
             // Capital Star or Factory Icon
             if (r.capital) {

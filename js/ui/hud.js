@@ -498,21 +498,21 @@ export class HUD {
             const defPower = ((target.units.infantry * 3) + (target.units.armor * 3) + (target.units.air * 2)) * (1 + terrain.defenseBonus);
 
             if (attPower === 0) {
-                oddsElem.innerHTML = `Kuvvet Oranı: <span style="color:#f87171">Birlik Tahsis Edilmedi</span>`;
+                oddsElem.innerHTML = `Kuvvet Oranı: <span style="color:#f87171">${i18n.t('odds_no_units')}</span>`;
                 return;
             }
 
             const ratio = defPower === 0 ? 99 : (attPower / defPower).toFixed(1);
-            let rating = 'Dengeli';
+            let rating = i18n.t('odds_balanced');
             let color = '#facc15';
 
-            if (ratio >= 2.0) { rating = 'Ezici Üstünlük'; color = '#4ade80'; }
-            else if (ratio >= 1.3) { rating = 'Taarruz Avantajı'; color = '#86efac'; }
-            else if (ratio < 0.8) { rating = 'Yüksek Risk / Savunma Üstün'; color = '#f87171'; }
+            if (ratio >= 2.0) { rating = i18n.t('odds_overwhelming'); color = '#4ade80'; }
+            else if (ratio >= 1.3) { rating = i18n.t('odds_advantage'); color = '#86efac'; }
+            else if (ratio < 0.8) { rating = i18n.t('odds_risky'); color = '#f87171'; }
 
             oddsElem.innerHTML = `Kuvvet Oranı: <strong>${ratio}x</strong> (<span style="color:${color}">${rating}</span>)`;
         } else {
-            oddsElem.innerHTML = `Kuvvet Oranı: <strong>Seçim Yapılmadı</strong>`;
+            oddsElem.innerHTML = `Kuvvet Oranı: <strong>${i18n.t('odds_no_selection')}</strong>`;
         }
     }
 
@@ -539,8 +539,8 @@ export class HUD {
 
         if (axisBar) axisBar.style.width = `${axisPct}%`;
         if (alliesBar) alliesBar.style.width = `${alliesPct}%`;
-        if (axisText) axisText.textContent = `Mihver: %${axisPct} (${axisIP} IP)`;
-        if (alliesText) alliesText.textContent = `Müttefikler: %${alliesPct} (${alliesIP} IP)`;
+        if (axisText) axisText.textContent = `${i18n.t('label_axis')}: %${axisPct} (${axisIP} IP)`;
+        if (alliesText) alliesText.textContent = `${i18n.t('label_allies')}: %${alliesPct} (${alliesIP} IP)`;
 
         // Capitals status
         const capitals = [
@@ -554,7 +554,9 @@ export class HUD {
         if (capsContainer) {
             capsContainer.innerHTML = capitals.map(c => {
                 const fac = FACTIONS[c.owner?.toUpperCase()] || FACTIONS.NEUTRAL;
-                return `<div class="capital-item"><span>⭐ ${c.name}</span> <span style="color:${fac.accentColor}">${fac.flagEmoji} ${fac.nameTr}</span></div>`;
+                const capName = i18n.getRegionName(c.id) || c.name;
+                const facName = i18n.getFactionName(fac.id);
+                return `<div class="capital-item"><span>⭐ ${capName}</span> <span style="color:${fac.accentColor}">${fac.flagEmoji} ${facName}</span></div>`;
             }).join('');
         }
     }

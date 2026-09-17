@@ -7,6 +7,7 @@
 import { INITIAL_REGIONS, MAP_DIMENSIONS } from './mapData.js';
 import { FACTIONS, UNIT_TYPES, TURN_PHASES } from '../network/protocol.js';
 import { CombatEngine } from './combat.js';
+import { i18n } from '../i18n/translations.js';
 
 export class GameState {
     constructor() {
@@ -104,8 +105,17 @@ export class GameState {
         }
 
         const active = this.getCurrentFaction();
+        const activeName = this.getFactionDisplayName(active.id);
         this.addLog(`=== 2. DÜNYA SAVAŞI STRATEJİK HAREKATI BAŞLADI ===`);
-        this.addLog(`Tur 1: ${active.nameTr} (${active.flagEmoji}) komutası devraldı.`);
+        this.addLog(`Tur 1: ${activeName} (${active.flagEmoji}) komutası devraldı.`);
+    }
+
+    getFactionDisplayName(factionId) {
+        return (i18n && i18n.getFactionName) ? i18n.getFactionName(factionId) : (this.factions[factionId]?.nameTr || factionId);
+    }
+
+    getRegionDisplayName(regionId) {
+        return (i18n && i18n.getRegionName) ? i18n.getRegionName(regionId) : (this.regions[regionId]?.name || regionId);
     }
 
     calculateIncome(factionId) {
@@ -181,7 +191,9 @@ export class GameState {
         region.units.air += air;
 
         this.updateFactionStats();
-        this.addLog(`${faction.nameTr}, ${region.name} bölgesine takviye yaptı: +${infantry} Piyade, +${armor} Panzer, +${air} Filo (-${totalCost} IP).`);
+        const facName = this.getFactionDisplayName(faction.id);
+        const regName = this.getRegionDisplayName(region.id);
+        this.addLog(`${facName}, ${regName} bölgesine takviye yaptı: +${infantry} Piyade, +${armor} Panzer, +${air} Filo (-${totalCost} IP).`);
 
         return { success: true, remainingIP: faction.industryPoints };
     }
@@ -245,9 +257,14 @@ export class GameState {
         from.units.air -= air;
 
         // Run battle simulation
+        const attName = this.getFactionDisplayName(attackerFaction.id);
+        const defName = this.getFactionDisplayName(defenderFaction.id);
+        const fromName = this.getRegionDisplayName(from.id);
+        const toName = this.getRegionDisplayName(to.id);
+
         const report = CombatEngine.resolveBattle(
-            { faction: attackerFaction.id, name: attackerFaction.nameTr, regionName: from.name },
-            { faction: defenderFaction.id, name: defenderFaction.nameTr, regionName: to.name, terrain: to.terrain },
+            { faction: attackerFaction.id, name: attName, regionName: fromName },
+            { faction: defenderFaction.id, name: defName, regionName: toName, terrain: to.terrain },
             validUnits,
             to.units
         );
@@ -258,7 +275,7 @@ export class GameState {
             // Defender wiped out: target region captured!
             to.owner = attackerFaction.id;
             to.units = { ...report.survivingAttackerUnits };
-            this.addLog(`🚩 FETİH: ${attackerFaction.nameTr}, ${to.name} bölgesini ele geçirdi!`);
+            this.addLog(`🚩 FETİH: ${attName}, ${toName} bölgesini ele geçirdi!`);
         } else {
             // Attack repelled: surviving defenders remain, surviving attackers return to origin
             // If both sides were wiped out in mutual combat, ensure defender holds 1 militia survivor
@@ -269,7 +286,7 @@ export class GameState {
             from.units.infantry += report.survivingAttackerUnits.infantry;
             from.units.armor += report.survivingAttackerUnits.armor;
             from.units.air += report.survivingAttackerUnits.air;
-            this.addLog(`🛡️ PÜSKÜRTÜLDÜ: ${defenderFaction.nameTr}, ${to.name} savunmasını başarıyla korudu.`);
+            this.addLog(`🛡️ PÜSKÜRTÜLDÜ: ${defName}, ${toName} savunmasını başarıyla korudu.`);
         }
 
         this.updateFactionStats();
@@ -308,7 +325,9 @@ export class GameState {
         const airResult = CombatEngine.resolveAirStrike(airCount, to);
         to.units = airResult.newUnits;
 
-        this.addLog(`✈️ HAVA HAREKATI: ${attackerFaction.nameTr}, ${to.name} mevzilerini bombaladı! (${airResult.hits} isabet).`);
+        const attAirName = this.getFactionDisplayName(attackerFaction.id);
+        const toAirName = this.getRegionDisplayName(to.id);
+        this.addLog(`✈️ HAVA HAREKATI: ${attAirName}, ${toAirName} mevzilerini bombaladı! (${airResult.hits} isabet).`);
         this.updateFactionStats();
 
         return {
@@ -357,7 +376,10 @@ export class GameState {
         to.units.armor += arm;
         to.units.air += air;
 
-        this.addLog(`${faction.nameTr}, ${from.name} -> ${to.name} hattına intikal gerçekleştirdi.`);
+        const moveFacName = this.getFactionDisplayName(faction.id);
+        const moveFromName = this.getRegionDisplayName(from.id);
+        const moveToName = this.getRegionDisplayName(to.id);
+        this.addLog(`${moveFacName}, ${moveFromName} -> ${moveToName} hattına intikal gerçekleştirdi.`);
         return { success: true };
     }
 
@@ -367,7 +389,8 @@ export class GameState {
     nextPhase() {
         if (this.currentPhase === TURN_PHASES.PRODUCTION) {
             this.currentPhase = TURN_PHASES.COMBAT;
-            this.addLog(`${this.getCurrentFaction().nameTr} Askeri Harekat & Saldırı Aşamasına geçti.`);
+            const curFacName = this.getFactionDisplayName(this.getCurrentFaction().id);
+            this.addLog(`${curFacName} Askeri Harekat & Saldırı Aşamasına geçti.`);
             return this.currentPhase;
         } else if (this.currentPhase === TURN_PHASES.COMBAT) {
             return this.endTurn();
@@ -400,7 +423,8 @@ export class GameState {
         const income = this.calculateIncome(nextFaction.id);
         nextFaction.industryPoints += income;
 
-        this.addLog(`Sıra: ${nextFaction.nameTr} (${nextFaction.flagEmoji}) - Gelir: +${income} IP (Toplam: ${nextFaction.industryPoints} IP).`);
+        const nextFacName = this.getFactionDisplayName(nextFaction.id);
+        this.addLog(`Sıra: ${nextFacName} (${nextFaction.flagEmoji}) - Gelir: +${income} IP (Toplam: ${nextFaction.industryPoints} IP).`);
 
         return this.currentPhase;
     }

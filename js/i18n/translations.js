@@ -24,6 +24,7 @@ export const TRANSLATIONS = {
         zoom_in: "+",
         zoom_out: "-",
         zoom_reset: "⟲ Haritayı Ortala",
+        zoom_reset_title: "Haritayı Ortala & Görünümü Sıfırla",
 
         // Navigation Tabs
         tab_production: "🪖 ÜRETİM",
@@ -155,8 +156,23 @@ export const TRANSLATIONS = {
         toast_game_saved: "💾 Oyun tarayıcı hafızasına kaydedildi.",
         toast_game_loaded: "📂 Kayıtlı oyun başarıyla yüklendi.",
         toast_no_save_found: "Kayıtlı oyun bulunamadı.",
+        toast_map_centered: "🗺️ Harita ortalandı ve taktik görünüm sıfırlandı.",
 
         // Factions
+        faction_germany_name: "Almanya",
+        faction_uk_name: "Birleşik Krallık",
+        faction_ussr_name: "Sovyetler Birliği",
+        faction_italy_name: "İtalya",
+        slot_bot_name: "Yapay Zeka (Bot)",
+        slot_host_badge: "👑 HOST",
+        slot_player_badge: "👤 OYUNCU",
+        slot_bot_badge: "🤖 BOT",
+        odds_no_units: "Birlik Tahsis Edilmedi",
+        odds_no_selection: "Seçim Yapılmadı",
+        odds_overwhelming: "Ezici Üstünlük",
+        odds_advantage: "Taarruz Avantajı",
+        odds_balanced: "Dengeli",
+        odds_risky: "Yüksek Risk / Savunma Üstün",
         factions: {
             germany: { name: "Almanya", fullName: "German Reich", desc: "Almanya (Mihver - Yüksek Başlangıç Panzer Gücü)" },
             uk: { name: "Birleşik Krallık", fullName: "United Kingdom", desc: "Birleşik Krallık (Müttefikler - Atlantik & Kraliyet Donanması)" },
@@ -210,6 +226,17 @@ export const TRANSLATIONS = {
             mountains: "Dağlık Arazi",
             coastal: "Sahil & Kıyı Hattı",
             urban: "Şehir & Tahkimat"
+        },
+
+        // Seas & Oceans
+        seas: {
+            atlantic_ocean: "KUZEY ATLANTİK OKYANUSU",
+            north_sea: "KUZEY DENİZİ",
+            baltic_sea: "BALTIK DENİZİ",
+            west_med: "BATI AKDENİZ",
+            east_med: "ORTA VE DOĞU AKDENİZ",
+            black_sea: "KARADENİZ",
+            caspian_sea: "HAZAR DENİZİ"
         }
     },
 
@@ -233,6 +260,7 @@ export const TRANSLATIONS = {
         zoom_in: "+",
         zoom_out: "-",
         zoom_reset: "⟲ Center Map",
+        zoom_reset_title: "Center Map & Reset View",
 
         // Navigation Tabs
         tab_production: "🪖 PRODUCTION",
@@ -364,8 +392,23 @@ export const TRANSLATIONS = {
         toast_game_saved: "💾 Game saved to browser storage.",
         toast_game_loaded: "📂 Saved campaign restored successfully.",
         toast_no_save_found: "No saved campaign found in storage.",
+        toast_map_centered: "🗺️ Map centered & tactical view reset.",
 
         // Factions
+        faction_germany_name: "Germany",
+        faction_uk_name: "United Kingdom",
+        faction_ussr_name: "Soviet Union",
+        faction_italy_name: "Italy",
+        slot_bot_name: "Artificial Intelligence (Bot)",
+        slot_host_badge: "👑 HOST",
+        slot_player_badge: "👤 PLAYER",
+        slot_bot_badge: "🤖 BOT",
+        odds_no_units: "No Units Assigned",
+        odds_no_selection: "No Selection",
+        odds_overwhelming: "Decisive Superiority",
+        odds_advantage: "Offensive Advantage",
+        odds_balanced: "Balanced",
+        odds_risky: "High Risk / Defense Favored",
         factions: {
             germany: { name: "Germany", fullName: "German Reich", desc: "Germany (Axis - High Initial Panzer Strength)" },
             uk: { name: "United Kingdom", fullName: "United Kingdom", desc: "United Kingdom (Allies - Atlantic & Royal Navy)" },
@@ -419,6 +462,17 @@ export const TRANSLATIONS = {
             mountains: "Mountainous Terrain",
             coastal: "Coastal & Littoral Zone",
             urban: "Urban & Fortifications"
+        },
+
+        // Seas & Oceans
+        seas: {
+            atlantic_ocean: "NORTH ATLANTIC OCEAN",
+            north_sea: "NORTH SEA",
+            baltic_sea: "BALTIC SEA",
+            west_med: "WESTERN MEDITERRANEAN",
+            east_med: "CENTRAL & EASTERN MEDITERRANEAN",
+            black_sea: "BLACK SEA",
+            caspian_sea: "CASPIAN SEA"
         }
     },
 
@@ -441,7 +495,8 @@ export const TRANSLATIONS = {
         room_copied: "ルームコードをコピーしました:",
         zoom_in: "+",
         zoom_out: "-",
-        zoom_reset: "⟲ 地図を中央に戻す",
+        zoom_reset: "⟲ マップを中央揃え",
+        zoom_reset_title: "マップを中央に配置して視点をリセット",
 
         // Navigation Tabs
         tab_production: "🪖 軍備生産",
@@ -573,8 +628,23 @@ export const TRANSLATIONS = {
         toast_game_saved: "💾 ブラウザのローカルメモリにゲームを保存しました。",
         toast_game_loaded: "📂 保存された作戦状況を復元しました。",
         toast_no_save_found: "セーブデータが見つかりませんでした。",
+        toast_map_centered: "🗺️ マップを中央揃えにし、視点をリセットしました。",
 
         // Factions
+        faction_germany_name: "ドイツ国",
+        faction_uk_name: "イギリス",
+        faction_ussr_name: "ソビエト連邦",
+        faction_italy_name: "イタリア王国",
+        slot_bot_name: "人工知能 (AI Bot)",
+        slot_host_badge: "👑 ホスト",
+        slot_player_badge: "👤 プレイヤー",
+        slot_bot_badge: "🤖 ボット",
+        odds_no_units: "部隊未割り当て",
+        odds_no_selection: "未選択",
+        odds_overwhelming: "圧倒的優位",
+        odds_advantage: "攻勢有利",
+        odds_balanced: "互角",
+        odds_risky: "危険 / 敵防衛優位",
         factions: {
             germany: { name: "ドイツ国", fullName: "German Reich", desc: "ドイツ国 (枢軸国 - 強力な機甲戦力)" },
             uk: { name: "イギリス", fullName: "United Kingdom", desc: "イギリス (連合国 - 大西洋航路と海空軍)" },
@@ -628,6 +698,17 @@ export const TRANSLATIONS = {
             mountains: "山岳地帯",
             coastal: "海岸・沿岸地帯",
             urban: "都市・要塞拠点"
+        },
+
+        // Seas & Oceans
+        seas: {
+            atlantic_ocean: "北大西洋",
+            north_sea: "北海",
+            baltic_sea: "バルト海",
+            west_med: "西地中海",
+            east_med: "中・東部地中海",
+            black_sea: "黒海",
+            caspian_sea: "カスピ海"
         }
     }
 };
@@ -670,6 +751,14 @@ class I18nManager {
             return dict.terrains[terrainId];
         }
         return terrainId;
+    }
+
+    getSeaName(seaId) {
+        const dict = TRANSLATIONS[this.currentLang] || TRANSLATIONS.tr;
+        if (dict.seas && dict.seas[seaId]) {
+            return dict.seas[seaId];
+        }
+        return (TRANSLATIONS.tr.seas && TRANSLATIONS.tr.seas[seaId]) || seaId;
     }
 
     setLanguage(lang) {
