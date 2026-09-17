@@ -19,7 +19,8 @@ Haritayı basit karelerden veya yapay kutulardan ibaret bırakmadım; İskandina
 - 🚀 **Sıfır Kurulum & Sıfır Altyapı:** Ne Redis, ne SQL veritabanı ne de karmaşık sunucular. Çift tıkla, saniyeler içinde oyna.
 - 🗺️ **35 Bölgeli Canlı Avrupa & Akdeniz Haritası:** Kare kutular yok! Birbiriyle kenetli gerçek kıyı sınırları, yarımadalar, deniz yolları ve körfezler.
 - 🎨 **Ayırt Edici Tarihsel Ülke Renkleri:** Almanya artık çelik grisi/antrasit (`#1e293b`), Tarafsız Ülkeler ise sıcak çöl kumu/kumtaşı beji (`#716550`) ile anında ayırt edilir. İngiltere Kraliyet Mavisi (`#1d4ed8`), Sovyetler Kızıl Ordu Kırmızısı (`#b91c1c`), İtalya Alp Yeşili (`#15803d`).
-- 🌐 **WebRTC P2P Çok Oyunculu:** Odayı kuran kişi (Host) doğrudan oyunun sunucusu olur. 6 haneli oda kodunu arkadaşına gönder, aracı sunucu olmadan doğrudan tarayıcıdan tarayıcıya (P2P) bağlanıp savaşın.
+- 🌐 **WebRTC P2P Çok Oyunculu & Toplanma Odası:** Odayı kuran kişi (Host) doğrudan oyunun sunucusu olur. 6 haneli oda kodunu ve tek tıkla üretilen davet linkini arkadaşlarına gönder; herkes askeri **Toplanma Odası**'nda toplanır. Katılmayan ülkeler otomatik olarak **🤖 Yapay Zeka (Bot)** tarafından yönetilir, böylece oyuncular saatlerce sıra beklemez.
+- ⚡ **Oyun İçi Hot-Join (Canlı Katılım Onayı):** Savaş başladıktan sonra gelen bir arkadaşınız odaya bağlanmak istediğinde Host ekranının sağ tarafında sesli **[✅ Onayla] / [❌ Reddet]** bildirimi çıkar. Onaylandığında yeni gelen oyuncu hayatta olan bot ülkelerden birinin komutasını anında devralıp oyuna kaldığı yerden dahil olur.
 - 🎖️ **Dinamik Sıra Sistemi:** Hangi ülkeyi seçerseniz seçin (Almanya, İngiltere, Sovyetler veya İtalya), ilk turda sizin seçtiğiniz ülke başlar. Sıra yapay zekaya geldiğinde otomatik botlar takılmadan hamlelerini icra eder.
 - ⚡ **60 FPS Lag-Free Canvas 2D:** Çift katmanlı donanım hızlandırmalı fırça darbeleri ve akıllı önbellekleme sayesinde harita akıcı ve takılmasız çalışır.
 - 🔊 **Prosedürel Web Audio:** Dışarıdan MP3 indirmeden, tarayıcının ses sentezleyicisiyle anlık üretilen topçu gümbürtüleri, sirenler ve telsiz cızırtıları.
@@ -131,7 +132,8 @@ Instead of plain square tiles or abstract grids, the game features a seamless ve
 - 🚀 **Zero Setup & Instant Play:** No Redis, no SQL, no backend configuration. Just double-click and play.
 - 🗺️ **35 Handcrafted Vector Territories:** Organic coastal curves, natural peninsulas, maritime choke points, and tactical fronts.
 - 🎨 **Distinct Faction Color Palettes:** Germany is rendered in Wehrmacht slate charcoal (`#1e293b`), Neutrals in warm sandstone tan (`#716550`), the UK in Royal Blue (`#1d4ed8`), the USSR in Crimson Red (`#b91c1c`), and Italy in Alpine Green (`#15803d`).
-- 🌐 **Serverless P2P Multiplayer (WebRTC):** The room host acts as the authoritative match engine. Share your 6-digit room code with a friend for direct peer-to-peer combat over encrypted DataChannels.
+- 🌐 **Serverless P2P Multiplayer & Gathering Lobby:** The host acts as the authoritative match engine. Share your 6-digit room code or 1-click invite link to gather in the **Military Briefing Room**. Unclaimed nations are seamlessly commanded by autonomous AI bots so human players never wait for inactive slots.
+- ⚡ **In-Game Hot-Join & Host Approval:** Friends can join battles already in progress! The Host receives an on-screen prompt with audio alert to **[Approve / Reject]**. Once approved, the incoming player takes over an active bot nation seamlessly without resetting game state.
 - 🛡️ **Bypasses Fortinet, Enterprise Firewalls & School Blockers:** Runs seamlessly across corporate networks, universities, and strict internet filters:
   - Uses standard **HTTPS (Port 443) and WebRTC TLS/WSS** instead of blocked game ports (Steam 27015, Minecraft 25565, etc.).
   - Deep packet inspection filters (Fortinet FortiGate, Cisco Umbrella, Zscaler, Palo Alto) recognize it as ordinary secure web traffic.

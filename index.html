@@ -420,6 +420,112 @@
         </div>
     </div>
 
+    <!-- MODAL: GATHERING LOBBY (WAITING ROOM) -->
+    <div class="modal-backdrop" id="modal-waiting-room">
+        <div class="modal-dialog" style="max-width: 660px; width: 95%;">
+            <div class="lang-selector-bar" style="justify-content: flex-end; margin-bottom: 8px;">
+                <button class="btn-lang" data-lang="tr">🇹🇷 TR</button>
+                <button class="btn-lang" data-lang="en">🇬🇧 EN</button>
+                <button class="btn-lang" data-lang="ja">🇯🇵 JA</button>
+            </div>
+
+            <h2 class="modal-title" style="color: var(--accent-amber); font-size: 1.35rem;" data-i18n="waiting_room_title">
+                🎖️ ASKERİ TOPLANMA ODASI (BEKLEME LOBİSİ)
+            </h2>
+            <p style="text-align: center; color: var(--text-muted); font-size: 0.85rem; margin-bottom: 16px;" data-i18n="waiting_room_subtitle">
+                Oda kodunu arkadaşlarınızla paylaşın. Katılmayan ülkeler otomatik olarak Yapay Zeka (Bot) tarafından yönetilecektir.
+            </p>
+
+            <!-- ROOM CODE & SHARE BOX -->
+            <div class="waiting-room-code-card">
+                <div class="code-label" data-i18n="room_code_label">ODA KODU:</div>
+                <div class="code-display" id="waiting-room-code-display">W2-XXXX</div>
+                <div class="code-buttons">
+                    <button class="btn-tactical btn-secondary" id="btn-copy-room-code" style="padding: 6px 12px; font-size: 0.82rem;">
+                        📋 <span data-i18n="btn_copy_code">Kodu Kopyala</span>
+                    </button>
+                    <button class="btn-tactical btn-secondary" id="btn-copy-room-link" style="padding: 6px 12px; font-size: 0.82rem;">
+                        🔗 <span data-i18n="btn_copy_link">Davet Linki Kopyala</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 4 COUNTRY SLOTS GRID -->
+            <div class="waiting-room-slots-grid" id="waiting-room-slots-container">
+                <!-- Slot Germany -->
+                <div class="slot-card" id="slot-card-germany">
+                    <div class="slot-header">
+                        <span class="slot-flag">🦅</span>
+                        <span class="slot-faction-name" id="slot-name-label-germany">Almanya</span>
+                        <span class="slot-badge badge-host" id="slot-badge-germany">👑 HOST</span>
+                    </div>
+                    <div class="slot-player-name" id="slot-name-germany">General</div>
+                </div>
+
+                <!-- Slot UK -->
+                <div class="slot-card" id="slot-card-uk">
+                    <div class="slot-header">
+                        <span class="slot-flag">🦁</span>
+                        <span class="slot-faction-name" id="slot-name-label-uk">Birleşik Krallık</span>
+                        <span class="slot-badge badge-bot" id="slot-badge-uk">🤖 BOT</span>
+                    </div>
+                    <div class="slot-player-name text-muted" id="slot-name-uk">Yapay Zeka (Bot)</div>
+                </div>
+
+                <!-- Slot USSR -->
+                <div class="slot-card" id="slot-card-ussr">
+                    <div class="slot-header">
+                        <span class="slot-flag">⭐</span>
+                        <span class="slot-faction-name" id="slot-name-label-ussr">Sovyetler Birliği</span>
+                        <span class="slot-badge badge-bot" id="slot-badge-ussr">🤖 BOT</span>
+                    </div>
+                    <div class="slot-player-name text-muted" id="slot-name-ussr">Yapay Zeka (Bot)</div>
+                </div>
+
+                <!-- Slot Italy -->
+                <div class="slot-card" id="slot-card-italy">
+                    <div class="slot-header">
+                        <span class="slot-flag">👑</span>
+                        <span class="slot-faction-name" id="slot-name-label-italy">İtalya</span>
+                        <span class="slot-badge badge-bot" id="slot-badge-italy">🤖 BOT</span>
+                    </div>
+                    <div class="slot-player-name text-muted" id="slot-name-italy">Yapay Zeka (Bot)</div>
+                </div>
+            </div>
+
+            <!-- LOBBY ACTIONS FOOTER -->
+            <div class="waiting-room-footer" style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn-tactical btn-secondary" id="btn-waiting-room-leave" style="padding: 10px 16px;">
+                    ⬅️ <span data-i18n="btn_leave_lobby">Lobiden Ayrıl</span>
+                </button>
+                <button class="btn-tactical btn-primary" id="btn-waiting-room-start" style="flex: 1; padding: 12px 18px; font-size: 1.05rem; justify-content: center;">
+                    🚀 <span data-i18n="btn_start_campaign_now">HAREKATI BAŞLAT (HERKESİ SAVAŞA SOK)</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: HOT-JOIN FACTION SELECTION -->
+    <div class="modal-backdrop" id="modal-hotjoin-select">
+        <div class="modal-dialog" style="max-width: 480px; text-align: center;">
+            <h2 class="modal-title" style="color: var(--accent-cyan); font-size: 1.3rem;" data-i18n="hotjoin_modal_title">
+                🎖️ SAVAŞA KATIL (KOMUTAYI DEVRAL)
+            </h2>
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 16px;" data-i18n="hotjoin_modal_desc">
+                Host katılımınızı onayladı! Savaş alanında halen aktif olan ve botlar tarafından yönetilen bir ülkeyi seçin:
+            </p>
+            <div id="hotjoin-factions-list" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px;">
+                <!-- Dynamically populated buttons -->
+            </div>
+            <button class="btn-tactical btn-primary" id="btn-hotjoin-confirm-claim" style="width: 100%; padding: 12px; justify-content: center;" disabled>
+                ⚔️ <span data-i18n="btn_claim_and_battle">KOMUTAYI AL VE SAVAŞA GİR</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- IN-GAME FLOATING HOT-JOIN PROMPT (HOST ONLY) -->
+    <div id="hotjoin-prompt-container" class="hotjoin-prompt-container"></div>
+
     <!-- TOAST NOTIFICATION CONTAINER -->
     <div id="toast-container"></div>
 

@@ -27,18 +27,24 @@ class WW2GameApp {
         this.selectedTargetId = null;
         this.userFactionId = 'germany'; // Default human player faction
         this.isAiRunning = false;
+        this.isGameStarted = false;
+        this.lobbySlots = null;
 
         // Apply localization
         i18n.applyToDOM();
         i18n.addListener(() => {
             this._updateFactionOptionsI18n();
             this.hud.update(this.selectedOriginId, this.selectedTargetId);
+            if (this.lobbySlots) {
+                this.renderWaitingRoomUI();
+            }
         });
 
         this._initMapInteractions();
         this._initNetworkCallbacks();
         this._initHudCallbacks();
         this._initLobbyModal();
+        this._initWaitingRoomListeners();
         this._initZoomButtons();
         this._updateFactionOptionsI18n();
 
@@ -449,8 +455,30 @@ class WW2GameApp {
         };
 
         this.network.onPlayerDisconnected = (peerId) => {
-            this.gameState.addLog(`[AĞ] Oyuncu ayrıldı (${peerId}). Ülkesi otomatik komutaya devredildi.`);
-            this.hud.update(this.selectedOriginId, this.selectedTargetId);
+            if (this.network.isHost) {
+                if (this.lobbySlots) {
+                    for (const [fId, slot] of Object.entries(this.lobbySlots)) {
+                        if (slot.playerId === peerId) {
+                            this.lobbySlots[fId] = { playerId: null, name: 'Yapay Zeka (Bot)', isHost: false, isAI: true };
+                            if (this.gameState.factions[fId]) {
+                                this.gameState.factions[fId].isAI = true;
+                                this.gameState.factions[fId].playerId = null;
+                            }
+                            this.hud.showToast(`⚠️ ${slot.name} ayrıldı, ${i18n.getFactionName(fId)} bota devredildi.`, 'warning');
+                        }
+                    }
+                }
+                if (!this.isGameStarted) {
+                    this.renderWaitingRoomUI();
+                    this.network.broadcast(MSG_TYPES.LOBBY_UPDATE, { lobbySlots: this.lobbySlots });
+                } else {
+                    this.syncNetworkState();
+                    this.checkAndRunAI();
+                }
+            } else {
+                this.gameState.addLog(`[AĞ] Sunucu bağlantısı kesildi.`);
+                this.hud.showToast('Sunucu ile bağlantı koptu.', 'warning');
+            }
         };
     }
 
@@ -458,21 +486,95 @@ class WW2GameApp {
         switch (msg.type) {
             case MSG_TYPES.LOBBY_JOIN:
                 if (this.network.isHost) {
-                    const claimedFaction = this._assignSlotToClient(senderId, msg.payload.playerName, msg.payload.requestedFaction);
-                    this.network.sendTo(senderId, MSG_TYPES.LOBBY_ACCEPTED, {
-                        assignedFaction: claimedFaction,
-                        gameState: this.gameState.serialize()
-                    });
-                    this.syncNetworkState();
-                    this.hud.showToast(`${msg.payload.playerName} odaya katıldı! (${claimedFaction.toUpperCase()})`, 'info');
+                    if (!this.isGameStarted) {
+                        const claimedFaction = this._assignSlotToClient(senderId, msg.payload.playerName, msg.payload.requestedFaction);
+                        this.network.sendTo(senderId, MSG_TYPES.LOBBY_ACCEPTED, {
+                            assignedFaction: claimedFaction,
+                            roomCode: this.network.roomCode,
+                            lobbySlots: this.lobbySlots,
+                            isGameStarted: false
+                        });
+                        this.network.broadcast(MSG_TYPES.LOBBY_UPDATE, {
+                            lobbySlots: this.lobbySlots
+                        });
+                        this.renderWaitingRoomUI();
+                        this.hud.showToast(`${msg.payload.playerName} odaya katıldı! (${i18n.getFactionName(claimedFaction)})`, 'info');
+                    } else {
+                        // Game already running: trigger Hot-Join prompt for Host!
+                        this.promptHotJoin(senderId, msg.payload.playerName);
+                    }
                 }
                 break;
 
             case MSG_TYPES.LOBBY_ACCEPTED:
                 this.userFactionId = msg.payload.assignedFaction;
-                this.gameState.deserialize(msg.payload.gameState);
-                this.hud.showToast(`Lobiye katıldınız! Ülkeniz: ${this.gameState.factions[this.userFactionId]?.nameTr || this.userFactionId.toUpperCase()}`, 'success');
+                if (!msg.payload.isGameStarted) {
+                    this.lobbySlots = msg.payload.lobbySlots;
+                    document.getElementById('modal-lobby')?.classList.remove('visible');
+                    document.getElementById('modal-waiting-room')?.classList.add('visible');
+                    this.renderWaitingRoomUI();
+                    this.hud.showToast(`Odaya katıldınız! Ülkeniz: ${i18n.getFactionName(this.userFactionId)}`, 'success');
+                } else {
+                    this.gameState.deserialize(msg.payload.gameState);
+                    this.hud.update(null, null);
+                }
+                break;
+
+            case MSG_TYPES.LOBBY_UPDATE:
+                if (!this.isGameStarted && msg.payload.lobbySlots) {
+                    this.lobbySlots = msg.payload.lobbySlots;
+                    this.renderWaitingRoomUI();
+                }
+                break;
+
+            case MSG_TYPES.GAME_START:
+                this.isGameStarted = true;
+                document.getElementById('modal-waiting-room')?.classList.remove('visible');
+                document.getElementById('modal-lobby')?.classList.remove('visible');
+                if (msg.payload.gameState) {
+                    this.gameState.deserialize(msg.payload.gameState);
+                }
+                this.sound.playVictory();
+                this.hud.showToast('⚔️ Harekat Başladı! İyi şanslar komutan!', 'success');
                 this.hud.update(null, null);
+                break;
+
+            case MSG_TYPES.HOTJOIN_REQUEST:
+                if (this.network.isHost) {
+                    this.promptHotJoin(senderId, msg.payload.playerName);
+                }
+                break;
+
+            case MSG_TYPES.HOTJOIN_APPROVED:
+                if (msg.payload.gameState) {
+                    this.gameState.deserialize(msg.payload.gameState);
+                }
+                this._openHotJoinModal(msg.payload.availableFactions);
+                break;
+
+            case MSG_TYPES.HOTJOIN_REJECTED:
+                this.hud.showToast(msg.payload.reason || i18n.t('toast_hotjoin_rejected'), 'danger');
+                document.getElementById('modal-lobby')?.classList.add('visible');
+                break;
+
+            case MSG_TYPES.HOTJOIN_CLAIM:
+                if (this.network.isHost) {
+                    const fId = msg.payload.claimedFaction;
+                    const pName = msg.payload.playerName || 'Komutan';
+                    if (this.gameState.factions[fId]) {
+                        this.gameState.factions[fId].isAI = false;
+                        this.gameState.factions[fId].playerId = senderId;
+                        this.gameState.factions[fId].playerName = pName;
+
+                        const fName = i18n.getFactionName(fId);
+                        const announcement = `📢 ${pName}, ${fName} komutasını devralarak savaşa girdi!`;
+                        this.gameState.addLog(announcement);
+                        this.hud.showToast(announcement, 'success');
+                        this.sound.playDeploy();
+
+                        this.syncNetworkState();
+                    }
+                }
                 break;
 
             case MSG_TYPES.STATE_SYNC:
@@ -566,8 +668,20 @@ class WW2GameApp {
         }
     }
 
+    _initLobbySlots() {
+        this.lobbySlots = {
+            germany: { playerId: null, name: 'Yapay Zeka (Bot)', isHost: false, isAI: true },
+            uk: { playerId: null, name: 'Yapay Zeka (Bot)', isHost: false, isAI: true },
+            ussr: { playerId: null, name: 'Yapay Zeka (Bot)', isHost: false, isAI: true },
+            italy: { playerId: null, name: 'Yapay Zeka (Bot)', isHost: false, isAI: true }
+        };
+    }
+
     _assignSlotToClient(peerId, playerName, requestedFaction = null) {
-        const available = ['germany', 'uk', 'ussr', 'italy'].filter(fId => fId !== this.userFactionId && this.gameState.factions[fId].isAI);
+        if (!this.lobbySlots) {
+            this._initLobbySlots();
+        }
+        const available = ['germany', 'uk', 'ussr', 'italy'].filter(fId => this.lobbySlots[fId].isAI);
         let assigned = null;
         if (requestedFaction && available.includes(requestedFaction)) {
             assigned = requestedFaction;
@@ -576,9 +690,252 @@ class WW2GameApp {
         } else {
             assigned = 'uk';
         }
-        this.gameState.factions[assigned].isAI = false;
-        this.gameState.factions[assigned].playerId = peerId;
+        this.lobbySlots[assigned] = {
+            playerId: peerId,
+            name: playerName,
+            isHost: false,
+            isAI: false
+        };
         return assigned;
+    }
+
+    renderWaitingRoomUI() {
+        const codeDisplay = document.getElementById('waiting-room-code-display');
+        if (codeDisplay) codeDisplay.textContent = this.network.roomCode || 'LOCAL';
+
+        const factions = ['germany', 'uk', 'ussr', 'italy'];
+        factions.forEach(fId => {
+            const slot = this.lobbySlots ? this.lobbySlots[fId] : null;
+            const badgeEl = document.getElementById(`slot-badge-${fId}`);
+            const nameEl = document.getElementById(`slot-name-${fId}`);
+            const cardEl = document.getElementById(`slot-card-${fId}`);
+
+            if (slot && !slot.isAI) {
+                if (cardEl) cardEl.classList.add('slot-active');
+                if (nameEl) {
+                    nameEl.textContent = slot.name;
+                    nameEl.classList.remove('text-muted');
+                }
+                if (badgeEl) {
+                    if (slot.isHost) {
+                        badgeEl.className = 'slot-badge badge-host';
+                        badgeEl.textContent = '👑 HOST';
+                    } else {
+                        badgeEl.className = 'slot-badge badge-player';
+                        badgeEl.textContent = '👤 OYUNCU';
+                    }
+                }
+            } else {
+                if (cardEl) cardEl.classList.remove('slot-active');
+                if (nameEl) {
+                    nameEl.textContent = '🤖 Yapay Zeka (Bot)';
+                    nameEl.classList.add('text-muted');
+                }
+                if (badgeEl) {
+                    badgeEl.className = 'slot-badge badge-bot';
+                    badgeEl.textContent = '🤖 BOT';
+                }
+            }
+        });
+
+        const btnStart = document.getElementById('btn-waiting-room-start');
+        if (btnStart) {
+            if (this.network.isHost) {
+                btnStart.disabled = false;
+                btnStart.innerHTML = `🚀 <span>${i18n.t('btn_start_campaign_now')}</span>`;
+            } else {
+                btnStart.disabled = true;
+                btnStart.innerHTML = `⏳ <span>Host'un Başlatması Bekleniyor...</span>`;
+            }
+        }
+    }
+
+    _initWaitingRoomListeners() {
+        const btnCopyCode = document.getElementById('btn-copy-room-code');
+        if (btnCopyCode) {
+            btnCopyCode.addEventListener('click', () => {
+                this.sound.playClick();
+                const code = this.network.roomCode || '';
+                navigator.clipboard.writeText(code).then(() => {
+                    this.hud.showToast(i18n.t('toast_code_copied'), 'success');
+                }).catch(() => {
+                    this.hud.showToast(`Oda Kodu: ${code}`, 'info');
+                });
+            });
+        }
+
+        const btnCopyLink = document.getElementById('btn-copy-room-link');
+        if (btnCopyLink) {
+            btnCopyLink.addEventListener('click', () => {
+                this.sound.playClick();
+                const code = this.network.roomCode || '';
+                const url = `${window.location.origin}${window.location.pathname}?room=${code}`;
+                navigator.clipboard.writeText(url).then(() => {
+                    this.hud.showToast(i18n.t('toast_link_copied'), 'success');
+                }).catch(() => {
+                    this.hud.showToast(`Davet Linki: ${url}`, 'info');
+                });
+            });
+        }
+
+        const btnLeave = document.getElementById('btn-waiting-room-leave');
+        if (btnLeave) {
+            btnLeave.addEventListener('click', () => {
+                this.sound.playClick();
+                document.getElementById('modal-waiting-room')?.classList.remove('visible');
+                document.getElementById('modal-lobby')?.classList.add('visible');
+                this.network.reset();
+            });
+        }
+
+        const btnStart = document.getElementById('btn-waiting-room-start');
+        if (btnStart) {
+            btnStart.addEventListener('click', () => {
+                if (!this.network.isHost) return;
+                this.sound.playDeploy();
+
+                // Apply lobby slots to gameState
+                if (this.lobbySlots) {
+                    for (const [fId, slot] of Object.entries(this.lobbySlots)) {
+                        this.gameState.factions[fId].isAI = slot.isAI;
+                        this.gameState.factions[fId].playerId = slot.playerId;
+                        if (!slot.isAI) {
+                            this.gameState.factions[fId].playerName = slot.name;
+                        }
+                    }
+                }
+
+                this.isGameStarted = true;
+                this.gameState.startGame(this.userFactionId);
+                document.getElementById('modal-waiting-room')?.classList.remove('visible');
+
+                // Broadcast GAME_START to all connected clients
+                this.network.broadcast(MSG_TYPES.GAME_START, {
+                    gameState: this.gameState.serialize()
+                });
+
+                this.sound.playVictory();
+                const fName = i18n.getFactionName(this.userFactionId);
+                this.hud.showToast(`⚔️ Harekat Başladı! ${i18n.t('toast_turn_yours')} ${fName}`, 'success');
+                this.hud.update(null, null);
+
+                this.checkAndRunAI();
+            });
+        }
+    }
+
+    promptHotJoin(senderId, playerName) {
+        this.sound.playRadioBeep();
+        const container = document.getElementById('hotjoin-prompt-container');
+        if (!container) return;
+
+        const existing = document.getElementById(`hotjoin-card-${senderId}`);
+        if (existing) existing.remove();
+
+        const card = document.createElement('div');
+        card.className = 'hotjoin-card';
+        card.id = `hotjoin-card-${senderId}`;
+        card.innerHTML = `
+            <div class="hotjoin-title">⚠️ ${i18n.t('hotjoin_prompt_title')}</div>
+            <div class="hotjoin-body">
+                <strong>${playerName}</strong> ${i18n.t('hotjoin_prompt_desc')}
+            </div>
+            <div class="hotjoin-actions">
+                <button class="hotjoin-btn-accept" id="btn-accept-${senderId}">${i18n.t('btn_hotjoin_accept')}</button>
+                <button class="hotjoin-btn-reject" id="btn-reject-${senderId}">${i18n.t('btn_hotjoin_reject')}</button>
+            </div>
+        `;
+        container.appendChild(card);
+
+        const btnReject = card.querySelector(`#btn-reject-${senderId}`);
+        if (btnReject) {
+            btnReject.addEventListener('click', () => {
+                this.sound.playClick();
+                card.remove();
+                this.network.sendTo(senderId, MSG_TYPES.HOTJOIN_REJECTED, {
+                    reason: i18n.t('toast_hotjoin_rejected')
+                });
+            });
+        }
+
+        const btnAccept = card.querySelector(`#btn-accept-${senderId}`);
+        if (btnAccept) {
+            btnAccept.addEventListener('click', () => {
+                this.sound.playClick();
+                card.remove();
+
+                const availableBots = Object.values(this.gameState.factions).filter(f => f.isAI && !f.isEliminated);
+                if (availableBots.length === 0) {
+                    this.hud.showToast(i18n.t('toast_hotjoin_no_factions'), 'warning');
+                    this.network.sendTo(senderId, MSG_TYPES.HOTJOIN_REJECTED, {
+                        reason: i18n.t('toast_hotjoin_no_factions')
+                    });
+                    return;
+                }
+
+                this.network.sendTo(senderId, MSG_TYPES.HOTJOIN_APPROVED, {
+                    availableFactions: availableBots.map(f => ({
+                        id: f.id,
+                        nameTr: f.nameTr,
+                        flagEmoji: f.flagEmoji,
+                        alliance: f.alliance
+                    })),
+                    gameState: this.gameState.serialize()
+                });
+
+                this.hud.showToast(`✅ ${playerName} için katılım onaylandı, ülke seçimi bekleniyor.`, 'info');
+            });
+        }
+    }
+
+    _openHotJoinModal(availableFactions) {
+        const modal = document.getElementById('modal-hotjoin-select');
+        const listEl = document.getElementById('hotjoin-factions-list');
+        const btnConfirm = document.getElementById('btn-hotjoin-confirm-claim');
+        if (!modal || !listEl) return;
+
+        let selectedClaimFaction = null;
+        listEl.innerHTML = '';
+
+        availableFactions.forEach(f => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'btn-hotjoin-choice';
+            btn.innerHTML = `<span style="font-size: 1.4rem;">${f.flagEmoji || '🚩'}</span> <span>${i18n.getFactionName(f.id)}</span>`;
+            btn.addEventListener('click', () => {
+                this.sound.playClick();
+                listEl.querySelectorAll('.btn-hotjoin-choice').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                selectedClaimFaction = f.id;
+                if (btnConfirm) btnConfirm.disabled = false;
+            });
+            listEl.appendChild(btn);
+        });
+
+        if (availableFactions.length > 0) {
+            const first = listEl.querySelector('.btn-hotjoin-choice');
+            if (first) first.click();
+        }
+
+        modal.classList.add('visible');
+
+        if (btnConfirm) {
+            btnConfirm.onclick = () => {
+                if (!selectedClaimFaction) return;
+                this.sound.playDeploy();
+                this.userFactionId = selectedClaimFaction;
+                this.isGameStarted = true;
+                modal.classList.remove('visible');
+
+                this.network.sendToHost(MSG_TYPES.HOTJOIN_CLAIM, {
+                    claimedFaction: selectedClaimFaction,
+                    playerName: this.network.playerName || 'Komutan'
+                });
+
+                this.hud.showToast(`🎖️ ${i18n.getFactionName(selectedClaimFaction)} komutasını devraldınız!`, 'success');
+                this.hud.update(null, null);
+            };
+        }
     }
 
     syncNetworkState() {
@@ -672,6 +1029,7 @@ class WW2GameApp {
                 f.isAI = f.id !== this.userFactionId;
             }
 
+            this.isGameStarted = true;
             this.gameState.startGame(this.userFactionId);
             modal.classList.remove('visible');
 
@@ -684,7 +1042,7 @@ class WW2GameApp {
             this.checkAndRunAI();
         };
 
-        // Host Multiplayer Room
+        // Host Multiplayer Room (Opens Gathering Waiting Room)
         const launchHost = (customRoomCode = null, pName = null) => {
             this.sound.playClick();
             this.userFactionId = factionSelect.value;
@@ -696,17 +1054,27 @@ class WW2GameApp {
             }
 
             this.network.initHost(playerName, customRoomCode).then(({ roomCode }) => {
-                for (const f of Object.values(this.gameState.factions)) {
-                    f.isAI = f.id !== this.userFactionId;
+                if (btnSingle) {
+                    btnSingle.disabled = false;
+                    btnSingle.textContent = i18n.t('btn_start_host');
                 }
-                this.gameState.startGame(this.userFactionId);
                 modal.classList.remove('visible');
 
-                document.getElementById('hud-room-code').textContent = roomCode;
-                this.hud.showToast(`Oda Açıldı! Arkadaşlarınızla paylaşın: ${roomCode}`, 'success');
-                this.hud.update(null, null);
+                // Initialize Gathering Room Slots
+                this._initLobbySlots();
+                this.lobbySlots[this.userFactionId] = {
+                    playerId: this.network.myPeerId,
+                    name: playerName,
+                    isHost: true,
+                    isAI: false
+                };
 
-                this.checkAndRunAI();
+                // Open Waiting Room Modal
+                document.getElementById('modal-waiting-room')?.classList.add('visible');
+                this.renderWaitingRoomUI();
+
+                document.getElementById('hud-room-code').textContent = roomCode;
+                this.hud.showToast(`🎖️ Toplanma Odası Açıldı! Oda Kodu: ${roomCode}`, 'success');
             }).catch((err) => {
                 if (btnSingle) {
                     btnSingle.disabled = false;
@@ -744,8 +1112,10 @@ class WW2GameApp {
             if (btnJoin) btnJoin.textContent = 'BAĞLANILIYOR...';
 
             this.network.initClient(playerName, code, desiredFaction).then(() => {
+                if (btnJoin) btnJoin.textContent = 'BAĞLAN';
                 modal.classList.remove('visible');
                 document.getElementById('hud-room-code').textContent = code.toUpperCase();
+                this.hud.showToast('Sunucuya bağlanıldı. Lobi durumu bekleniyor...', 'info');
             }).catch((err) => {
                 if (btnJoin) btnJoin.textContent = 'BAĞLAN';
                 this.hud.showToast(`Bağlantı hatası: ${err}`, 'danger');
@@ -759,8 +1129,12 @@ class WW2GameApp {
             });
         }
 
-        // Automated Testing / Direct Launch support
+        // Prefill room code from URL parameters (?room=W2XXXX or ?join=W2XXXX)
         const urlParams = new URLSearchParams(window.location.search);
+        const prefillRoom = urlParams.get('room') || urlParams.get('join');
+        if (prefillRoom && joinCodeInput) {
+            joinCodeInput.value = prefillRoom.trim().toUpperCase();
+        }
         if (urlParams.get('autostart') === 'singleplayer') {
             setTimeout(() => {
                 const fac = urlParams.get('faction');

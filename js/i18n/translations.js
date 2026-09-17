@@ -96,8 +96,29 @@ export const TRANSLATIONS = {
         label_select_faction: "KOMUTA EDİLECEK ÜLKE SEÇİMİ:",
         label_commander_name: "KOMUTAN ADI:",
         btn_start_singleplayer: "🚀 HAREKATI HEMEN BAŞLAT (TEK OYUNCULU)",
-        btn_start_host: "🌐 LOBİ OLUŞTUR VE BAŞLAT (HOST)",
+        btn_start_host: "🌐 LOBİ OLUŞTUR VE TOPLANMAYA BAŞLA",
         lang_switch_label: "🌐 DİL / LANGUAGE / 言語:",
+
+        // Waiting Room & Hot-Join
+        waiting_room_title: "🎖️ ASKERİ TOPLANMA ODASI (BEKLEME LOBİSİ)",
+        waiting_room_subtitle: "Oda kodunu arkadaşlarınızla paylaşın. Katılmayan ülkeler otomatik olarak Yapay Zeka (Bot) tarafından yönetilecektir.",
+        room_code_label: "ODA KODU:",
+        btn_copy_code: "Kodu Kopyala",
+        btn_copy_link: "Davet Linki Kopyala",
+        btn_leave_lobby: "Lobiden Ayrıl",
+        btn_start_campaign_now: "HAREKATI BAŞLAT (HERKESİ SAVAŞA SOK)",
+        hotjoin_modal_title: "🎖️ SAVAŞA KATIL (KOMUTAYI DEVRAL)",
+        hotjoin_modal_desc: "Host katılımınızı onayladı! Savaş alanında halen aktif olan ve botlar tarafından yönetilen bir ülkeyi seçin:",
+        btn_claim_and_battle: "KOMUTAYI AL VE SAVAŞA GİR",
+        toast_code_copied: "Oda kodu panoya kopyalandı!",
+        toast_link_copied: "Davet linki panoya kopyalandı!",
+        hotjoin_prompt_title: "⚠️ SAVAŞA KATILIM İSTEĞİ",
+        hotjoin_prompt_desc: "devam eden savaşa katılmak istiyor!",
+        btn_hotjoin_accept: "✅ KABUL ET",
+        btn_hotjoin_reject: "❌ REDDET",
+        toast_hotjoin_rejected: "Host katılım isteğinizi reddetti.",
+        toast_hotjoin_no_factions: "Savaş alanında komuta edilecek uygun bot ülke kalmadı!",
+
 
         // Combat Report Modal
         combat_modal_title: "⚔️ MUHAREBE RAPORU",
@@ -276,8 +297,29 @@ export const TRANSLATIONS = {
         label_select_faction: "SELECT YOUR FACTION:",
         label_commander_name: "COMMANDER NAME:",
         btn_start_singleplayer: "🚀 LAUNCH CAMPAIGN (SOLO PLAY)",
-        btn_start_host: "🌐 CREATE LOBBY & HOST",
+        btn_start_host: "🌐 CREATE ROOM & OPEN GATHERING LOBBY",
         lang_switch_label: "🌐 LANGUAGE / DİL / 言語:",
+
+        // Waiting Room & Hot-Join
+        waiting_room_title: "🎖️ MILITARY BRIEFING ROOM (GATHERING LOBBY)",
+        waiting_room_subtitle: "Share the room code with friends. Unclaimed factions will automatically be commanded by autonomous AI bots.",
+        room_code_label: "ROOM CODE:",
+        btn_copy_code: "Copy Code",
+        btn_copy_link: "Copy Invite Link",
+        btn_leave_lobby: "Leave Lobby",
+        btn_start_campaign_now: "LAUNCH CAMPAIGN (START WAR FOR ALL)",
+        hotjoin_modal_title: "🎖️ JOIN ONGOING BATTLE (TAKE COMMAND)",
+        hotjoin_modal_desc: "Host approved your request! Choose an active faction currently commanded by an AI bot:",
+        btn_claim_and_battle: "CLAIM COMMAND & ENTER BATTLE",
+        toast_code_copied: "Room code copied to clipboard!",
+        toast_link_copied: "Invite link copied to clipboard!",
+        hotjoin_prompt_title: "⚠️ REINFORCEMENT REQUEST",
+        hotjoin_prompt_desc: "wants to join the ongoing war!",
+        btn_hotjoin_accept: "✅ APPROVE",
+        btn_hotjoin_reject: "❌ REJECT",
+        toast_hotjoin_rejected: "Host rejected your join request.",
+        toast_hotjoin_no_factions: "No available bot-commanded factions remaining!",
+
 
         // Combat Report Modal
         combat_modal_title: "⚔️ AFTER-ACTION REPORT (AAR)",
@@ -456,8 +498,29 @@ export const TRANSLATIONS = {
         label_select_faction: "指揮する国家を選択:",
         label_commander_name: "指揮官名:",
         btn_start_singleplayer: "🚀 作戦を直ちに開始 (単独作戦)",
-        btn_start_host: "🌐 ロビーを作成して開始 (ホスト)",
+        btn_start_host: "🌐 ロビーを作成して集結を開始",
         lang_switch_label: "🌐 言語 / LANGUAGE / DİL:",
+
+        // Waiting Room & Hot-Join
+        waiting_room_title: "🎖️ 作戦集結司令部 (待機ロビー)",
+        waiting_room_subtitle: "ルームコードを仲間に共有してください。未参戦の国家はすべて自律思考AIボットが自動で指揮します。",
+        room_code_label: "作戦コード:",
+        btn_copy_code: "コードをコピー",
+        btn_copy_link: "招待リンクをコピー",
+        btn_leave_lobby: "ロビーを退室",
+        btn_start_campaign_now: "作戦を開始する (全員で開戦)",
+        hotjoin_modal_title: "🎖️ 戦場に途中参戦 (指揮権の継承)",
+        hotjoin_modal_desc: "ホストが参戦を承認しました！現在AIボットが指揮している生存国家を選択してください:",
+        btn_claim_and_battle: "指揮を執り戦場へ突入",
+        toast_code_copied: "ルームコードをクリップボードにコピーしました！",
+        toast_link_copied: "招待リンクをクリップボードにコピーしました！",
+        hotjoin_prompt_title: "⚠️ 援軍参戦リクエスト",
+        hotjoin_prompt_desc: "が進行中の作戦への参戦を希望しています！",
+        btn_hotjoin_accept: "✅ 承認する",
+        btn_hotjoin_reject: "❌ 拒否する",
+        toast_hotjoin_rejected: "ホストにより参戦リクエストが拒否されました。",
+        toast_hotjoin_no_factions: "現在指揮可能なAI国家はありません！",
+
 
         // Combat Report Modal
         combat_modal_title: "⚔️ 戦闘詳報 (交戦結果報告)",
