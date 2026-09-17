@@ -196,6 +196,32 @@ export class HUD {
     }
 
     _bindCombatControls() {
+        const infCommit = document.getElementById('combat-inf-commit');
+        const armCommit = document.getElementById('combat-arm-commit');
+        const airCommit = document.getElementById('combat-air-commit');
+        const infLabel = document.getElementById('combat-inf-label');
+        const armLabel = document.getElementById('combat-arm-label');
+        const airLabel = document.getElementById('combat-air-label');
+
+        if (infCommit && infLabel) {
+            infCommit.addEventListener('input', () => {
+                infLabel.textContent = infCommit.value;
+                this._updateOddsRatio();
+            });
+        }
+        if (armCommit && armLabel) {
+            armCommit.addEventListener('input', () => {
+                armLabel.textContent = armCommit.value;
+                this._updateOddsRatio();
+            });
+        }
+        if (airCommit && airLabel) {
+            airCommit.addEventListener('input', () => {
+                airLabel.textContent = airCommit.value;
+                this._updateOddsRatio();
+            });
+        }
+
         const btnLaunchAssault = document.getElementById('btn-launch-assault');
         if (btnLaunchAssault) {
             btnLaunchAssault.addEventListener('click', () => {
@@ -240,6 +266,29 @@ export class HUD {
     }
 
     _bindMovementControls() {
+        const moveInf = document.getElementById('move-inf-input');
+        const moveArm = document.getElementById('move-arm-input');
+        const moveAir = document.getElementById('move-air-input');
+        const moveInfLabel = document.getElementById('move-inf-label');
+        const moveArmLabel = document.getElementById('move-arm-label');
+        const moveAirLabel = document.getElementById('move-air-label');
+
+        if (moveInf && moveInfLabel) {
+            moveInf.addEventListener('input', () => {
+                moveInfLabel.textContent = moveInf.value;
+            });
+        }
+        if (moveArm && moveArmLabel) {
+            moveArm.addEventListener('input', () => {
+                moveArmLabel.textContent = moveArm.value;
+            });
+        }
+        if (moveAir && moveAirLabel) {
+            moveAir.addEventListener('input', () => {
+                moveAirLabel.textContent = moveAir.value;
+            });
+        }
+
         const btnExecuteMove = document.getElementById('btn-execute-move');
         if (btnExecuteMove) {
             btnExecuteMove.addEventListener('click', () => {
@@ -334,7 +383,6 @@ export class HUD {
         // 2. Combat Tab
         const combatFromElem = document.getElementById('combat-origin-info');
         const combatToElem = document.getElementById('combat-target-info');
-        const oddsElem = document.getElementById('combat-odds-ratio');
 
         if (combatFromElem) {
             if (origin) {
@@ -355,35 +403,96 @@ export class HUD {
             }
         }
 
-        // Set max values on commit sliders if origin exists
+        // Set max values and smart defaults on commit sliders
+        const infCommit = document.getElementById('combat-inf-commit');
+        const armCommit = document.getElementById('combat-arm-commit');
+        const airCommit = document.getElementById('combat-air-commit');
+        const infLabel = document.getElementById('combat-inf-label');
+        const armLabel = document.getElementById('combat-arm-label');
+        const airLabel = document.getElementById('combat-air-label');
+
         if (origin) {
-            const infCommit = document.getElementById('combat-inf-commit');
-            const armCommit = document.getElementById('combat-arm-commit');
-            const airCommit = document.getElementById('combat-air-commit');
+            const availInf = Math.max(0, origin.units.infantry - 1);
+            const availArm = origin.units.armor;
+            const availAir = origin.units.air;
 
             if (infCommit) {
-                infCommit.max = Math.max(0, origin.units.infantry);
-                if (parseInt(infCommit.value, 10) > origin.units.infantry) infCommit.value = origin.units.infantry;
+                infCommit.max = availInf;
+                if (target) infCommit.value = availInf;
+                else if (parseInt(infCommit.value, 10) > availInf) infCommit.value = availInf;
+                if (infLabel) infLabel.textContent = infCommit.value;
             }
             if (armCommit) {
-                armCommit.max = Math.max(0, origin.units.armor);
-                if (parseInt(armCommit.value, 10) > origin.units.armor) armCommit.value = origin.units.armor;
+                armCommit.max = availArm;
+                if (target) armCommit.value = availArm;
+                else if (parseInt(armCommit.value, 10) > availArm) armCommit.value = availArm;
+                if (armLabel) armLabel.textContent = armCommit.value;
             }
             if (airCommit) {
-                airCommit.max = Math.max(0, origin.units.air);
-                if (parseInt(airCommit.value, 10) > origin.units.air) airCommit.value = origin.units.air;
+                airCommit.max = availAir;
+                if (target) airCommit.value = availAir;
+                else if (parseInt(airCommit.value, 10) > availAir) airCommit.value = availAir;
+                if (airLabel) airLabel.textContent = airCommit.value;
+            }
+        } else {
+            if (infCommit) { infCommit.max = 0; infCommit.value = 0; }
+            if (armCommit) { armCommit.max = 0; armCommit.value = 0; }
+            if (airCommit) { airCommit.max = 0; airCommit.value = 0; }
+            if (infLabel) infLabel.textContent = '0';
+            if (armLabel) armLabel.textContent = '0';
+            if (airLabel) airLabel.textContent = '0';
+        }
+
+        // 3. Movement Tab sliders
+        const moveInf = document.getElementById('move-inf-input');
+        const moveArm = document.getElementById('move-arm-input');
+        const moveAir = document.getElementById('move-air-input');
+        const moveInfLabel = document.getElementById('move-inf-label');
+        const moveArmLabel = document.getElementById('move-arm-label');
+        const moveAirLabel = document.getElementById('move-air-label');
+
+        if (origin) {
+            const movableInf = Math.max(0, origin.units.infantry - 1);
+            if (moveInf) {
+                moveInf.max = movableInf;
+                if (target && target.owner === origin.owner) moveInf.value = movableInf;
+                if (moveInfLabel) moveInfLabel.textContent = moveInf.value;
+            }
+            if (moveArm) {
+                moveArm.max = origin.units.armor;
+                if (target && target.owner === origin.owner) moveArm.value = origin.units.armor;
+                if (moveArmLabel) moveArmLabel.textContent = moveArm.value;
+            }
+            if (moveAir) {
+                moveAir.max = origin.units.air;
+                if (target && target.owner === origin.owner) moveAir.value = origin.units.air;
+                if (moveAirLabel) moveAirLabel.textContent = moveAir.value;
             }
         }
 
-        // Calculate odds
-        if (origin && target && oddsElem) {
-            const attInf = parseInt(document.getElementById('combat-inf-commit')?.value, 10) || origin.units.infantry;
-            const attArm = parseInt(document.getElementById('combat-arm-commit')?.value, 10) || origin.units.armor;
-            const attAir = parseInt(document.getElementById('combat-air-commit')?.value, 10) || origin.units.air;
+        // Calculate and display combat odds
+        this._updateOddsRatio(origin, target);
+    }
+
+    _updateOddsRatio(originParam = null, targetParam = null) {
+        const origin = originParam || (this.selectedOriginId ? this.gameState.regions[this.selectedOriginId] : null);
+        const target = targetParam || (this.selectedTargetId ? this.gameState.regions[this.selectedTargetId] : null);
+        const oddsElem = document.getElementById('combat-odds-ratio');
+        if (!oddsElem) return;
+
+        if (origin && target && origin.owner !== target.owner) {
+            const attInf = parseInt(document.getElementById('combat-inf-commit')?.value, 10) || 0;
+            const attArm = parseInt(document.getElementById('combat-arm-commit')?.value, 10) || 0;
+            const attAir = parseInt(document.getElementById('combat-air-commit')?.value, 10) || 0;
 
             const attPower = (attInf * 2) + (attArm * 5) + (attAir * 4);
             const terrain = TERRAIN_TYPES[target.terrain.toUpperCase()] || TERRAIN_TYPES.PLAINS;
             const defPower = ((target.units.infantry * 3) + (target.units.armor * 3) + (target.units.air * 2)) * (1 + terrain.defenseBonus);
+
+            if (attPower === 0) {
+                oddsElem.innerHTML = `Kuvvet Oranı: <span style="color:#f87171">Birlik Tahsis Edilmedi</span>`;
+                return;
+            }
 
             const ratio = defPower === 0 ? 99 : (attPower / defPower).toFixed(1);
             let rating = 'Dengeli';
@@ -394,6 +503,8 @@ export class HUD {
             else if (ratio < 0.8) { rating = 'Yüksek Risk / Savunma Üstün'; color = '#f87171'; }
 
             oddsElem.innerHTML = `Kuvvet Oranı: <strong>${ratio}x</strong> (<span style="color:${color}">${rating}</span>)`;
+        } else {
+            oddsElem.innerHTML = `Kuvvet Oranı: <strong>Seçim Yapılmadı</strong>`;
         }
     }
 

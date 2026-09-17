@@ -483,7 +483,7 @@ export const INITIAL_REGIONS = [
         // Authentic Anatolian Peninsula: Thrace, Bosporus, Sinop cape (1055,630), Aegean, Antalya & Iskenderun gulfs
         path: "M 920,665 L 940,650 L 955,655 L 985,645 L 1020,635 L 1055,630 L 1085,650 L 1150,665 L 1200,665 L 1220,675 L 1240,725 L 1210,770 L 1165,775 L 1125,780 L 1100,790 L 1075,795 L 1030,810 L 995,810 L 965,805 L 940,795 L 930,765 L 930,730 L 935,710 L 915,700 Z",
         polygon: [[920,665], [940,650], [955,655], [985,645], [1020,635], [1055,630], [1085,650], [1150,665], [1200,665], [1220,675], [1240,725], [1210,770], [1165,775], [1125,780], [1100,790], [1075,795], [1030,810], [995,810], [965,805], [940,795], [930,765], [930,730], [935,710], [915,700]],
-        neighbors: ['romania', 'balkans', 'caucasus', 'egypt'],
+        neighbors: ['romania', 'balkans', 'caucasus', 'middle_east', 'egypt'],
         initialUnits: { infantry: 5, armor: 2, air: 1 }
     },
 

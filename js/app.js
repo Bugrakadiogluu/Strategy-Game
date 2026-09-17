@@ -339,6 +339,14 @@ class WW2GameApp {
         this.selectedOriginId = null;
         this.selectedTargetId = null;
         this.renderer.clearSelection();
+
+        // Switch HUD tab automatically based on current phase
+        if (this.gameState.currentPhase === TURN_PHASES.PRODUCTION) {
+            this.hud.switchTab('tab-production');
+        } else {
+            this.hud.switchTab('tab-combat');
+        }
+
         this.hud.update(null, null);
         this.syncNetworkState();
 
@@ -489,7 +497,7 @@ class WW2GameApp {
     }
 
     _assignSlotToClient(peerId, playerName) {
-        const available = ['uk', 'ussr', 'italy'].filter(fId => fId !== this.userFactionId && this.gameState.factions[fId].isAI);
+        const available = ['germany', 'uk', 'ussr', 'italy'].filter(fId => fId !== this.userFactionId && this.gameState.factions[fId].isAI);
         const assigned = available.length > 0 ? available[0] : 'uk';
         this.gameState.factions[assigned].isAI = false;
         this.gameState.factions[assigned].playerId = peerId;
@@ -528,7 +536,7 @@ class WW2GameApp {
                 f.isAI = f.id !== this.userFactionId;
             }
 
-            this.gameState.startGame();
+            this.gameState.startGame(this.userFactionId);
             modal.classList.remove('visible');
 
             document.getElementById('hud-room-code').textContent = 'OFFLINE';
@@ -546,6 +554,8 @@ class WW2GameApp {
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('autostart') === 'singleplayer') {
             setTimeout(() => {
+                const fac = urlParams.get('faction');
+                if (fac && factionSelect) factionSelect.value = fac;
                 launchSingleplayer();
                 const sel = urlParams.get('select');
                 if (sel) {
@@ -568,12 +578,14 @@ class WW2GameApp {
                     for (const f of Object.values(this.gameState.factions)) {
                         f.isAI = f.id !== this.userFactionId;
                     }
-                    this.gameState.startGame();
+                    this.gameState.startGame(this.userFactionId);
                     modal.classList.remove('visible');
 
                     document.getElementById('hud-room-code').textContent = roomCode;
                     this.hud.showToast(`Oda Açıldı! Arkadaşlarınızla paylaşın: ${roomCode}`, 'success');
                     this.hud.update(null, null);
+
+                    this.checkAndRunAI();
                 }).catch((err) => {
                     this.hud.showToast(`Host açılamadı, yerel mod başlatılıyor: ${err}`, 'warning');
                     launchSingleplayer();

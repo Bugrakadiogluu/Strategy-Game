@@ -39,9 +39,9 @@ export const FACTIONS = {
         name: 'German Reich',
         nameTr: 'Almanya',
         alliance: 'axis',
-        color: '#374151',
-        accentColor: '#f59e0b',
-        textColor: '#f9fafb',
+        color: '#1e293b',       // Wehrmacht Dark Iron Slate / Gunmetal
+        accentColor: '#fbbf24', // Golden Eagle Amber
+        textColor: '#f8fafc',
         capital: 'berlin',
         flagEmoji: '🦅'
     },
@@ -50,7 +50,7 @@ export const FACTIONS = {
         name: 'Kingdom of Italy',
         nameTr: 'İtalya',
         alliance: 'axis',
-        color: '#15803d',
+        color: '#15803d',       // Regio Esercito Alpine Green
         accentColor: '#86efac',
         textColor: '#ffffff',
         capital: 'rome',
@@ -61,7 +61,7 @@ export const FACTIONS = {
         name: 'United Kingdom',
         nameTr: 'Birleşik Krallık',
         alliance: 'allies',
-        color: '#1d4ed8',
+        color: '#1d4ed8',       // Royal Navy Deep Blue
         accentColor: '#93c5fd',
         textColor: '#ffffff',
         capital: 'london',
@@ -72,7 +72,7 @@ export const FACTIONS = {
         name: 'Soviet Union',
         nameTr: 'Sovyetler Birliği',
         alliance: 'allies',
-        color: '#b91c1c',
+        color: '#b91c1c',       // Soviet Red Army Crimson
         accentColor: '#fca5a5',
         textColor: '#ffffff',
         capital: 'moscow',
@@ -83,9 +83,9 @@ export const FACTIONS = {
         name: 'Neutral Nations',
         nameTr: 'Tarafsız Ülkeler',
         alliance: 'neutral',
-        color: '#64748b',
-        accentColor: '#cbd5e1',
-        textColor: '#ffffff',
+        color: '#716550',       // Warm Earth / Desert Khaki (distinct from Germany's slate steel)
+        accentColor: '#d6c7a1',
+        textColor: '#f5f5f4',
         capital: null,
         flagEmoji: '🕊️'
     }

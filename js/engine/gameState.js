@@ -45,6 +45,10 @@ export class GameState {
 
     initRegions() {
         for (const r of INITIAL_REGIONS) {
+            let path2d = null;
+            if (typeof Path2D !== 'undefined' && r.path) {
+                try { path2d = new Path2D(r.path); } catch (_) {}
+            }
             this.regions[r.id] = {
                 id: r.id,
                 name: r.name,
@@ -55,6 +59,7 @@ export class GameState {
                 x: r.x,
                 y: r.y,
                 path: r.path,
+                path2d,
                 polygon: r.polygon ? JSON.parse(JSON.stringify(r.polygon)) : null,
                 neighbors: [...r.neighbors],
                 units: {
@@ -73,13 +78,24 @@ export class GameState {
     }
 
     /**
-     * Start of game setup: give starting factions initial income and deploy
+     * Start of game setup: give starting factions initial income and deploy.
+     * Optionally rotates turnOrder so the human player/host's chosen faction plays first.
      */
-    startGame() {
+    startGame(startingFactionId = null) {
         this.winner = null;
         this.turnNumber = 1;
-        this.currentTurnIndex = 0;
         this.currentPhase = TURN_PHASES.PRODUCTION;
+
+        if (startingFactionId && this.factions[startingFactionId]) {
+            const idx = this.turnOrder.indexOf(startingFactionId);
+            if (idx !== -1) {
+                this.turnOrder = [
+                    ...this.turnOrder.slice(idx),
+                    ...this.turnOrder.slice(0, idx)
+                ];
+            }
+        }
+        this.currentTurnIndex = 0;
 
         // Calculate initial income for all factions
         for (const fId of this.turnOrder) {
@@ -203,24 +219,36 @@ export class GameState {
         const check = this.canAttack(fromRegionId, toRegionId, from.owner);
         if (!check.allowed) return { success: false, reason: check.reason };
 
+        const inf = Math.max(0, parseInt(attackingUnits.infantry, 10) || 0);
+        const arm = Math.max(0, parseInt(attackingUnits.armor, 10) || 0);
+        const air = Math.max(0, parseInt(attackingUnits.air, 10) || 0);
+        const commitTotal = inf + arm + air;
+
+        if (commitTotal <= 0) {
+            return { success: false, reason: 'Taarruz için en az 1 birim tahsis etmelisiniz!' };
+        }
+        if (inf > from.units.infantry || arm > from.units.armor || air > from.units.air) {
+            return { success: false, reason: 'Bölgede seçilen miktarda taarruz birimi bulunmuyor!' };
+        }
+
         // Ensure origin region retains at least 1 unit
         const currentFromTotal = from.units.infantry + from.units.armor + from.units.air;
-        const commitTotal = attackingUnits.infantry + attackingUnits.armor + attackingUnits.air;
-
         if (commitTotal >= currentFromTotal) {
             return { success: false, reason: 'Köken bölgede en az 1 birim garnizon kalmalıdır!' };
         }
 
+        const validUnits = { infantry: inf, armor: arm, air: air };
+
         // Deduct committed units from origin region temporarily
-        from.units.infantry -= attackingUnits.infantry;
-        from.units.armor -= attackingUnits.armor;
-        from.units.air -= attackingUnits.air;
+        from.units.infantry -= inf;
+        from.units.armor -= arm;
+        from.units.air -= air;
 
         // Run battle simulation
         const report = CombatEngine.resolveBattle(
             { faction: attackerFaction.id, name: attackerFaction.nameTr, regionName: from.name },
             { faction: defenderFaction.id, name: defenderFaction.nameTr, regionName: to.name, terrain: to.terrain },
-            attackingUnits,
+            validUnits,
             to.units
         );
 
@@ -233,6 +261,10 @@ export class GameState {
             this.addLog(`🚩 FETİH: ${attackerFaction.nameTr}, ${to.name} bölgesini ele geçirdi!`);
         } else {
             // Attack repelled: surviving defenders remain, surviving attackers return to origin
+            // If both sides were wiped out in mutual combat, ensure defender holds 1 militia survivor
+            if ((report.survivingDefenderUnits.infantry + report.survivingDefenderUnits.armor + report.survivingDefenderUnits.air) <= 0) {
+                report.survivingDefenderUnits.infantry = 1;
+            }
             to.units = { ...report.survivingDefenderUnits };
             from.units.infantry += report.survivingAttackerUnits.infantry;
             from.units.armor += report.survivingAttackerUnits.armor;

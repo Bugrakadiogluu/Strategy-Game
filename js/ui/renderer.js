@@ -374,12 +374,16 @@ export class MapRenderer {
     }
 
     _renderTacticalOcean(ctx, w, h) {
-        // Deep naval war-room gradient
-        const bgGrad = ctx.createLinearGradient(0, 0, w, h);
-        bgGrad.addColorStop(0, '#0a0e17');
-        bgGrad.addColorStop(0.5, '#0f172a');
-        bgGrad.addColorStop(1, '#080d1a');
-        ctx.fillStyle = bgGrad;
+        // Deep naval war-room gradient (cached to prevent 60 allocations/sec)
+        if (!this._bgGrad || this._lastW !== w || this._lastH !== h) {
+            this._lastW = w;
+            this._lastH = h;
+            this._bgGrad = ctx.createLinearGradient(0, 0, w, h);
+            this._bgGrad.addColorStop(0, '#0a0e17');
+            this._bgGrad.addColorStop(0.5, '#0f172a');
+            this._bgGrad.addColorStop(1, '#080d1a');
+        }
+        ctx.fillStyle = this._bgGrad;
         ctx.fillRect(0, 0, w, h);
 
         // Coordinate grid lines
@@ -400,18 +404,23 @@ export class MapRenderer {
         }
         ctx.stroke();
 
-        // Subtle topographic / radar scan arc
+        // Subtle topographic / radar scan arc (cached gradient)
         const radarAngle = (this.pulseTime * 0.4) % (Math.PI * 2);
+        const maxDim = Math.max(w, h);
+        if (!this._radarGrad || this._radarDim !== maxDim) {
+            this._radarDim = maxDim;
+            this._radarGrad = ctx.createRadialGradient(0, 0, 50, 0, 0, maxDim);
+            this._radarGrad.addColorStop(0, 'rgba(56, 189, 248, 0.04)');
+            this._radarGrad.addColorStop(1, 'rgba(56, 189, 248, 0.0)');
+        }
+
         ctx.save();
         ctx.translate(w / 2, h / 2);
         ctx.rotate(radarAngle);
-        const radarGrad = ctx.createRadialGradient(0, 0, 50, 0, 0, Math.max(w, h));
-        radarGrad.addColorStop(0, 'rgba(56, 189, 248, 0.04)');
-        radarGrad.addColorStop(1, 'rgba(56, 189, 248, 0.0)');
-        ctx.fillStyle = radarGrad;
+        ctx.fillStyle = this._radarGrad;
         ctx.beginPath();
         ctx.moveTo(0, 0);
-        ctx.arc(0, 0, Math.max(w, h), 0, Math.PI / 4);
+        ctx.arc(0, 0, maxDim, 0, Math.PI / 4);
         ctx.closePath();
         ctx.fill();
         ctx.restore();
@@ -423,22 +432,6 @@ export class MapRenderer {
         const hoveredId = this.hoveredRegionId;
         const pulse = (Math.sin(this.pulseTime) + 1) * 0.5; // 0 to 1
 
-        // 1. First pass: Coastal water glow / shelf halo around landmasses
-        ctx.save();
-        ctx.strokeStyle = 'rgba(56, 189, 248, 0.12)';
-        ctx.lineWidth = 8;
-        ctx.lineJoin = 'round';
-        for (const r of regions) {
-            if (!r.path2d && r.path) {
-                try { r.path2d = new Path2D(r.path); } catch (e) { /* ignore */ }
-            }
-            if (r.path2d) {
-                ctx.stroke(r.path2d);
-            }
-        }
-        ctx.restore();
-
-        // 2. Second pass: Fill realistic landmasses and draw tactical boundaries
         for (const r of regions) {
             if (!r.path2d && r.path) {
                 try { r.path2d = new Path2D(r.path); } catch (e) { /* ignore */ }
@@ -452,35 +445,45 @@ export class MapRenderer {
             if (r.path2d) {
                 // Polygon Fill using authentic SVG curved landmass
                 ctx.fillStyle = faction.color;
-                ctx.globalAlpha = isSelected ? 0.92 : (isHovered ? 0.88 : 0.72);
+                ctx.globalAlpha = isSelected ? 0.95 : (isHovered ? 0.90 : 0.78);
                 ctx.fill(r.path2d);
 
-                // Tactical Border & Glow
+                // Hardware-accelerated tactical border (no CPU shadowBlur lag)
                 ctx.globalAlpha = 1.0;
                 if (isSelected) {
-                    ctx.strokeStyle = '#f59e0b'; // Amber tactical selection
-                    ctx.lineWidth = 3.5 + pulse * 1.5;
-                    ctx.shadowColor = '#f59e0b';
-                    ctx.shadowBlur = 16;
+                    // Wide ambient glow stroke + crisp amber core
+                    ctx.strokeStyle = 'rgba(245, 158, 11, 0.45)';
+                    ctx.lineWidth = 7 + pulse * 2;
+                    ctx.stroke(r.path2d);
+
+                    ctx.strokeStyle = '#f59e0b';
+                    ctx.lineWidth = 3.0;
+                    ctx.stroke(r.path2d);
                 } else if (isTarget) {
                     const isFriendly = selectedId && this.gameState.regions[selectedId].owner === r.owner;
-                    ctx.strokeStyle = isFriendly ? '#38bdf8' : '#ef4444';
-                    ctx.lineWidth = 2.8 + pulse * 1.5;
-                    ctx.shadowColor = isFriendly ? '#38bdf8' : '#ef4444';
-                    ctx.shadowBlur = 12;
+                    const glowCol = isFriendly ? 'rgba(56, 189, 248, 0.45)' : 'rgba(239, 68, 68, 0.45)';
+                    const coreCol = isFriendly ? '#38bdf8' : '#ef4444';
+
+                    ctx.strokeStyle = glowCol;
+                    ctx.lineWidth = 6 + pulse * 2;
+                    ctx.stroke(r.path2d);
+
+                    ctx.strokeStyle = coreCol;
+                    ctx.lineWidth = 2.5;
+                    ctx.stroke(r.path2d);
                 } else if (isHovered) {
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+                    ctx.lineWidth = 4.5;
+                    ctx.stroke(r.path2d);
+
                     ctx.strokeStyle = '#ffffff';
-                    ctx.lineWidth = 2.4;
-                    ctx.shadowColor = '#ffffff';
-                    ctx.shadowBlur = 9;
+                    ctx.lineWidth = 2.0;
+                    ctx.stroke(r.path2d);
                 } else {
                     ctx.strokeStyle = 'rgba(255, 255, 255, 0.28)';
-                    ctx.lineWidth = 1.4;
-                    ctx.shadowBlur = 0;
+                    ctx.lineWidth = 1.2;
+                    ctx.stroke(r.path2d);
                 }
-
-                ctx.stroke(r.path2d);
-                ctx.shadowBlur = 0;
             } else if (r.polygon && r.polygon.length >= 3) {
                 // Fallback for polygon arrays
                 ctx.beginPath();
@@ -491,34 +494,40 @@ export class MapRenderer {
                 ctx.closePath();
 
                 ctx.fillStyle = faction.color;
-                ctx.globalAlpha = isSelected ? 0.92 : (isHovered ? 0.88 : 0.72);
+                ctx.globalAlpha = isSelected ? 0.95 : (isHovered ? 0.90 : 0.78);
                 ctx.fill();
 
                 ctx.globalAlpha = 1.0;
                 if (isSelected) {
+                    ctx.strokeStyle = 'rgba(245, 158, 11, 0.45)';
+                    ctx.lineWidth = 7 + pulse * 2;
+                    ctx.stroke();
+
                     ctx.strokeStyle = '#f59e0b';
-                    ctx.lineWidth = 3.5 + pulse * 1.5;
-                    ctx.shadowColor = '#f59e0b';
-                    ctx.shadowBlur = 16;
+                    ctx.lineWidth = 3.0;
+                    ctx.stroke();
                 } else if (isTarget) {
                     const isFriendly = selectedId && this.gameState.regions[selectedId].owner === r.owner;
+                    ctx.strokeStyle = isFriendly ? 'rgba(56, 189, 248, 0.45)' : 'rgba(239, 68, 68, 0.45)';
+                    ctx.lineWidth = 6 + pulse * 2;
+                    ctx.stroke();
+
                     ctx.strokeStyle = isFriendly ? '#38bdf8' : '#ef4444';
-                    ctx.lineWidth = 2.8 + pulse * 1.5;
-                    ctx.shadowColor = isFriendly ? '#38bdf8' : '#ef4444';
-                    ctx.shadowBlur = 12;
+                    ctx.lineWidth = 2.5;
+                    ctx.stroke();
                 } else if (isHovered) {
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+                    ctx.lineWidth = 4.5;
+                    ctx.stroke();
+
                     ctx.strokeStyle = '#ffffff';
-                    ctx.lineWidth = 2.4;
-                    ctx.shadowColor = '#ffffff';
-                    ctx.shadowBlur = 9;
+                    ctx.lineWidth = 2.0;
+                    ctx.stroke();
                 } else {
                     ctx.strokeStyle = 'rgba(255, 255, 255, 0.28)';
-                    ctx.lineWidth = 1.4;
-                    ctx.shadowBlur = 0;
+                    ctx.lineWidth = 1.2;
+                    ctx.stroke();
                 }
-
-                ctx.stroke();
-                ctx.shadowBlur = 0;
             }
         }
     }
@@ -564,11 +573,15 @@ export class MapRenderer {
             ctx.textBaseline = 'middle';
 
             const name = r.name.toUpperCase();
-            const textWidth = ctx.measureText(name).width;
+            // Cache text width per region to avoid 2,100 measureText calls per second
+            if (r._cachedNameWidth === undefined) {
+                r._cachedNameWidth = ctx.measureText(name).width;
+            }
+            const textWidth = r._cachedNameWidth;
 
             // Name Tag Badge Background
-            ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.88)';
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
             ctx.lineWidth = 1;
             ctx.fillRect(cx - textWidth / 2 - 8, cy - 26, textWidth + 16, 18);
             ctx.strokeRect(cx - textWidth / 2 - 8, cy - 26, textWidth + 16, 18);
@@ -596,7 +609,7 @@ export class MapRenderer {
             const badgeY = cy + 2;
 
             // Plate Backdrop
-            ctx.fillStyle = 'rgba(10, 15, 26, 0.90)';
+            ctx.fillStyle = 'rgba(10, 15, 26, 0.92)';
             ctx.strokeStyle = faction.accentColor || '#38bdf8';
             ctx.lineWidth = 1.5;
             ctx.beginPath();
@@ -649,17 +662,21 @@ export class MapRenderer {
                 const curX = anim.startX + (anim.targetX - anim.startX) * t;
                 const curY = anim.startY + (anim.targetY - anim.startY) * t - Math.sin(t * Math.PI) * 60;
 
-                // Tracer projectile glow
                 ctx.save();
+                // Outer glow disc
+                ctx.fillStyle = 'rgba(245, 158, 11, 0.4)';
+                ctx.beginPath();
+                ctx.arc(curX, curY, 8, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Tracer projectile core
                 ctx.fillStyle = '#fbbf24';
-                ctx.shadowColor = '#f59e0b';
-                ctx.shadowBlur = 15;
                 ctx.beginPath();
                 ctx.arc(curX, curY, 4, 0, Math.PI * 2);
                 ctx.fill();
 
                 // Tracer Tail
-                ctx.strokeStyle = 'rgba(245, 158, 11, 0.4)';
+                ctx.strokeStyle = 'rgba(245, 158, 11, 0.45)';
                 ctx.lineWidth = 2.5;
                 ctx.beginPath();
                 ctx.moveTo(anim.startX, anim.startY);
@@ -675,8 +692,6 @@ export class MapRenderer {
                 ctx.font = '22px sans-serif';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.shadowColor = '#f43f5e';
-                ctx.shadowBlur = 12;
                 ctx.fillText('✈️', curX, curY);
                 ctx.restore();
             } else if (anim.type === 'explosion') {
@@ -688,8 +703,6 @@ export class MapRenderer {
                 ctx.strokeStyle = `rgba(239, 68, 68, ${alpha})`;
                 ctx.fillStyle = `rgba(245, 158, 11, ${alpha * 0.45})`;
                 ctx.lineWidth = 3;
-                ctx.shadowColor = '#ef4444';
-                ctx.shadowBlur = 20;
 
                 ctx.beginPath();
                 ctx.arc(anim.x, anim.y, radius, 0, Math.PI * 2);
