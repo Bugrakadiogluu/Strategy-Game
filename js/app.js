@@ -134,6 +134,7 @@ class WW2GameApp {
         const capId = capitals[factionId];
         if (capId && this.gameState.regions[capId]) {
             this.renderer.setSelectedRegion(capId);
+            this.renderer.focusOnRegion(capId, 0.78);
         }
 
         const facName = i18n.getFactionName(factionId);
@@ -1174,6 +1175,8 @@ class WW2GameApp {
             this.renderer.setPlayerFaction(this.userFactionId);
             this.hud.update(null, null);
 
+            this.renderer.focusOnFaction(this.userFactionId, 0.82);
+
             this._showStrategicBriefing();
 
             // If player chosen is not the first in turn order, let AI start
@@ -1278,6 +1281,9 @@ class WW2GameApp {
                 const fac = urlParams.get('faction');
                 if (fac && factionSelect) factionSelect.value = fac;
                 launchSingleplayer();
+                if (urlParams.get('overview') === '1') {
+                    setTimeout(() => this.renderer.resetOverview(), 200);
+                }
                 const sel = urlParams.get('select');
                 if (sel) {
                     setTimeout(() => this.handleRegionClick(sel), 700);
@@ -1333,21 +1339,31 @@ class WW2GameApp {
         const btnIn = document.getElementById('btn-zoom-in');
         const btnOut = document.getElementById('btn-zoom-out');
         const btnReset = document.getElementById('btn-zoom-reset');
+        const btnHomeland = document.getElementById('btn-zoom-homeland');
 
         if (btnIn) {
             btnIn.onclick = () => {
-                this.renderer.scale = Math.min(this.renderer.maxScale, this.renderer.scale * 1.2);
+                this.sound.playClick();
+                this.renderer.zoomIn(1.25);
             };
         }
         if (btnOut) {
             btnOut.onclick = () => {
-                this.renderer.scale = Math.max(this.renderer.minScale, this.renderer.scale * 0.8);
+                this.sound.playClick();
+                this.renderer.zoomOut(0.80);
+            };
+        }
+        if (btnHomeland) {
+            btnHomeland.onclick = () => {
+                this.sound.playClick();
+                this.renderer.focusOnFaction(this.userFactionId, 0.82);
+                this.hud.showToast(i18n.t('zoom_homeland_title') || 'Başkente odaklanıldı', 'info');
             };
         }
         if (btnReset) {
             btnReset.onclick = () => {
                 this.sound.playClick();
-                this.renderer.fitToScreen();
+                this.renderer.resetOverview();
                 this.hud.showToast(i18n.t('toast_map_centered'), 'info');
             };
         }
@@ -1398,7 +1414,9 @@ class WW2GameApp {
         const urlParams = new URLSearchParams(window.location.search);
         const dontShow = localStorage.getItem('warroom_hide_briefing') === 'true' || urlParams.get('skipbriefing') === '1';
         if (dontShow || !modal) {
-            this.renderer.playCinematicIntro(capitalId);
+            if (urlParams.get('skipbriefing') !== '1') {
+                this.renderer.playCinematicIntro(capitalId);
+            }
             return;
         }
 

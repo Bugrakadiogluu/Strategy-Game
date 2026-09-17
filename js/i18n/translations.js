@@ -170,6 +170,10 @@ export const TRANSLATIONS = {
         toast_game_loaded: "Kayıtlı oyun başarıyla yüklendi.",
         toast_no_save_found: "Kayıtlı oyun bulunamadı.",
         toast_map_centered: "Harita ortalandı ve taktik görünüm sıfırlandı.",
+        zoom_homeland: "Ülkeme Odaklan",
+        zoom_homeland_title: "Başkente ve Ana Sahaya Odaklan",
+        zoom_reset: "Tüm Harita",
+        zoom_reset_title: "Tüm Kıta / Genel Bakış",
 
         // Factions
         faction_germany_name: "Almanya",
@@ -506,6 +510,10 @@ export const TRANSLATIONS = {
         toast_game_loaded: "Saved campaign restored successfully.",
         toast_no_save_found: "No saved campaign found in storage.",
         toast_map_centered: "Map centered & tactical view reset.",
+        zoom_homeland: "Focus Homeland",
+        zoom_homeland_title: "Center on Capital & Homeland",
+        zoom_reset: "All Theater",
+        zoom_reset_title: "Full Continental Overview",
 
         // Factions
         faction_germany_name: "Germany",
@@ -842,6 +850,10 @@ export const TRANSLATIONS = {
         toast_game_loaded: "保存された作戦状況を復元しました。",
         toast_no_save_found: "セーブデータが見つかりませんでした。",
         toast_map_centered: "マップを中央揃えにし、視点をリセットしました。",
+        zoom_homeland: "本国に注目",
+        zoom_homeland_title: "首都と本国にフォーカス",
+        zoom_reset: "全体マップ",
+        zoom_reset_title: "全欧州大陸概要",
 
         // Factions
         faction_germany_name: "ドイツ国",
