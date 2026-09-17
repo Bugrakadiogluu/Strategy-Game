@@ -115,9 +115,17 @@ export const TRANSLATIONS = {
         hotjoin_prompt_title: "⚠️ SAVAŞA KATILIM İSTEĞİ",
         hotjoin_prompt_desc: "devam eden savaşa katılmak istiyor!",
         btn_hotjoin_accept: "✅ KABUL ET",
-        btn_hotjoin_reject: "❌ REDDET",
         toast_hotjoin_rejected: "Host katılım isteğinizi reddetti.",
         toast_hotjoin_no_factions: "Savaş alanında komuta edilecek uygun bot ülke kalmadı!",
+
+        // Developer Portfolio
+        btn_developer: "Yapan Kişi",
+        btn_developer_credit_full: "Geliştirici: Buğra Kadıoğlu (İş Teklifleri İçin Portföy)",
+        dev_modal_title: "Buğra Kadıoğlu | Portföy",
+        dev_modal_offer: "İş teklifleri bekliyorum!",
+        dev_modal_desc: "Geliştiricinin portföy linki (bugrakadioglu.dev) yeni sekmede açılacaktır. Onaylıyor musunuz?",
+        btn_dev_proceed: "Ziyaret Et (Onayla)",
+        btn_cancel: "İptal",
 
 
         // Combat Report Modal
@@ -316,9 +324,17 @@ export const TRANSLATIONS = {
         hotjoin_prompt_title: "⚠️ REINFORCEMENT REQUEST",
         hotjoin_prompt_desc: "wants to join the ongoing war!",
         btn_hotjoin_accept: "✅ APPROVE",
-        btn_hotjoin_reject: "❌ REJECT",
         toast_hotjoin_rejected: "Host rejected your join request.",
         toast_hotjoin_no_factions: "No available bot-commanded factions remaining!",
+
+        // Developer Portfolio
+        btn_developer: "Created By",
+        btn_developer_credit_full: "Developer: Buğra Kadıoğlu (Portfolio for Job Offers)",
+        dev_modal_title: "Buğra Kadıoğlu | Portfolio",
+        dev_modal_offer: "Open for job opportunities!",
+        dev_modal_desc: "The developer's portfolio link (bugrakadioglu.dev) will open in a new tab. Do you confirm?",
+        btn_dev_proceed: "Visit (Confirm)",
+        btn_cancel: "Cancel",
 
 
         // Combat Report Modal
@@ -517,9 +533,17 @@ export const TRANSLATIONS = {
         hotjoin_prompt_title: "⚠️ 援軍参戦リクエスト",
         hotjoin_prompt_desc: "が進行中の作戦への参戦を希望しています！",
         btn_hotjoin_accept: "✅ 承認する",
-        btn_hotjoin_reject: "❌ 拒否する",
         toast_hotjoin_rejected: "ホストにより参戦リクエストが拒否されました。",
         toast_hotjoin_no_factions: "現在指揮可能なAI国家はありません！",
+
+        // Developer Portfolio
+        btn_developer: "開発者",
+        btn_developer_credit_full: "開発者: Buğra Kadıoğlu (お仕事のご依頼・ポートフォリオ)",
+        dev_modal_title: "Buğra Kadıoğlu | ポートフォリオ",
+        dev_modal_offer: "お仕事のご依頼をお待ちしております！",
+        dev_modal_desc: "開発者のポートフォリオページ (bugrakadioglu.dev) を新しいタブで開きます。よろしいですか？",
+        btn_dev_proceed: "移動する (承認)",
+        btn_cancel: "キャンセル",
 
 
         // Combat Report Modal

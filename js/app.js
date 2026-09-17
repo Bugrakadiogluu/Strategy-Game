@@ -45,6 +45,7 @@ class WW2GameApp {
         this._initHudCallbacks();
         this._initLobbyModal();
         this._initWaitingRoomListeners();
+        this._initDeveloperModalListeners();
         this._initZoomButtons();
         this._updateFactionOptionsI18n();
 
@@ -935,6 +936,36 @@ class WW2GameApp {
                 this.hud.showToast(`🎖️ ${i18n.getFactionName(selectedClaimFaction)} komutasını devraldınız!`, 'success');
                 this.hud.update(null, null);
             };
+        }
+    }
+
+    _initDeveloperModalListeners() {
+        const modal = document.getElementById('modal-developer-confirm');
+        const btnHeader = document.getElementById('btn-developer-credit');
+        const btnLobby = document.getElementById('btn-lobby-developer-credit');
+        const btnCancel = document.getElementById('btn-dev-cancel');
+        const btnConfirm = document.getElementById('btn-dev-confirm');
+
+        const openModal = () => {
+            this.sound.playClick();
+            if (modal) modal.classList.add('visible');
+        };
+
+        const closeModal = () => {
+            this.sound.playClick();
+            if (modal) modal.classList.remove('visible');
+        };
+
+        if (btnHeader) btnHeader.addEventListener('click', openModal);
+        if (btnLobby) btnLobby.addEventListener('click', openModal);
+        if (btnCancel) btnCancel.addEventListener('click', closeModal);
+
+        if (btnConfirm) {
+            btnConfirm.addEventListener('click', () => {
+                this.sound.playDeploy();
+                window.open('https://bugrakadioglu.dev', '_blank', 'noopener,noreferrer');
+                if (modal) modal.classList.remove('visible');
+            });
         }
     }
 

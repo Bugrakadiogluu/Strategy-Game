@@ -67,6 +67,9 @@
             <button class="btn-tactical" id="btn-copy-room-code" title="Oda Kodunu Kopyala">
                 <span data-i18n="btn_room_prefix">🔑 Oda:</span> <span id="hud-room-code">LOCAL</span>
             </button>
+            <button class="btn-tactical" id="btn-developer-credit" style="background: rgba(245, 158, 11, 0.15); border-color: rgba(245, 158, 11, 0.6); color: var(--accent-amber);" title="Geliştirici Portföyü">
+                👨‍💻 <span data-i18n="btn_developer">Yapan Kişi</span>
+            </button>
         </div>
     </header>
 
@@ -387,6 +390,12 @@
                     🚀 HAREKATI HEMEN BAŞLAT (TEK OYUNCULU)
                 </button>
             </div>
+
+            <div style="text-align: center; margin-top: 14px; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 10px;">
+                <button type="button" class="btn-tactical" id="btn-lobby-developer-credit" style="background: transparent; border: none; color: #94a3b8; font-size: 0.82rem; cursor: pointer; text-decoration: underline;">
+                    👨‍💻 <span data-i18n="btn_developer_credit_full">Geliştirici: Buğra Kadıoğlu (İş Teklifleri İçin Portföy)</span>
+                </button>
+            </div>
         </div>
     </div>
 
@@ -520,6 +529,30 @@
             <button class="btn-tactical btn-primary" id="btn-hotjoin-confirm-claim" style="width: 100%; padding: 12px; justify-content: center;" disabled>
                 ⚔️ <span data-i18n="btn_claim_and_battle">KOMUTAYI AL VE SAVAŞA GİR</span>
             </button>
+        </div>
+    </div>
+
+    <!-- MODAL: DEVELOPER / PORTFOLIO CONFIRMATION -->
+    <div class="modal-backdrop" id="modal-developer-confirm">
+        <div class="modal-dialog" style="max-width: 440px; text-align: center;">
+            <div style="font-size: 2.4rem; margin-bottom: 8px;">💼</div>
+            <h2 class="modal-title" style="color: var(--accent-amber); font-size: 1.3rem;" data-i18n="dev_modal_title">
+                Buğra Kadıoğlu | Portföy
+            </h2>
+            <p style="color: var(--accent-cyan); font-size: 1.05rem; font-weight: 700; margin: 12px 0 6px 0;" data-i18n="dev_modal_offer">
+                "İş teklifleri bekliyorum!"
+            </p>
+            <p style="color: var(--text-muted); font-size: 0.85rem; line-height: 1.4; margin-bottom: 20px;" data-i18n="dev_modal_desc">
+                Geliştiricinin portföy linki (<code>bugrakadioglu.dev</code>) yeni sekmede açılacaktır. Onaylıyor musunuz?
+            </p>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button class="btn-tactical btn-secondary" id="btn-dev-cancel" style="padding: 10px 18px;">
+                    ❌ <span data-i18n="btn_cancel">İptal</span>
+                </button>
+                <button class="btn-tactical btn-primary" id="btn-dev-confirm" style="padding: 10px 22px;">
+                    🌐 <span data-i18n="btn_dev_proceed">Ziyaret Et (Onayla)</span>
+                </button>
+            </div>
         </div>
     </div>
 
