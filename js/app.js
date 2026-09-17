@@ -311,6 +311,15 @@ class WW2GameApp {
             this.hud.update(this.selectedOriginId, this.selectedTargetId);
             this.syncNetworkState();
 
+            if (this.network.isHost) {
+                this.network.broadcast(MSG_TYPES.COMBAT_EVENT, {
+                    fromRegionId: fromId,
+                    toRegionId: toId,
+                    isAirStrike: false,
+                    report: result.report
+                });
+            }
+
             if (result.winner) {
                 this.sound.playVictory();
                 this.hud.showGameOverModal(result.winner);
@@ -328,6 +337,15 @@ class WW2GameApp {
                 this.hud.showToast(`Hava sortisi başarılı: ${result.airResult.hits} isabet!`, 'success');
                 this.hud.update(this.selectedOriginId, this.selectedTargetId);
                 this.syncNetworkState();
+
+                if (this.network.isHost) {
+                    this.network.broadcast(MSG_TYPES.COMBAT_EVENT, {
+                        fromRegionId: fromId,
+                        toRegionId: toId,
+                        isAirStrike: true,
+                        airResult: result.airResult
+                    });
+                }
             } else {
                 this.hud.showToast(result.reason, 'danger');
             }
@@ -431,7 +449,7 @@ class WW2GameApp {
         switch (msg.type) {
             case MSG_TYPES.LOBBY_JOIN:
                 if (this.network.isHost) {
-                    const claimedFaction = this._assignSlotToClient(senderId, msg.payload.playerName);
+                    const claimedFaction = this._assignSlotToClient(senderId, msg.payload.playerName, msg.payload.requestedFaction);
                     this.network.sendTo(senderId, MSG_TYPES.LOBBY_ACCEPTED, {
                         assignedFaction: claimedFaction,
                         gameState: this.gameState.serialize()
@@ -444,15 +462,58 @@ class WW2GameApp {
             case MSG_TYPES.LOBBY_ACCEPTED:
                 this.userFactionId = msg.payload.assignedFaction;
                 this.gameState.deserialize(msg.payload.gameState);
-                this.hud.showToast(`Lobiye katıldınız! Ülkeniz: ${this.userFactionId.toUpperCase()}`, 'success');
+                this.hud.showToast(`Lobiye katıldınız! Ülkeniz: ${this.gameState.factions[this.userFactionId]?.nameTr || this.userFactionId.toUpperCase()}`, 'success');
                 this.hud.update(null, null);
                 break;
 
             case MSG_TYPES.STATE_SYNC:
+                const prevPhase = this.gameState.currentPhase;
+                const prevFaction = this.gameState.getCurrentFaction()?.id;
                 this.gameState.deserialize(msg.payload.gameState);
+                const newFaction = this.gameState.getCurrentFaction()?.id;
+                const newPhase = this.gameState.currentPhase;
+
+                // If phase changed, auto-switch tab
+                if (newPhase !== prevPhase) {
+                    if (newPhase === TURN_PHASES.PRODUCTION) {
+                        this.hud.switchTab('tab-production');
+                    } else {
+                        this.hud.switchTab('tab-combat');
+                    }
+                }
+
+                // If turn just arrived for client, notify with radio beep and toast
+                if (newFaction === this.userFactionId && newFaction !== prevFaction) {
+                    this.sound.playRadioBeep();
+                    this.hud.showToast(`🚩 Sıra Sizde! Komutan: ${this.gameState.getCurrentFaction().nameTr}`, 'success');
+                }
+
                 this.hud.update(this.selectedOriginId, this.selectedTargetId);
                 if (this.gameState.winner) {
                     this.hud.showGameOverModal(this.gameState.winner);
+                }
+                break;
+
+            case MSG_TYPES.COMBAT_EVENT:
+                if (msg.payload.isAirStrike) {
+                    this.renderer.addCombatAnimation(msg.payload.fromRegionId, msg.payload.toRegionId, true);
+                    this.sound.playAirRaid();
+                    if (msg.payload.airResult) {
+                        this.hud.showToast(`Hava sortisi: ${msg.payload.airResult.hits} isabet kaydedildi!`, 'info');
+                    }
+                } else {
+                    this.renderer.addCombatAnimation(msg.payload.fromRegionId, msg.payload.toRegionId, false);
+                    this.sound.playArtillery();
+                    setTimeout(() => {
+                        if (msg.payload.report) {
+                            if (msg.payload.report.attackerVictorious) {
+                                this.sound.playVictory();
+                            } else {
+                                this.sound.playDefeat();
+                            }
+                            this.hud.showCombatModal(msg.payload.report);
+                        }
+                    }, 500);
                 }
                 break;
 
@@ -496,9 +557,16 @@ class WW2GameApp {
         }
     }
 
-    _assignSlotToClient(peerId, playerName) {
+    _assignSlotToClient(peerId, playerName, requestedFaction = null) {
         const available = ['germany', 'uk', 'ussr', 'italy'].filter(fId => fId !== this.userFactionId && this.gameState.factions[fId].isAI);
-        const assigned = available.length > 0 ? available[0] : 'uk';
+        let assigned = null;
+        if (requestedFaction && available.includes(requestedFaction)) {
+            assigned = requestedFaction;
+        } else if (available.length > 0) {
+            assigned = available[0];
+        } else {
+            assigned = 'uk';
+        }
         this.gameState.factions[assigned].isAI = false;
         this.gameState.factions[assigned].playerId = peerId;
         return assigned;
@@ -550,6 +618,64 @@ class WW2GameApp {
         if (btnSingle) btnSingle.addEventListener('click', launchSingleplayer);
         if (cardSingle) cardSingle.addEventListener('click', launchSingleplayer);
 
+        // Host Multiplayer Room
+        const cardHost = document.getElementById('card-mode-host');
+        const launchHost = (customRoomCode = null, pName = null) => {
+            this.sound.playClick();
+            this.userFactionId = factionSelect.value;
+            const playerName = pName || nameInput.value.trim() || 'General';
+
+            if (cardHost) cardHost.innerHTML = `<h3>🌐 LOBİ BAŞLATILIYOR...</h3><p>PeerJS sunucusuna bağlanılıyor...</p>`;
+
+            this.network.initHost(playerName, customRoomCode).then(({ roomCode }) => {
+                for (const f of Object.values(this.gameState.factions)) {
+                    f.isAI = f.id !== this.userFactionId;
+                }
+                this.gameState.startGame(this.userFactionId);
+                modal.classList.remove('visible');
+
+                document.getElementById('hud-room-code').textContent = roomCode;
+                this.hud.showToast(`Oda Açıldı! Arkadaşlarınızla paylaşın: ${roomCode}`, 'success');
+                this.hud.update(null, null);
+
+                this.checkAndRunAI();
+            }).catch((err) => {
+                this.hud.showToast(`Host açılamadı, yerel mod başlatılıyor: ${err}`, 'warning');
+                launchSingleplayer();
+            });
+        };
+
+        if (cardHost) cardHost.addEventListener('click', () => launchHost());
+
+        // Join Multiplayer Room
+        const btnJoin = document.getElementById('btn-lobby-join');
+        const joinCodeInput = document.getElementById('lobby-join-code-input');
+
+        const launchJoin = (code, pName = null) => {
+            if (!code) {
+                this.hud.showToast('Lütfen 6 haneli oda kodunu girin.', 'warning');
+                return;
+            }
+            const desiredFaction = factionSelect ? factionSelect.value : null;
+            const playerName = pName || nameInput.value.trim() || 'Komutan';
+            if (btnJoin) btnJoin.textContent = 'BAĞLANILIYOR...';
+
+            this.network.initClient(playerName, code, desiredFaction).then(() => {
+                modal.classList.remove('visible');
+                document.getElementById('hud-room-code').textContent = code.toUpperCase();
+            }).catch((err) => {
+                if (btnJoin) btnJoin.textContent = 'BAĞLAN';
+                this.hud.showToast(`Bağlantı hatası: ${err}`, 'danger');
+            });
+        };
+
+        if (btnJoin && joinCodeInput) {
+            btnJoin.addEventListener('click', () => {
+                const code = joinCodeInput.value.trim();
+                launchJoin(code);
+            });
+        }
+
         // Automated Testing / Direct Launch support
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('autostart') === 'singleplayer') {
@@ -562,58 +688,22 @@ class WW2GameApp {
                     setTimeout(() => this.handleRegionClick(sel), 200);
                 }
             }, 150);
-        }
-
-        // Host Multiplayer Room
-        const cardHost = document.getElementById('card-mode-host');
-        if (cardHost) {
-            cardHost.addEventListener('click', () => {
-                this.sound.playClick();
-                this.userFactionId = factionSelect.value;
-                const playerName = nameInput.value.trim() || 'General';
-
-                cardHost.innerHTML = `<h3>🌐 LOBİ BAŞLATILIYOR...</h3><p>PeerJS sunucusuna bağlanılıyor...</p>`;
-
-                this.network.initHost(playerName).then(({ roomCode }) => {
-                    for (const f of Object.values(this.gameState.factions)) {
-                        f.isAI = f.id !== this.userFactionId;
-                    }
-                    this.gameState.startGame(this.userFactionId);
-                    modal.classList.remove('visible');
-
-                    document.getElementById('hud-room-code').textContent = roomCode;
-                    this.hud.showToast(`Oda Açıldı! Arkadaşlarınızla paylaşın: ${roomCode}`, 'success');
-                    this.hud.update(null, null);
-
-                    this.checkAndRunAI();
-                }).catch((err) => {
-                    this.hud.showToast(`Host açılamadı, yerel mod başlatılıyor: ${err}`, 'warning');
-                    launchSingleplayer();
-                });
-            });
-        }
-
-        // Join Multiplayer Room
-        const btnJoin = document.getElementById('btn-lobby-join');
-        const joinCodeInput = document.getElementById('lobby-join-code-input');
-        if (btnJoin && joinCodeInput) {
-            btnJoin.addEventListener('click', () => {
-                const code = joinCodeInput.value.trim();
-                if (!code) {
-                    this.hud.showToast('Lütfen 6 haneli oda kodunu girin.', 'warning');
-                    return;
-                }
-                const playerName = nameInput.value.trim() || 'Komutan';
-                btnJoin.textContent = 'BAĞLANILIYOR...';
-
-                this.network.initClient(playerName, code).then(() => {
-                    modal.classList.remove('visible');
-                    document.getElementById('hud-room-code').textContent = code.toUpperCase();
-                }).catch((err) => {
-                    btnJoin.textContent = 'BAĞLAN';
-                    this.hud.showToast(`Bağlantı hatası: ${err}`, 'danger');
-                });
-            });
+        } else if (urlParams.get('autostart') === 'host') {
+            setTimeout(() => {
+                const fac = urlParams.get('faction');
+                if (fac && factionSelect) factionSelect.value = fac;
+                const room = urlParams.get('room');
+                const name = urlParams.get('name') || 'HostCommander';
+                launchHost(room, name);
+            }, 150);
+        } else if (urlParams.get('autostart') === 'join') {
+            setTimeout(() => {
+                const fac = urlParams.get('faction');
+                if (fac && factionSelect) factionSelect.value = fac;
+                const room = urlParams.get('room');
+                const name = urlParams.get('name') || 'ClientCommander';
+                launchJoin(room, name);
+            }, 350);
         }
     }
 

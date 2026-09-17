@@ -489,16 +489,30 @@ export class GameState {
 
     /**
      * Serializes complete state for network synchronization and Save Game
+     * Uses compact region state (owner + units) to guarantee high-performance,
+     * low-latency WebRTC synchronization without sending static SVG geometry.
      */
     serialize() {
+        const compactRegions = {};
+        for (const [id, r] of Object.entries(this.regions)) {
+            compactRegions[id] = {
+                owner: r.owner,
+                units: {
+                    infantry: r.units?.infantry || 0,
+                    armor: r.units?.armor || 0,
+                    air: r.units?.air || 0
+                }
+            };
+        }
+
         return {
-            regions: this.regions,
+            regions: compactRegions,
             factions: this.factions,
             turnOrder: this.turnOrder,
             currentTurnIndex: this.currentTurnIndex,
             currentPhase: this.currentPhase,
             turnNumber: this.turnNumber,
-            actionHistory: this.actionHistory,
+            actionHistory: (this.actionHistory || []).slice(-15),
             winner: this.winner,
             lastCombatReport: this.lastCombatReport
         };
@@ -506,10 +520,32 @@ export class GameState {
 
     /**
      * Deserializes received state snapshot
+     * Safely updates dynamic properties while keeping static geometry (path, path2d, polygon, neighbors).
      */
     deserialize(data) {
         if (!data || !data.regions || !data.factions) return false;
-        this.regions = data.regions;
+
+        // Ensure base regions exist with geometry
+        if (!this.regions || Object.keys(this.regions).length === 0) {
+            this.initRegions();
+        }
+
+        // Merge dynamic region data
+        for (const [id, rData] of Object.entries(data.regions)) {
+            if (this.regions[id]) {
+                if (rData.owner) this.regions[id].owner = rData.owner;
+                if (rData.units) {
+                    this.regions[id].units = {
+                        infantry: rData.units.infantry || 0,
+                        armor: rData.units.armor || 0,
+                        air: rData.units.air || 0
+                    };
+                }
+            } else {
+                this.regions[id] = rData;
+            }
+        }
+
         this.factions = data.factions;
         this.turnOrder = data.turnOrder;
         this.currentTurnIndex = data.currentTurnIndex;

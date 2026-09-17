@@ -114,12 +114,13 @@ export class NetworkManager {
     /**
      * Starts Client role: connects to the Host's peer ID using room code.
      */
-    initClient(playerName = 'Asker', roomCode) {
+    initClient(playerName = 'Asker', roomCode, requestedFaction = null) {
         this.reset();
         this.isHost = false;
         this.isLocalOnly = false;
         this.playerName = playerName;
         this.roomCode = roomCode.trim().toUpperCase();
+        this.requestedFaction = requestedFaction;
 
         const hostPeerId = `ww2strat-${this.roomCode.toLowerCase()}`;
 
@@ -154,10 +155,11 @@ export class NetworkManager {
 
                     conn.on('open', () => {
                         this.onStatusUpdate(`Odaya bağlanıldı: ${this.roomCode}`);
-                        // Send Join Request
+                        // Send Join Request with desired faction
                         conn.send(createMessage(MSG_TYPES.LOBBY_JOIN, {
                             playerName: this.playerName,
-                            clientPeerId: this.myPeerId
+                            clientPeerId: this.myPeerId,
+                            requestedFaction: this.requestedFaction
                         }, this.myPeerId));
                         resolve({ success: true, roomCode: this.roomCode });
                     });
@@ -194,12 +196,18 @@ export class NetworkManager {
      * Host handling incoming client data connections
      */
     _handleIncomingConnection(conn) {
+        this.connections.set(conn.peer, conn);
+        if (conn.open) {
+            this.onPlayerConnected(conn.peer);
+        }
+
         conn.on('open', () => {
             this.connections.set(conn.peer, conn);
             this.onPlayerConnected(conn.peer);
         });
 
         conn.on('data', (data) => {
+            this.connections.set(conn.peer, conn);
             this._handleIncomingData(data, conn.peer);
         });
 
@@ -209,7 +217,7 @@ export class NetworkManager {
         });
 
         conn.on('error', (err) => {
-            console.error(`Connection error from ${conn.peer}:`, err);
+            console.error(`[P2P] Bağlantı hatası (${conn.peer}):`, err);
             this.connections.delete(conn.peer);
             this.onPlayerDisconnected(conn.peer);
         });
@@ -222,10 +230,9 @@ export class NetworkManager {
         try {
             const message = typeof rawMessage === 'string' ? JSON.parse(rawMessage) : rawMessage;
             if (!message || !message.type) return;
-
             this.onMessageReceived(message, senderId);
         } catch (err) {
-            console.error('Error parsing incoming network packet:', err, rawMessage);
+            console.error('[P2P] Ağ paketi işlenemedi:', err, rawMessage);
         }
     }
 
@@ -237,25 +244,38 @@ export class NetworkManager {
         if (!this.isHost) return;
 
         const msg = createMessage(type, payload, 'host');
+        console.log(`[P2P Broadcast] ${type} to ${this.connections.size} connections`);
         for (const [peerId, conn] of this.connections.entries()) {
-            if (conn && conn.open) {
-                try {
-                    conn.send(msg);
-                } catch (e) {
-                    console.warn(`Failed to broadcast to ${peerId}:`, e);
+            if (conn) {
+                if (conn.open) {
+                    try {
+                        conn.send(msg);
+                    } catch (e) {
+                        console.warn(`Failed to broadcast to ${peerId}:`, e);
+                    }
+                } else {
+                    conn.on('open', () => {
+                        try { conn.send(msg); } catch (_) {}
+                    });
                 }
             }
         }
     }
 
-    /**
-     * Sends message to a specific connection (Host sending to one client)
-     */
     sendTo(peerId, type, payload = {}) {
         if (this.isLocalOnly) return;
         const conn = this.connections.get(peerId);
-        if (conn && conn.open) {
-            conn.send(createMessage(type, payload, 'host'));
+        if (conn) {
+            const msg = createMessage(type, payload, 'host');
+            if (conn.open) {
+                conn.send(msg);
+            } else {
+                conn.on('open', () => {
+                    try { conn.send(msg); } catch (e) { console.warn(`Failed delayed send to ${peerId}:`, e); }
+                });
+            }
+        } else {
+            console.warn(`[P2P] Aktif bağlantı bulunamadı: ${peerId}`);
         }
     }
 
@@ -270,10 +290,17 @@ export class NetworkManager {
             return;
         }
 
-        if (this.hostConnection && this.hostConnection.open) {
-            this.hostConnection.send(createMessage(type, payload, this.myPeerId));
+        if (this.hostConnection) {
+            const msg = createMessage(type, payload, this.myPeerId);
+            if (this.hostConnection.open) {
+                this.hostConnection.send(msg);
+            } else {
+                this.hostConnection.on('open', () => {
+                    try { this.hostConnection.send(msg); } catch (_) {}
+                });
+            }
         } else {
-            console.warn('Cannot send to host, connection is closed.');
+            console.warn('[P2P] Sunucu bağlantısı kapalı, mesaj gönderilemedi.');
         }
     }
 

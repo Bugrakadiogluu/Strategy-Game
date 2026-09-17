@@ -46,6 +46,17 @@ while ($listener.IsListening) {
         $response = $context.Response
 
         $rawPath = $request.Url.LocalPath
+        if ($request.HttpMethod -eq "POST" -and $rawPath -eq "/api/test-result") {
+            $reader = New-Object System.IO.StreamReader($request.InputStream, $request.ContentEncoding)
+            $postBody = $reader.ReadToEnd()
+            [System.IO.File]::WriteAllText((Join-Path $PSScriptRoot "test_result.json"), $postBody)
+            $response.StatusCode = 200
+            $response.AddHeader("Access-Control-Allow-Origin", "*")
+            $response.OutputStream.Close()
+            $response.Close()
+            continue
+        }
+
         if ($rawPath -eq "/" -or $rawPath -eq "") {
             $rawPath = "/index.html"
         }

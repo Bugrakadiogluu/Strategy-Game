@@ -9,8 +9,13 @@
     <!-- Stylesheet -->
     <link rel="stylesheet" href="css/style.css">
 
-    <!-- PeerJS CDN for WebRTC DataChannels P2P Networking -->
-    <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+    <!-- PeerJS for WebRTC DataChannels P2P Networking (Local with CDN fallback) -->
+    <script src="js/network/peerjs.min.js"></script>
+    <script>
+        if (typeof window.Peer === 'undefined') {
+            document.write('<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"><\/script>');
+        }
+    </script>
 </head>
 <body>
 
