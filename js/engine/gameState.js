@@ -17,7 +17,7 @@ export class GameState {
     reset() {
         this.regions = {};
         this.factions = {};
-        this.turnOrder = ['germany', 'uk', 'ussr', 'italy'];
+        this.turnOrder = ['germany', 'uk', 'ussr', 'italy', 'france', 'spain', 'turkey'];
         this.currentTurnIndex = 0;
         this.currentPhase = TURN_PHASES.PRODUCTION;
         this.turnNumber = 1;
@@ -36,7 +36,7 @@ export class GameState {
                 ...f,
                 industryPoints: 0,
                 isEliminated: false,
-                isAI: true,          // Otomatik bilgisayar komutasi
+                isAI: (f.id !== 'neutral'),
                 playerId: null,
                 totalUnits: 0,
                 totalRegions: 0
@@ -208,6 +208,7 @@ export class GameState {
         if (!from || !to) return { allowed: false, reason: 'Bölge bulunamadı.' };
         if (from.owner !== factionId) return { allowed: false, reason: 'Saldırı başlatılacak bölge size ait değil.' };
         if (to.owner === factionId) return { allowed: false, reason: 'Kendi bölgenize saldıramazsınız.' };
+        if (to.owner === 'neutral') return { allowed: false, reason: 'Tarafsız tampon bölgelere harekat düzenlenemez (Savaş Dışı Bölge).' };
         if (!from.neighbors.includes(toRegionId)) return { allowed: false, reason: 'Hedef bölge komşu değil.' };
 
         const totalAvailableUnits = from.units.infantry + from.units.armor + from.units.air;
@@ -314,6 +315,9 @@ export class GameState {
         }
         if (to.owner === from.owner) {
             return { success: false, reason: 'Dost bölgeye hava saldırısı yapılamaz.' };
+        }
+        if (to.owner === 'neutral') {
+            return { success: false, reason: 'Tarafsız tampon bölgeler hava harekatına kapalıdır.' };
         }
         if (!from.neighbors.includes(toRegionId)) {
             return { success: false, reason: 'Hedef hava sahası menzil dışı (komşu olmalı).' };
@@ -433,15 +437,19 @@ export class GameState {
      * Checks if victory conditions are met
      */
     checkVictoryConditions() {
+        // Capitals Check
+        const axisAllies = ['germany', 'italy', 'spain'];
+        const alliedPowers = ['uk', 'ussr', 'france', 'turkey'];
+
         const berlinOwner = this.regions['berlin'] ? this.regions['berlin'].owner : null;
         const romeOwner = this.regions['rome'] ? this.regions['rome'].owner : null;
         const londonOwner = this.regions['london'] ? this.regions['london'].owner : null;
         const moscowOwner = this.regions['moscow'] ? this.regions['moscow'].owner : null;
+        const parisOwner = this.regions['paris'] ? this.regions['paris'].owner : null;
 
         // Condition 1: Capital Conquest
-        // Allies conquer Berlin and Rome
-        const alliesConqueredAxis = (berlinOwner === 'uk' || berlinOwner === 'ussr') &&
-                                   (romeOwner === 'uk' || romeOwner === 'ussr');
+        // Allies conquer Axis central capitals (Berlin & Rome)
+        const alliesConqueredAxis = alliedPowers.includes(berlinOwner) && alliedPowers.includes(romeOwner);
         if (alliesConqueredAxis) {
             this.winner = {
                 alliance: 'allies',
@@ -452,45 +460,46 @@ export class GameState {
             return this.winner;
         }
 
-        // Axis conquers London and Moscow
-        const axisConqueredAllies = (londonOwner === 'germany' || londonOwner === 'italy') &&
-                                   (moscowOwner === 'germany' || moscowOwner === 'italy');
+        // Axis conquers Allied capitals (London & Paris or London & Moscow)
+        const axisConqueredAllies = axisAllies.includes(londonOwner) && 
+                                   (axisAllies.includes(moscowOwner) || axisAllies.includes(parisOwner));
         if (axisConqueredAllies) {
             this.winner = {
                 alliance: 'axis',
                 name: 'Mihver Devletleri (Axis)',
-                reason: 'Londra ve Moskova başkentleri ele geçirilerek Müttefikler dize getirildi!'
+                reason: 'Müttefik ana başkentleri (Londra, Paris/Moskova) ele geçirilerek zafer kazanıldı!'
             };
             this.addLog(`KESİN ZAFER: ${this.winner.name} kazandı! ${this.winner.reason}`);
             return this.winner;
         }
 
-        // Condition 2: 70% Territorial/Industrial Dominance
+        // Condition 2: 65% Territorial/Industrial Dominance
         let totalMapIP = 0;
         let axisIP = 0;
         let alliesIP = 0;
 
         for (const r of Object.values(this.regions)) {
+            if (r.owner === 'neutral') continue;
             const ip = r.industry || 1;
             totalMapIP += ip;
-            if (r.owner === 'germany' || r.owner === 'italy') {
+            if (axisAllies.includes(r.owner)) {
                 axisIP += ip;
-            } else if (r.owner === 'uk' || r.owner === 'ussr') {
+            } else if (alliedPowers.includes(r.owner)) {
                 alliesIP += ip;
             }
         }
 
-        if (axisIP / totalMapIP >= 0.70) {
+        if (totalMapIP > 0 && axisIP / totalMapIP >= 0.65) {
             this.winner = {
                 alliance: 'axis',
                 name: 'Mihver Devletleri (Axis)',
-                reason: `Avrupa sanayisinin %${Math.round((axisIP/totalMapIP)*100)}'ü kontrol altına alındı!`
+                reason: `Avrupa sanayisinin %${Math.round((axisIP/totalMapIP)*100)}'i kontrol altına alındı!`
             };
             this.addLog(`KESİN ZAFER: ${this.winner.name} kazandı!`);
             return this.winner;
         }
 
-        if (alliesIP / totalMapIP >= 0.70) {
+        if (totalMapIP > 0 && alliesIP / totalMapIP >= 0.65) {
             this.winner = {
                 alliance: 'allies',
                 name: 'Müttefik Devletler (Allies)',

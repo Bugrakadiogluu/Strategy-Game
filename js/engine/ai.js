@@ -179,7 +179,14 @@ export class StrategicAI {
 
             for (const neighborId of from.neighbors) {
                 const to = gameState.regions[neighborId];
-                if (!to || to.owner === faction.id) continue; // skip friendly
+                if (!to || to.owner === faction.id || to.owner === 'neutral') continue; // skip friendly & neutral buffer
+
+                // Skip attacking allies in the same coalition
+                const axisFactions = ['germany', 'italy', 'spain'];
+                const alliedFactions = ['uk', 'ussr', 'france', 'turkey'];
+                const isSameAlliance = (axisFactions.includes(faction.id) && axisFactions.includes(to.owner)) ||
+                                       (alliedFactions.includes(faction.id) && alliedFactions.includes(to.owner));
+                if (isSameAlliance) continue;
 
                 // Calculate Attacking Power
                 // Reserve 1 infantry or 1 armor for home garrison

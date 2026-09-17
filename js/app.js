@@ -71,8 +71,73 @@ class WW2GameApp {
             const world = this.renderer.screenToWorld(pos.x, pos.y);
             const clickedRegionId = this.renderer.getRegionAt(world.x, world.y);
 
+            // If lobby modal is active, clicking map selects that country
+            const lobbyModal = document.getElementById('modal-lobby');
+            if (lobbyModal && lobbyModal.classList.contains('visible')) {
+                if (clickedRegionId) {
+                    const region = this.gameState.regions[clickedRegionId];
+                    if (region && region.owner && region.owner !== 'neutral') {
+                        this.selectLobbyFaction(region.owner);
+                        return;
+                    }
+                }
+            }
+
             this.handleRegionClick(clickedRegionId);
         });
+
+        // Also allow clicking directly on the lobby modal backdrop outside the dialog box
+        const lobbyModal = document.getElementById('modal-lobby');
+        if (lobbyModal) {
+            lobbyModal.addEventListener('click', (e) => {
+                if (e.target === lobbyModal) {
+                    const rect = this.canvas.getBoundingClientRect();
+                    const mouseX = e.clientX - rect.left;
+                    const mouseY = e.clientY - rect.top;
+                    const world = this.renderer.screenToWorld(mouseX, mouseY);
+                    const clickedRegionId = this.renderer.getRegionAt(world.x, world.y);
+                    if (clickedRegionId) {
+                        const region = this.gameState.regions[clickedRegionId];
+                        if (region && region.owner && region.owner !== 'neutral') {
+                            this.selectLobbyFaction(region.owner);
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    selectLobbyFaction(factionId) {
+        if (!factionId || factionId === 'neutral') return;
+        this.userFactionId = factionId;
+        this.sound.playClick();
+
+        const factionSelect = document.getElementById('lobby-faction-select');
+        if (factionSelect) factionSelect.value = factionId;
+
+        document.querySelectorAll('.faction-pill-card').forEach(p => {
+            p.classList.toggle('selected', p.dataset.faction === factionId);
+        });
+
+        this.renderer.setPlayerFaction(factionId);
+        this.hud.updatePlayerFaction(factionId);
+
+        const capitals = {
+            germany: 'berlin',
+            uk: 'london',
+            ussr: 'moscow',
+            italy: 'rome',
+            france: 'paris',
+            spain: 'madrid',
+            turkey: 'ankara'
+        };
+        const capId = capitals[factionId];
+        if (capId && this.gameState.regions[capId]) {
+            this.renderer.setSelectedRegion(capId);
+        }
+
+        const facName = i18n.getFactionName(factionId);
+        this.hud.showToast(`${facName} seçildi!`, 'info');
     }
 
     handleRegionClick(regionId) {
@@ -683,7 +748,10 @@ class WW2GameApp {
             germany: { playerId: null, name: 'Yapay Zeka (Bot)', isHost: false, isAI: true },
             uk: { playerId: null, name: 'Yapay Zeka (Bot)', isHost: false, isAI: true },
             ussr: { playerId: null, name: 'Yapay Zeka (Bot)', isHost: false, isAI: true },
-            italy: { playerId: null, name: 'Yapay Zeka (Bot)', isHost: false, isAI: true }
+            italy: { playerId: null, name: 'Yapay Zeka (Bot)', isHost: false, isAI: true },
+            france: { playerId: null, name: 'Yapay Zeka (Bot)', isHost: false, isAI: true },
+            spain: { playerId: null, name: 'Yapay Zeka (Bot)', isHost: false, isAI: true },
+            turkey: { playerId: null, name: 'Yapay Zeka (Bot)', isHost: false, isAI: true }
         };
     }
 
@@ -691,7 +759,7 @@ class WW2GameApp {
         if (!this.lobbySlots) {
             this._initLobbySlots();
         }
-        const available = ['germany', 'uk', 'ussr', 'italy'].filter(fId => this.lobbySlots[fId].isAI);
+        const available = ['germany', 'uk', 'ussr', 'italy', 'france', 'spain', 'turkey'].filter(fId => this.lobbySlots[fId].isAI);
         let assigned = null;
         if (requestedFaction && available.includes(requestedFaction)) {
             assigned = requestedFaction;
@@ -713,7 +781,7 @@ class WW2GameApp {
         const codeDisplay = document.getElementById('waiting-room-code-display');
         if (codeDisplay) codeDisplay.textContent = this.network.roomCode || 'LOCAL';
 
-        const factions = ['germany', 'uk', 'ussr', 'italy'];
+        const factions = ['germany', 'uk', 'ussr', 'italy', 'france', 'spain', 'turkey'];
         factions.forEach(fId => {
             const slot = this.lobbySlots ? this.lobbySlots[fId] : null;
             const badgeEl = document.getElementById(`slot-badge-${fId}`);
@@ -1069,6 +1137,20 @@ class WW2GameApp {
             });
         }
 
+        // Interactive Faction Pills
+        document.querySelectorAll('.faction-pill-card').forEach(pill => {
+            pill.addEventListener('click', () => {
+                const fId = pill.getAttribute('data-faction');
+                this.selectLobbyFaction(fId);
+            });
+        });
+
+        if (factionSelect) {
+            factionSelect.addEventListener('change', () => {
+                this.selectLobbyFaction(factionSelect.value);
+            });
+        }
+
         const launchSingleplayer = () => {
             this.sound.playClick();
             this.userFactionId = factionSelect.value;
@@ -1225,6 +1307,9 @@ class WW2GameApp {
         const optUK = document.getElementById('opt-faction-uk');
         const optUSSR = document.getElementById('opt-faction-ussr');
         const optIta = document.getElementById('opt-faction-italy');
+        const optFra = document.getElementById('opt-faction-france');
+        const optSpa = document.getElementById('opt-faction-spain');
+        const optTur = document.getElementById('opt-faction-turkey');
 
         const facs = i18n.t('factions');
         if (facs) {
@@ -1232,7 +1317,16 @@ class WW2GameApp {
             if (optUK && facs.uk) optUK.textContent = facs.uk.desc;
             if (optUSSR && facs.ussr) optUSSR.textContent = facs.ussr.desc;
             if (optIta && facs.italy) optIta.textContent = facs.italy.desc;
+            if (optFra && facs.france) optFra.textContent = facs.france.desc;
+            if (optSpa && facs.spain) optSpa.textContent = facs.spain.desc;
+            if (optTur && facs.turkey) optTur.textContent = facs.turkey.desc;
         }
+
+        document.querySelectorAll('.faction-pill-card').forEach(pill => {
+            const fId = pill.getAttribute('data-faction');
+            const nameEl = pill.querySelector('.faction-pill-name');
+            if (nameEl) nameEl.textContent = i18n.getFactionName(fId);
+        });
     }
 
     _initZoomButtons() {
@@ -1290,7 +1384,10 @@ class WW2GameApp {
             germany: 'berlin',
             uk: 'london',
             ussr: 'moscow',
-            italy: 'rome'
+            italy: 'rome',
+            france: 'paris',
+            spain: 'madrid',
+            turkey: 'ankara'
         };
         const capitalId = capitalMap[this.userFactionId] || 'berlin';
 

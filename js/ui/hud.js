@@ -569,14 +569,15 @@ export class HUD {
         let alliesIP = 0;
 
         for (const r of Object.values(this.gameState.regions)) {
+            if (r.owner === 'neutral') continue;
             const ip = r.industry || 1;
             totalIP += ip;
-            if (r.owner === 'germany' || r.owner === 'italy') axisIP += ip;
-            else if (r.owner === 'uk' || r.owner === 'ussr') alliesIP += ip;
+            if (r.owner === 'germany' || r.owner === 'italy' || r.owner === 'spain') axisIP += ip;
+            else if (r.owner === 'uk' || r.owner === 'ussr' || r.owner === 'france' || r.owner === 'turkey') alliesIP += ip;
         }
 
-        const axisPct = Math.round((axisIP / totalIP) * 100);
-        const alliesPct = Math.round((alliesIP / totalIP) * 100);
+        const axisPct = totalIP > 0 ? Math.round((axisIP / totalIP) * 100) : 50;
+        const alliesPct = totalIP > 0 ? Math.round((alliesIP / totalIP) * 100) : 50;
 
         const axisBar = document.getElementById('intel-axis-bar');
         const alliesBar = document.getElementById('intel-allies-bar');
@@ -588,12 +589,15 @@ export class HUD {
         if (axisText) axisText.textContent = `${i18n.t('label_axis')}: %${axisPct} (${axisIP} IP)`;
         if (alliesText) alliesText.textContent = `${i18n.t('label_allies')}: %${alliesPct} (${alliesIP} IP)`;
 
-        // Capitals status
+        // Strategic Capitals status across all 7 nations
         const capitals = [
             { id: 'berlin', name: 'Berlin', owner: this.gameState.regions['berlin']?.owner },
             { id: 'rome', name: 'Roma', owner: this.gameState.regions['rome']?.owner },
+            { id: 'madrid', name: 'Madrid', owner: this.gameState.regions['madrid']?.owner },
             { id: 'london', name: 'Londra', owner: this.gameState.regions['london']?.owner },
-            { id: 'moscow', name: 'Moskova', owner: this.gameState.regions['moscow']?.owner }
+            { id: 'paris', name: 'Paris', owner: this.gameState.regions['paris']?.owner },
+            { id: 'moscow', name: 'Moskova', owner: this.gameState.regions['moscow']?.owner },
+            { id: 'ankara', name: 'Ankara', owner: this.gameState.regions['ankara']?.owner }
         ];
 
         const capsContainer = document.getElementById('intel-capitals-list');
