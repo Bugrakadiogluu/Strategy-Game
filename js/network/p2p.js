@@ -72,6 +72,12 @@ export class NetworkManager {
                 return reject(err);
             }
 
+            const timeoutId = setTimeout(() => {
+                const timeoutErr = 'Sunucu sinyal yanıtı zaman aşımına uğradı (12s).';
+                this.onError(timeoutErr);
+                reject(timeoutErr);
+            }, 12000);
+
             try {
                 // Connect to public PeerJS signaling using standard TLS / Port 443
                 this.peer = new window.Peer(peerId, {
@@ -85,6 +91,7 @@ export class NetworkManager {
                 });
 
                 this.peer.on('open', (id) => {
+                    clearTimeout(timeoutId);
                     this.myPeerId = id;
                     this.onStatusUpdate(`Lobi oluşturuldu. Oda Kodu: ${this.roomCode}`);
                     resolve({ success: true, roomCode: this.roomCode, peerId: id });
@@ -95,6 +102,7 @@ export class NetworkManager {
                 });
 
                 this.peer.on('error', (err) => {
+                    clearTimeout(timeoutId);
                     console.error('PeerJS Host Error:', err);
                     if (err.type === 'unavailable-id') {
                         // If ID collision, retry with new code
@@ -105,6 +113,7 @@ export class NetworkManager {
                     }
                 });
             } catch (ex) {
+                clearTimeout(timeoutId);
                 console.error('Host peer init exception', ex);
                 reject(ex);
             }
@@ -131,6 +140,12 @@ export class NetworkManager {
                 return reject(err);
             }
 
+            const timeoutId = setTimeout(() => {
+                const timeoutErr = 'Odaya bağlanılamadı (Zaman aşımı). Lütfen oda kodunu kontrol edin.';
+                this.onError(timeoutErr);
+                reject(timeoutErr);
+            }, 12000);
+
             try {
                 this.peer = new window.Peer(null, {
                     debug: 1,
@@ -154,6 +169,7 @@ export class NetworkManager {
                     this.hostConnection = conn;
 
                     conn.on('open', () => {
+                        clearTimeout(timeoutId);
                         this.onStatusUpdate(`Odaya bağlanıldı: ${this.roomCode}`);
                         // Send Join Request with desired faction
                         conn.send(createMessage(MSG_TYPES.LOBBY_JOIN, {
@@ -174,6 +190,7 @@ export class NetworkManager {
                     });
 
                     conn.on('error', (err) => {
+                        clearTimeout(timeoutId);
                         console.error('Client connection error:', err);
                         this.onError(`Bağlantı hatası: ${err.message || err}`);
                         reject(err);
@@ -181,12 +198,14 @@ export class NetworkManager {
                 });
 
                 this.peer.on('error', (err) => {
-                    console.error('PeerJS Client Error:', err);
-                    this.onError(`Ağ Hatası: ${err.type || err.message}`);
+                    clearTimeout(timeoutId);
+                    console.error('Peer error in client init:', err);
+                    this.onError(`Ağ hatası: ${err.type || err.message}`);
                     reject(err);
                 });
             } catch (ex) {
-                console.error('Client init exception', ex);
+                clearTimeout(timeoutId);
+                console.error('Client peer init exception', ex);
                 reject(ex);
             }
         });

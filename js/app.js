@@ -597,9 +597,10 @@ class WW2GameApp {
         const factionSelect = document.getElementById('lobby-faction-select');
         const nameInput = document.getElementById('lobby-player-name');
 
-        // Quick Singleplayer Start
+        // Quick Singleplayer Start & Modes
         const btnSingle = document.getElementById('btn-start-singleplayer-quick');
         const cardSingle = document.getElementById('card-mode-singleplayer');
+        const cardHost = document.getElementById('card-mode-host');
 
         // Selected mode: 'singleplayer' | 'host'
         let selectedMode = 'singleplayer';
@@ -689,7 +690,10 @@ class WW2GameApp {
             this.userFactionId = factionSelect.value;
             const playerName = pName || nameInput.value.trim() || 'General';
 
-            if (cardHost) cardHost.innerHTML = `<h3>🌐 LOBİ BAŞLATILIYOR...</h3><p>PeerJS sunucusuna bağlanılıyor...</p>`;
+            if (btnSingle) {
+                btnSingle.disabled = true;
+                btnSingle.textContent = '⏳ LOBİ BAŞLATILIYOR...';
+            }
 
             this.network.initHost(playerName, customRoomCode).then(({ roomCode }) => {
                 for (const f of Object.values(this.gameState.factions)) {
@@ -704,6 +708,10 @@ class WW2GameApp {
 
                 this.checkAndRunAI();
             }).catch((err) => {
+                if (btnSingle) {
+                    btnSingle.disabled = false;
+                    btnSingle.textContent = i18n.t('btn_start_host');
+                }
                 this.hud.showToast(`Host açılamadı, yerel mod başlatılıyor: ${err}`, 'warning');
                 launchSingleplayer();
             });
