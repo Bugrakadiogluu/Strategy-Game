@@ -608,7 +608,7 @@ body::after {
 }
 
 .lobby-choice-card.selected::after {
-    content: "✓ ACTIVE";
+    content: "ACTIVE";
     position: absolute;
     top: 8px;
     right: 8px;
@@ -1004,4 +1004,198 @@ body::after {
     background: rgba(56, 189, 248, 0.2);
     box-shadow: 0 0 10px rgba(56, 189, 248, 0.25);
 }
+
+/* ==========================================================================
+   SVG VECTOR ICONS & NATIONAL INSIGNIAS
+   ========================================================================== */
+.svg-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    vertical-align: middle;
+    flex-shrink: 0;
+}
+
+.svg-icon svg {
+    display: block;
+}
+
+.insignia-svg {
+    filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.6));
+    vertical-align: middle;
+}
+
+/* ==========================================================================
+   PLAYER COMMAND BADGE (TOP HEADER)
+   ========================================================================== */
+.player-command-badge {
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95)) !important;
+    border: 1.5px solid var(--accent-cyan) !important;
+    box-shadow: 0 0 16px rgba(56, 189, 248, 0.35), inset 0 0 10px rgba(56, 189, 248, 0.15);
+    padding: 4px 14px;
+    animation: player-badge-pulse 3s ease-in-out infinite alternate;
+}
+
+@keyframes player-badge-pulse {
+    0% { border-color: rgba(56, 189, 248, 0.6); box-shadow: 0 0 12px rgba(56, 189, 248, 0.2); }
+    100% { border-color: rgba(56, 189, 248, 1); box-shadow: 0 0 20px rgba(56, 189, 248, 0.5); }
+}
+
+.player-command-badge .badge-value {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.badge-flag {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ==========================================================================
+   STRATEGIC BRIEFING & DIRECTIVES MODAL
+   ========================================================================== */
+.briefing-modal-dialog {
+    max-width: 680px !important;
+    width: 95%;
+    background: linear-gradient(180deg, rgba(13, 20, 36, 0.98), rgba(7, 11, 18, 0.99)) !important;
+    border: 2px solid var(--accent-cyan) !important;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.8), 0 0 30px rgba(56, 189, 248, 0.25) !important;
+    padding: 24px 28px !important;
+}
+
+.briefing-hero-card {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9));
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin: 16px 0;
+    position: relative;
+    overflow: hidden;
+}
+
+.briefing-hero-card::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 6px;
+    background: var(--briefing-accent-color, var(--accent-cyan));
+    box-shadow: 0 0 10px var(--briefing-accent-color, var(--accent-cyan));
+}
+
+.briefing-insignia-box {
+    width: 60px;
+    height: 60px;
+    background: rgba(10, 15, 26, 0.85);
+    border: 1.5px solid rgba(255, 255, 255, 0.15);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+}
+
+.briefing-hero-details {
+    flex: 1;
+}
+
+.briefing-alliance-tag {
+    font-family: var(--font-heading);
+    font-size: 0.72rem;
+    letter-spacing: 1.5px;
+    color: var(--accent-amber);
+    margin-bottom: 2px;
+}
+
+.briefing-nation-name {
+    font-family: var(--font-heading);
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #ffffff;
+    letter-spacing: 1px;
+}
+
+.briefing-directive-box {
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+}
+
+.briefing-directive-title {
+    font-family: var(--font-heading);
+    font-size: 0.85rem;
+    color: var(--accent-cyan);
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.briefing-directive-desc {
+    font-size: 0.88rem;
+    color: var(--text-primary);
+    line-height: 1.45;
+}
+
+.briefing-tips-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.briefing-tip-row {
+    background: rgba(15, 23, 42, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 5px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    font-size: 0.84rem;
+    color: #cbd5e1;
+    line-height: 1.4;
+}
+
+.briefing-tip-icon {
+    flex-shrink: 0;
+    margin-top: 1px;
+    color: var(--accent-amber);
+}
+
+.briefing-actions-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 16px;
+    gap: 12px;
+}
+
+.briefing-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+.briefing-checkbox-label input[type="checkbox"] {
+    accent-color: var(--accent-cyan);
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
 

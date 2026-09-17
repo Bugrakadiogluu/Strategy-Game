@@ -7,11 +7,12 @@
 import { GameState } from './engine/gameState.js';
 import { StrategicAI } from './engine/ai.js';
 import { NetworkManager } from './network/p2p.js';
-import { MSG_TYPES, TURN_PHASES } from './network/protocol.js';
+import { MSG_TYPES, TURN_PHASES, FACTIONS } from './network/protocol.js';
 import { MapRenderer } from './ui/renderer.js';
 import { SoundEngine } from './ui/sound.js';
 import { HUD } from './ui/hud.js';
 import { i18n } from './i18n/translations.js';
+import { getFactionInsignia } from './ui/icons.js';
 
 class WW2GameApp {
     constructor() {
@@ -47,9 +48,12 @@ class WW2GameApp {
         this._initWaitingRoomListeners();
         this._initDeveloperModalListeners();
         this._initZoomButtons();
+        this._initBriefingModalListeners();
         this._updateFactionOptionsI18n();
 
         // Initial HUD render & viewport fit
+        this.hud.updatePlayerFaction(this.userFactionId);
+        this.renderer.setPlayerFaction(this.userFactionId);
         this.hud.update(null, null);
         setTimeout(() => this.renderer.fitToScreen(), 100);
         setTimeout(() => this.renderer.fitToScreen(), 400);
@@ -281,7 +285,7 @@ class WW2GameApp {
         // Chat Message
         this.hud.onSendChatRequested = (text) => {
             const senderName = this.network.playerName || 'Komutan';
-            const logEntry = `💬 [${senderName}]: ${text}`;
+            const logEntry = `[${senderName}]: ${text}`;
             this.gameState.addLog(logEntry);
             this.hud.update(this.selectedOriginId, this.selectedTargetId);
 
@@ -400,7 +404,7 @@ class WW2GameApp {
         }
 
         this.isAiRunning = true;
-        this.hud.showToast(`🎖️ ${i18n.getFactionName(currentFaction.id)} (Stratejik Komuta) harekatını planlıyor...`, 'info');
+        this.hud.showToast(`${i18n.getFactionName(currentFaction.id)} (Stratejik Komuta) harekatını planlıyor...`, 'info');
 
         await StrategicAI.playTurn(this.gameState, (step) => {
             if (step.type === 'AI_DEPLOY') {
@@ -436,7 +440,7 @@ class WW2GameApp {
             this.checkAndRunAI();
         } else {
             this.sound.playRadioBeep();
-            this.hud.showToast(`🚩 ${i18n.t('toast_turn_yours')} ${i18n.getFactionName(this.gameState.getCurrentFaction().id)}`, 'success');
+            this.hud.showToast(`${i18n.t('toast_turn_yours')} ${i18n.getFactionName(this.gameState.getCurrentFaction().id)}`, 'success');
         }
     }
 
@@ -467,7 +471,7 @@ class WW2GameApp {
                                 this.gameState.factions[fId].isAI = true;
                                 this.gameState.factions[fId].playerId = null;
                             }
-                            this.hud.showToast(`⚠️ ${slot.name} ayrıldı, ${i18n.getFactionName(fId)} bota devredildi.`, 'warning');
+                            this.hud.showToast(`${slot.name} ayrıldı, ${i18n.getFactionName(fId)} bota devredildi.`, 'warning');
                         }
                     }
                 }
@@ -538,9 +542,11 @@ class WW2GameApp {
                     this.gameState.deserialize(msg.payload.gameState);
                 }
                 this.sound.playVictory();
-                this.hud.showToast('⚔️ Harekat Başladı! İyi şanslar komutan!', 'success');
+                this.hud.updatePlayerFaction(this.userFactionId);
+                this.renderer.setPlayerFaction(this.userFactionId);
+                this.hud.showToast(`Harekat Başladı! ${i18n.getFactionName(this.userFactionId)}`, 'success');
                 this.hud.update(null, null);
-                setTimeout(() => this.renderer.fitToScreen(), 80);
+                this._showStrategicBriefing();
                 break;
 
             case MSG_TYPES.HOTJOIN_REQUEST:
@@ -571,7 +577,7 @@ class WW2GameApp {
                         this.gameState.factions[fId].playerName = pName;
 
                         const fName = i18n.getFactionName(fId);
-                        const announcement = `📢 ${pName}, ${fName} komutasını devralarak savaşa girdi!`;
+                        const announcement = `${pName}, ${fName} komutasını devralarak savaşa girdi!`;
                         this.gameState.addLog(announcement);
                         this.hud.showToast(announcement, 'success');
                         this.sound.playDeploy();
@@ -600,7 +606,7 @@ class WW2GameApp {
                 // If turn just arrived for client, notify with radio beep and toast
                 if (newFaction === this.userFactionId && newFaction !== prevFaction) {
                     this.sound.playRadioBeep();
-                    this.hud.showToast(`🚩 ${i18n.t('toast_turn_yours')} ${i18n.getFactionName(this.gameState.getCurrentFaction().id)}`, 'success');
+                    this.hud.showToast(`${i18n.t('toast_turn_yours')} ${i18n.getFactionName(this.gameState.getCurrentFaction().id)}`, 'success');
                 }
 
                 this.hud.update(this.selectedOriginId, this.selectedTargetId);
@@ -751,10 +757,10 @@ class WW2GameApp {
         if (btnStart) {
             if (this.network.isHost) {
                 btnStart.disabled = false;
-                btnStart.innerHTML = `🚀 <span>${i18n.t('btn_start_campaign_now')}</span>`;
+                btnStart.innerHTML = `<span>${i18n.t('btn_start_campaign_now')}</span>`;
             } else {
                 btnStart.disabled = true;
-                btnStart.innerHTML = `⏳ <span>Host'un Başlatması Bekleniyor...</span>`;
+                btnStart.innerHTML = `<span>Host'un Başlatması Bekleniyor...</span>`;
             }
         }
     }
@@ -817,7 +823,6 @@ class WW2GameApp {
                 this.isGameStarted = true;
                 this.gameState.startGame(this.userFactionId);
                 document.getElementById('modal-waiting-room')?.classList.remove('visible');
-                setTimeout(() => this.renderer.fitToScreen(), 80);
 
                 // Broadcast GAME_START to all connected clients
                 this.network.broadcast(MSG_TYPES.GAME_START, {
@@ -826,8 +831,12 @@ class WW2GameApp {
 
                 this.sound.playVictory();
                 const fName = i18n.getFactionName(this.userFactionId);
-                this.hud.showToast(`⚔️ Harekat Başladı! ${i18n.t('toast_turn_yours')} ${fName}`, 'success');
+                this.hud.showToast(`Harekat Başladı! ${i18n.t('toast_turn_yours')} ${fName}`, 'success');
+                this.hud.updatePlayerFaction(this.userFactionId);
+                this.renderer.setPlayerFaction(this.userFactionId);
                 this.hud.update(null, null);
+
+                this._showStrategicBriefing();
 
                 this.checkAndRunAI();
             });
@@ -846,7 +855,7 @@ class WW2GameApp {
         card.className = 'hotjoin-card';
         card.id = `hotjoin-card-${senderId}`;
         card.innerHTML = `
-            <div class="hotjoin-title">⚠️ ${i18n.t('hotjoin_prompt_title')}</div>
+            <div class="hotjoin-title">${i18n.t('hotjoin_prompt_title')}</div>
             <div class="hotjoin-body">
                 <strong>${playerName}</strong> ${i18n.t('hotjoin_prompt_desc')}
             </div>
@@ -893,7 +902,7 @@ class WW2GameApp {
                     gameState: this.gameState.serialize()
                 });
 
-                this.hud.showToast(`✅ ${playerName} için katılım onaylandı, ülke seçimi bekleniyor.`, 'info');
+                this.hud.showToast(`${playerName} için katılım onaylandı, ülke seçimi bekleniyor.`, 'info');
             });
         }
     }
@@ -911,7 +920,7 @@ class WW2GameApp {
             const btn = document.createElement('button');
             btn.type = 'button';
             btn.className = 'btn-hotjoin-choice';
-            btn.innerHTML = `<span style="font-size: 1.4rem;">${f.flagEmoji || '🚩'}</span> <span>${i18n.getFactionName(f.id)}</span>`;
+            btn.innerHTML = `<span style="display: inline-flex; align-items: center; justify-content: center; margin-right: 8px;">${getFactionInsignia(f.id, 22)}</span> <span>${i18n.getFactionName(f.id)}</span>`;
             btn.addEventListener('click', () => {
                 this.sound.playClick();
                 listEl.querySelectorAll('.btn-hotjoin-choice').forEach(b => b.classList.remove('selected'));
@@ -942,9 +951,11 @@ class WW2GameApp {
                     playerName: this.network.playerName || 'Komutan'
                 });
 
-                this.hud.showToast(`🎖️ ${i18n.getFactionName(selectedClaimFaction)} komutasını devraldınız!`, 'success');
+                this.hud.updatePlayerFaction(this.userFactionId);
+                this.renderer.setPlayerFaction(this.userFactionId);
+                this.hud.showToast(`${i18n.getFactionName(selectedClaimFaction)} komutasını devraldınız!`, 'success');
                 this.hud.update(null, null);
-                setTimeout(() => this.renderer.fitToScreen(), 80);
+                this._showStrategicBriefing();
             };
         }
     }
@@ -1073,12 +1084,15 @@ class WW2GameApp {
             this.isGameStarted = true;
             this.gameState.startGame(this.userFactionId);
             modal.classList.remove('visible');
-            setTimeout(() => this.renderer.fitToScreen(), 80);
 
             document.getElementById('hud-room-code').textContent = 'OFFLINE';
             const fName = i18n.getFactionName(this.userFactionId);
             this.hud.showToast(`${i18n.t('toast_turn_yours')} ${fName}`, 'success');
+            this.hud.updatePlayerFaction(this.userFactionId);
+            this.renderer.setPlayerFaction(this.userFactionId);
             this.hud.update(null, null);
+
+            this._showStrategicBriefing();
 
             // If player chosen is not the first in turn order, let AI start
             this.checkAndRunAI();
@@ -1116,7 +1130,7 @@ class WW2GameApp {
                 this.renderWaitingRoomUI();
 
                 document.getElementById('hud-room-code').textContent = roomCode;
-                this.hud.showToast(`🎖️ Toplanma Odası Açıldı! Oda Kodu: ${roomCode}`, 'success');
+                this.hud.showToast(`Toplanma Odası Açıldı! Oda Kodu: ${roomCode}`, 'success');
             }).catch((err) => {
                 if (btnSingle) {
                     btnSingle.disabled = false;
@@ -1184,7 +1198,7 @@ class WW2GameApp {
                 launchSingleplayer();
                 const sel = urlParams.get('select');
                 if (sel) {
-                    setTimeout(() => this.handleRegionClick(sel), 200);
+                    setTimeout(() => this.handleRegionClick(sel), 700);
                 }
             }, 150);
         } else if (urlParams.get('autostart') === 'host') {
@@ -1214,10 +1228,10 @@ class WW2GameApp {
 
         const facs = i18n.t('factions');
         if (facs) {
-            if (optGer && facs.germany) optGer.textContent = `🦅 ${facs.germany.desc}`;
-            if (optUK && facs.uk) optUK.textContent = `🦁 ${facs.uk.desc}`;
-            if (optUSSR && facs.ussr) optUSSR.textContent = `⭐ ${facs.ussr.desc}`;
-            if (optIta && facs.italy) optIta.textContent = `👑 ${facs.italy.desc}`;
+            if (optGer && facs.germany) optGer.textContent = facs.germany.desc;
+            if (optUK && facs.uk) optUK.textContent = facs.uk.desc;
+            if (optUSSR && facs.ussr) optUSSR.textContent = facs.ussr.desc;
+            if (optIta && facs.italy) optIta.textContent = facs.italy.desc;
         }
     }
 
@@ -1242,6 +1256,147 @@ class WW2GameApp {
                 this.renderer.fitToScreen();
                 this.hud.showToast(i18n.t('toast_map_centered'), 'info');
             };
+        }
+    }
+
+    _initBriefingModalListeners() {
+        // Mini language buttons inside briefing modal
+        document.querySelectorAll('#modal-briefing .btn-lang-mini').forEach(btn => {
+            btn.addEventListener('click', () => {
+                this.sound.playClick();
+                const lang = btn.getAttribute('data-lang');
+                i18n.setLanguage(lang);
+                document.querySelectorAll('#modal-briefing .btn-lang-mini').forEach(b => {
+                    b.classList.toggle('active', b.getAttribute('data-lang') === lang);
+                });
+                this._populateBriefingContent();
+            });
+        });
+
+        // Faction change updates the player command badge in the top bar
+        const factionSelect = document.getElementById('lobby-faction-select');
+        if (factionSelect) {
+            factionSelect.addEventListener('change', () => {
+                this.userFactionId = factionSelect.value;
+                this.hud.updatePlayerFaction(this.userFactionId);
+                this.renderer.setPlayerFaction(this.userFactionId);
+            });
+        }
+    }
+
+    _showStrategicBriefing() {
+        const modal = document.getElementById('modal-briefing');
+        const capitalMap = {
+            germany: 'berlin',
+            uk: 'london',
+            ussr: 'moscow',
+            italy: 'rome'
+        };
+        const capitalId = capitalMap[this.userFactionId] || 'berlin';
+
+        // Audio announcement with Web Speech API
+        this._announcePlayerFactionVoice();
+
+        // Check if user set "Do not show again" or URL param
+        const urlParams = new URLSearchParams(window.location.search);
+        const dontShow = localStorage.getItem('warroom_hide_briefing') === 'true' || urlParams.get('skipbriefing') === '1';
+        if (dontShow || !modal) {
+            this.renderer.playCinematicIntro(capitalId);
+            return;
+        }
+
+        this._populateBriefingContent();
+        modal.classList.add('visible');
+
+        const btnEnter = document.getElementById('btn-briefing-start');
+        const checkDontShow = document.getElementById('briefing-dont-show-checkbox');
+
+        if (btnEnter) {
+            btnEnter.onclick = () => {
+                this.sound.playDeploy();
+                if (checkDontShow && checkDontShow.checked) {
+                    localStorage.setItem('warroom_hide_briefing', 'true');
+                }
+                modal.classList.remove('visible');
+
+                // Smooth satellite zoom-out from player's capital
+                this.renderer.playCinematicIntro(capitalId);
+            };
+        }
+    }
+
+    _populateBriefingContent() {
+        const fId = this.userFactionId;
+        const fac = FACTIONS[fId?.toUpperCase()] || FACTIONS.GERMANY;
+        const fData = i18n.t(`factions.${fId}`) || {};
+
+        const heroCard = document.getElementById('briefing-hero-card');
+        const insBox = document.getElementById('briefing-insignia-box');
+        const allianceTag = document.getElementById('briefing-alliance-tag');
+        const nationName = document.getElementById('briefing-nation-name');
+        const directiveDesc = document.getElementById('briefing-directive-desc');
+        const directiveTitle = document.getElementById('briefing-directive-title-text');
+
+        if (heroCard) {
+            heroCard.style.setProperty('--briefing-accent-color', fac.accentColor || '#38bdf8');
+        }
+        if (insBox) {
+            insBox.innerHTML = getFactionInsignia(fId, 44);
+            insBox.style.borderColor = fac.accentColor || '#38bdf8';
+            insBox.style.boxShadow = `0 0 16px ${fac.accentColor || 'rgba(56, 189, 248, 0.4)'}`;
+        }
+        if (allianceTag) {
+            allianceTag.textContent = fData.allianceName || (fac.alliance === 'axis' ? 'MİHVER DEVLETLERİ' : 'MÜTTEFİK DEVLETLER');
+        }
+        if (nationName) {
+            nationName.textContent = (fData.name || fac.nameTr).toUpperCase();
+            nationName.style.color = fac.accentColor || '#ffffff';
+        }
+        if (directiveTitle) {
+            directiveTitle.textContent = fData.directiveTitle || i18n.t('briefing_nation_directive_title');
+        }
+        if (directiveDesc) {
+            directiveDesc.textContent = fData.directiveDesc || fac.desc;
+        }
+
+        // Apply active language to data-i18n elements inside modal
+        document.querySelectorAll('#modal-briefing [data-i18n]').forEach(el => {
+            const key = el.getAttribute('data-i18n');
+            if (key) el.textContent = i18n.t(key);
+        });
+    }
+
+    _announcePlayerFactionVoice() {
+        if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+            try {
+                const lang = i18n.currentLang || 'tr';
+                const fData = i18n.t(`factions.${this.userFactionId}`);
+                const nationName = fData ? fData.name : this.userFactionId;
+                const alliance = fData ? fData.allianceName : '';
+
+                let text = '';
+                let voiceLang = 'tr-TR';
+
+                if (lang === 'tr') {
+                    text = `Komuta Edilen Ülke: ${nationName}. ${alliance}.`;
+                    voiceLang = 'tr-TR';
+                } else if (lang === 'ja') {
+                    text = `指揮担当国: ${nationName}。${alliance}。`;
+                    voiceLang = 'ja-JP';
+                } else {
+                    text = `Commanding nation: ${nationName}. ${alliance}.`;
+                    voiceLang = 'en-US';
+                }
+
+                const utter = new SpeechSynthesisUtterance(text);
+                utter.lang = voiceLang;
+                utter.rate = 1.0;
+                utter.pitch = 0.95;
+                window.speechSynthesis.cancel();
+                window.speechSynthesis.speak(utter);
+            } catch (e) {
+                // Ignore speech synthesis errors if blocked by browser autoplay policy
+            }
         }
     }
 }

@@ -6,6 +6,7 @@
 
 import { FACTIONS, UNIT_TYPES, TERRAIN_TYPES, TURN_PHASES } from '../network/protocol.js';
 import { i18n } from '../i18n/translations.js';
+import { ICONS, getFactionInsignia } from './icons.js';
 
 export class HUD {
     constructor(gameState, soundEngine) {
@@ -312,6 +313,29 @@ export class HUD {
     }
 
     /**
+     * Updates the persistent player command badge in the top header
+     */
+    updatePlayerFaction(factionId) {
+        this.playerFactionId = factionId;
+        const fac = FACTIONS[factionId?.toUpperCase()] || FACTIONS.GERMANY;
+        const badgeFlag = document.getElementById('hud-player-faction-flag');
+        const badgeName = document.getElementById('hud-player-faction-name');
+        const badgeContainer = document.getElementById('hud-player-command-container');
+
+        if (badgeFlag) {
+            badgeFlag.innerHTML = getFactionInsignia(fac.id, 20);
+        }
+        if (badgeName) {
+            badgeName.textContent = i18n.getFactionName(fac.id);
+            badgeName.style.color = fac.accentColor || '#38bdf8';
+        }
+        if (badgeContainer) {
+            badgeContainer.style.borderColor = fac.accentColor || 'var(--accent-cyan)';
+            badgeContainer.style.boxShadow = `0 0 16px ${fac.accentColor || 'rgba(56, 189, 248, 0.4)'}`;
+        }
+    }
+
+    /**
      * Updates all HUD widgets with latest GameState data
      */
     update(selectedRegionId, targetRegionId) {
@@ -331,7 +355,7 @@ export class HUD {
 
         const factionNameElem = document.getElementById('hud-active-faction-name');
         if (factionNameElem) {
-            factionNameElem.innerHTML = `${curFaction.flagEmoji} ${i18n.getFactionName(curFaction.id)}`;
+            factionNameElem.innerHTML = `<span class="badge-flag" style="margin-right: 6px;">${getFactionInsignia(curFaction.id, 18)}</span> ${i18n.getFactionName(curFaction.id)}`;
             factionNameElem.style.color = curFaction.accentColor;
         }
 
@@ -345,10 +369,10 @@ export class HUD {
         if (phaseElem && nextPhaseBtn) {
             if (this.gameState.currentPhase === TURN_PHASES.PRODUCTION) {
                 phaseElem.textContent = i18n.t('phase_1_name');
-                nextPhaseBtn.textContent = i18n.t('btn_next_to_combat');
+                nextPhaseBtn.innerHTML = `<span class="svg-icon" style="margin-right:4px;">${ICONS.swords}</span> ${i18n.t('btn_next_to_combat')}`;
             } else if (this.gameState.currentPhase === TURN_PHASES.COMBAT) {
                 phaseElem.textContent = i18n.t('phase_2_name');
-                nextPhaseBtn.textContent = i18n.t('btn_end_turn');
+                nextPhaseBtn.innerHTML = `<span class="svg-icon" style="margin-right:4px;">${ICONS.blitz}</span> ${i18n.t('btn_end_turn')}`;
             }
         }
     }
@@ -371,14 +395,14 @@ export class HUD {
                 if (btnDeploy) {
                     btnDeploy.disabled = !isMine;
                     btnDeploy.style.opacity = isMine ? '1.0' : '0.45';
-                    btnDeploy.innerHTML = isMine ? i18n.t('btn_deploy_units') : i18n.t('btn_deploy_disabled');
+                    btnDeploy.innerHTML = isMine ? `<span class="svg-icon" style="margin-right:4px;">${ICONS.check}</span> ${i18n.t('btn_deploy_units')}` : i18n.t('btn_deploy_disabled');
                 }
             } else {
                 prodRegionTitle.textContent = i18n.t('select_region_prompt');
                 if (btnDeploy) {
                     btnDeploy.disabled = false;
                     btnDeploy.style.opacity = '1.0';
-                    btnDeploy.innerHTML = i18n.t('btn_deploy_units');
+                    btnDeploy.innerHTML = `<span class="svg-icon" style="margin-right:4px;">${ICONS.check}</span> ${i18n.t('btn_deploy_units')}`;
                 }
             }
         }
@@ -387,12 +411,28 @@ export class HUD {
         const combatFromElem = document.getElementById('combat-origin-info');
         const combatToElem = document.getElementById('combat-target-info');
 
+        const unitPlateHtml = (inf, arm, air) => `
+            <span style="display:inline-flex; align-items:center; gap:8px; margin-top:2px;">
+                <span class="svg-icon" style="color:#93c5fd">${ICONS.infantry}</span> <strong>${inf}</strong>
+                <span style="opacity:0.3">|</span>
+                <span class="svg-icon" style="color:#facc15">${ICONS.armor}</span> <strong>${arm}</strong>
+                <span style="opacity:0.3">|</span>
+                <span class="svg-icon" style="color:#f43f5e">${ICONS.air}</span> <strong>${air}</strong>
+            </span>
+        `;
+
         if (combatFromElem) {
             if (origin) {
                 const originFac = FACTIONS[origin.owner.toUpperCase()] || FACTIONS.NEUTRAL;
                 const oName = i18n.getRegionName(origin.id);
                 const oFac = i18n.getFactionName(originFac.id);
-                combatFromElem.innerHTML = `<strong>${oName}</strong> <span style="color:${originFac.accentColor}">[${oFac}]</span><br><small>(🪖 ${origin.units.infantry} | 🚜 ${origin.units.armor} | ✈️ ${origin.units.air}) | ${i18n.t('industry_points')}: ${origin.industry} IP</small>`;
+                combatFromElem.innerHTML = `
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        ${getFactionInsignia(originFac.id, 16)} <strong>${oName}</strong> 
+                        <span style="color:${originFac.accentColor}; font-size:0.8rem;">[${oFac}]</span>
+                    </div>
+                    <small style="color:var(--text-muted);">${unitPlateHtml(origin.units.infantry, origin.units.armor, origin.units.air)} • ${origin.industry} IP</small>
+                `;
             } else {
                 combatFromElem.textContent = i18n.t('hint_select_origin_first');
             }
@@ -405,7 +445,13 @@ export class HUD {
                 const tName = i18n.getRegionName(target.id);
                 const tFac = i18n.getFactionName(targetFac.id);
                 const terrainName = i18n.getTerrainName(target.terrain);
-                combatToElem.innerHTML = `<strong>${tName}</strong> <span style="color:${targetFac.accentColor}">[${tFac}]</span><br><small>(🪖 ${target.units.infantry} | 🚜 ${target.units.armor} | ✈️ ${target.units.air})<br>${i18n.t('terrain_label')} ${terrainName} (${terrain.icon}) ${i18n.t('defense_bonus_label')} +%${Math.round(terrain.defenseBonus*100)}</small>`;
+                combatToElem.innerHTML = `
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        ${getFactionInsignia(targetFac.id, 16)} <strong>${tName}</strong> 
+                        <span style="color:${targetFac.accentColor}; font-size:0.8rem;">[${tFac}]</span>
+                    </div>
+                    <small style="color:var(--text-muted);">${unitPlateHtml(target.units.infantry, target.units.armor, target.units.air)}<br>${i18n.t('terrain_label')} ${terrainName} • ${i18n.t('defense_bonus_label')} +%${Math.round(terrain.defenseBonus*100)}</small>
+                `;
             } else {
                 combatToElem.textContent = i18n.t('hint_select_target_second');
             }
@@ -556,7 +602,7 @@ export class HUD {
                 const fac = FACTIONS[c.owner?.toUpperCase()] || FACTIONS.NEUTRAL;
                 const capName = i18n.getRegionName(c.id) || c.name;
                 const facName = i18n.getFactionName(fac.id);
-                return `<div class="capital-item"><span>⭐ ${capName}</span> <span style="color:${fac.accentColor}">${fac.flagEmoji} ${facName}</span></div>`;
+                return `<div class="capital-item"><span style="display:inline-flex; align-items:center; gap:6px;"><span class="svg-icon" style="color:#fbbf24;">${ICONS.star}</span> ${capName}</span> <span style="display:inline-flex; align-items:center; gap:6px; color:${fac.accentColor}">${getFactionInsignia(fac.id, 16)} ${facName}</span></div>`;
             }).join('');
         }
     }
@@ -593,13 +639,21 @@ export class HUD {
                     <div class="combat-box">
                         <h4>${attackerFactionName} (${i18n.t('combat_attacker')})</h4>
                         <p>${i18n.t('combat_losses')}: <strong>${attLosses}</strong></p>
-                        <p><small>(🪖 ${report.attackerLosses.infantry} | 🚜 ${report.attackerLosses.armor} | ✈️ ${report.attackerLosses.air})</small></p>
+                        <p><small style="display:inline-flex; align-items:center; gap:6px;">
+                            <span class="svg-icon" style="color:#93c5fd">${ICONS.infantry}</span> ${report.attackerLosses.infantry} | 
+                            <span class="svg-icon" style="color:#facc15">${ICONS.armor}</span> ${report.attackerLosses.armor} | 
+                            <span class="svg-icon" style="color:#f43f5e">${ICONS.air}</span> ${report.attackerLosses.air}
+                        </small></p>
                     </div>
                     <div class="combat-vs">VS</div>
                     <div class="combat-box">
                         <h4>${defenderFactionName} (${i18n.t('combat_defender')})</h4>
                         <p>${i18n.t('combat_losses')}: <strong>${defLosses}</strong></p>
-                        <p><small>(🪖 ${report.defenderLosses.infantry} | 🚜 ${report.defenderLosses.armor} | ✈️ ${report.defenderLosses.air})</small></p>
+                        <p><small style="display:inline-flex; align-items:center; gap:6px;">
+                            <span class="svg-icon" style="color:#93c5fd">${ICONS.infantry}</span> ${report.defenderLosses.infantry} | 
+                            <span class="svg-icon" style="color:#facc15">${ICONS.armor}</span> ${report.defenderLosses.armor} | 
+                            <span class="svg-icon" style="color:#f43f5e">${ICONS.air}</span> ${report.defenderLosses.air}
+                        </small></p>
                     </div>
                 </div>
                 <div class="combat-rounds-log">
@@ -630,7 +684,7 @@ export class HUD {
 
         const winnerName = i18n.getFactionName(winner.id) || winner.name;
         if (title) {
-            title.textContent = `🏆 ${winnerName.toUpperCase()} ${i18n.t('game_over_victory')}`;
+            title.innerHTML = `<span class="svg-icon" style="color:var(--accent-amber); margin-right:8px;">${ICONS.crown}</span> ${winnerName.toUpperCase()} ${i18n.t('game_over_victory')}`;
         }
         if (desc) {
             desc.textContent = winner.reason;

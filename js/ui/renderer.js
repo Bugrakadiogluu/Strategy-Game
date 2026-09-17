@@ -24,6 +24,11 @@ export class MapRenderer {
         this.hoveredRegionId = null;
         this.selectedRegionId = null;
         this.highlightedTargetIds = []; // Valid neighbors for attack or move
+        this.playerFactionId = 'germany';
+
+        // Cinematic intro state
+        this.isCinematicActive = false;
+        this.cinematicCapital = null;
 
         // Active visual animations (projectiles, explosions, air runs)
         this.animations = [];
@@ -66,6 +71,74 @@ export class MapRenderer {
 
         this.offsetX = (displayW - mapW * this.scale) / 2;
         this.offsetY = (displayH - mapH * this.scale) / 2;
+    }
+
+    setPlayerFaction(factionId) {
+        this.playerFactionId = factionId;
+    }
+
+    /**
+     * Cinematic Satellite Zoom-Out on game launch
+     * Starts focused closely on player's capital, then smoothly zooms out to the overview.
+     */
+    playCinematicIntro(capitalRegionId, onComplete) {
+        const capital = this.gameState.regions[capitalRegionId] || this.gameState.regions['berlin'] || Object.values(this.gameState.regions)[0];
+        if (!capital || !this.canvas) {
+            if (onComplete) onComplete();
+            return;
+        }
+
+        const rect = this.canvas.getBoundingClientRect();
+        const displayW = Math.round(rect.width) > 50 ? Math.round(rect.width) : Math.max(800, window.innerWidth - 420);
+        const displayH = Math.round(rect.height) > 50 ? Math.round(rect.height) : Math.max(600, window.innerHeight - 60);
+
+        this.canvas.width = displayW;
+        this.canvas.height = displayH;
+
+        const mapW = this.gameState?.dimensions?.width || 1400;
+        const mapH = this.gameState?.dimensions?.height || 900;
+
+        const scaleX = displayW / mapW;
+        const scaleY = displayH / mapH;
+        const targetScale = Math.max(this.minScale, Math.min(Math.min(scaleX, scaleY) * 0.94, this.maxScale));
+        const targetOffsetX = (displayW - mapW * targetScale) / 2;
+        const targetOffsetY = (displayH - mapH * targetScale) / 2;
+
+        // Initial zoomed-in coordinates focused on the capital
+        const startScale = Math.min(this.maxScale, targetScale * 2.0);
+        const startOffsetX = (displayW / 2) - capital.x * startScale;
+        const startOffsetY = (displayH / 2) - capital.y * startScale;
+
+        const duration = 1800; // 1.8 seconds
+        const startTime = performance.now();
+        this.isCinematicActive = true;
+        this.cinematicCapital = { 
+            x: capital.x, 
+            y: capital.y, 
+            color: FACTIONS[capital.owner?.toUpperCase()]?.accentColor || '#38bdf8' 
+        };
+
+        const animate = (now) => {
+            const elapsed = now - startTime;
+            const progress = Math.min(1.0, elapsed / duration);
+            // Ease-out cubic for realistic military camera deceleration
+            const ease = 1 - Math.pow(1 - progress, 3);
+
+            this.scale = startScale + (targetScale - startScale) * ease;
+            this.offsetX = startOffsetX + (targetOffsetX - startOffsetX) * ease;
+            this.offsetY = startOffsetY + (targetOffsetY - startOffsetY) * ease;
+
+            if (progress < 1.0) {
+                requestAnimationFrame(animate);
+            } else {
+                this.isCinematicActive = false;
+                this.cinematicCapital = null;
+                this.fitToScreen();
+                if (onComplete) onComplete();
+            }
+        };
+
+        requestAnimationFrame(animate);
     }
 
     getCanvasMousePos(e) {
@@ -489,6 +562,11 @@ export class MapRenderer {
                     ctx.strokeStyle = '#ffffff';
                     ctx.lineWidth = 2.0;
                     ctx.stroke(r.path2d);
+                } else if (this.playerFactionId && r.owner === this.playerFactionId) {
+                    // Player's Homeland Highlight: Subtle golden/accent tactical border
+                    ctx.strokeStyle = faction.accentColor || '#38bdf8';
+                    ctx.lineWidth = 2.2 + pulse * 0.8;
+                    ctx.stroke(r.path2d);
                 } else {
                     ctx.strokeStyle = 'rgba(255, 255, 255, 0.28)';
                     ctx.lineWidth = 1.2;
@@ -602,51 +680,154 @@ export class MapRenderer {
 
             // Capital Star or Factory Icon
             if (r.capital) {
-                ctx.font = '14px sans-serif';
-                ctx.fillText('⭐', cx - textWidth / 2 - 18, cy - 17);
+                this._drawVectorStar(ctx, cx - textWidth / 2 - 12, cy - 17, 5, 6, 3, '#fbbf24');
             } else if (r.industry >= 4) {
-                ctx.font = '12px sans-serif';
-                ctx.fillText('🏭', cx - textWidth / 2 - 16, cy - 17);
+                this._drawVectorFactory(ctx, cx - textWidth / 2 - 12, cy - 17, '#38bdf8');
             }
 
-            // 2. Unit Counters Badge (Military Stack Plate)
+            // 2. Unit Counters Badge (Military Stack Plate with Vector Silhouettes)
             const inf = r.units.infantry || 0;
             const arm = r.units.armor || 0;
             const air = r.units.air || 0;
 
-            const badgeW = 90;
-            const badgeH = 24;
+            const badgeW = 92;
+            const badgeH = 22;
             const badgeX = cx - badgeW / 2;
             const badgeY = cy + 2;
 
-            // Plate Backdrop
-            ctx.fillStyle = 'rgba(10, 15, 26, 0.92)';
+            // Plate Backdrop with faction accent
+            ctx.fillStyle = 'rgba(10, 15, 26, 0.94)';
             ctx.strokeStyle = faction.accentColor || '#38bdf8';
-            ctx.lineWidth = 1.5;
+            ctx.lineWidth = 1.4;
             ctx.beginPath();
             ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 4);
             ctx.fill();
             ctx.stroke();
 
-            // Unit Icons and Counts inside badge
-            ctx.font = '11px "Rajdhani", sans-serif';
-            ctx.textAlign = 'center';
+            // Inner divider lines between unit types
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(badgeX + 31, badgeY + 3);
+            ctx.lineTo(badgeX + 31, badgeY + badgeH - 3);
+            ctx.moveTo(badgeX + 62, badgeY + 3);
+            ctx.lineTo(badgeX + 62, badgeY + badgeH - 3);
+            ctx.stroke();
+
+            ctx.font = 'bold 11px "Rajdhani", sans-serif';
+            ctx.textAlign = 'left';
             ctx.textBaseline = 'middle';
 
-            // Infantry (🪖)
+            // 1. Infantry Cell (Vector Soldier Helmet + Count)
+            this._drawVectorInfantry(ctx, badgeX + 7, badgeY + 11, '#93c5fd');
             ctx.fillStyle = '#93c5fd';
-            ctx.fillText(`🪖 ${inf}`, badgeX + 16, badgeY + 12);
+            ctx.fillText(`${inf}`, badgeX + 15, badgeY + 11.5);
 
-            // Armor (🚜)
-            ctx.fillStyle = arm > 0 ? '#facc15' : '#64748b';
-            ctx.fillText(`🚜 ${arm}`, badgeX + 45, badgeY + 12);
+            // 2. Armor Cell (Vector WW2 Tank + Count)
+            const armCol = arm > 0 ? '#facc15' : '#64748b';
+            this._drawVectorArmor(ctx, badgeX + 38, badgeY + 11, armCol);
+            ctx.fillStyle = armCol;
+            ctx.fillText(`${arm}`, badgeX + 47, badgeY + 11.5);
 
-            // Air (✈️)
-            ctx.fillStyle = air > 0 ? '#f43f5e' : '#64748b';
-            ctx.fillText(`✈️ ${air}`, badgeX + 74, badgeY + 12);
+            // 3. Air Cell (Vector Warplane + Count)
+            const airCol = air > 0 ? '#f43f5e' : '#64748b';
+            this._drawVectorAir(ctx, badgeX + 69, badgeY + 11, airCol);
+            ctx.fillStyle = airCol;
+            ctx.fillText(`${air}`, badgeX + 77, badgeY + 11.5);
 
             ctx.restore();
         }
+    }
+
+    _drawVectorInfantry(ctx, x, y, color = '#93c5fd') {
+        ctx.save();
+        ctx.fillStyle = color;
+        // Military combat helmet silhouette
+        ctx.beginPath();
+        ctx.arc(x, y - 1, 3.5, Math.PI, 0, false);
+        ctx.lineTo(x + 5, y + 2);
+        ctx.lineTo(x - 5, y + 2);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+    }
+
+    _drawVectorArmor(ctx, x, y, color = '#facc15') {
+        ctx.save();
+        ctx.fillStyle = color;
+        // WW2 Battle tank silhouette
+        ctx.fillRect(x - 5, y - 2, 4, 1.2); // Gun barrel
+        ctx.beginPath();
+        ctx.arc(x, y - 1.5, 2.2, 0, Math.PI * 2); // Turret
+        ctx.fill();
+        ctx.fillRect(x - 4.5, y + 0.5, 9, 3); // Hull & tracks
+        ctx.restore();
+    }
+
+    _drawVectorAir(ctx, x, y, color = '#f43f5e') {
+        ctx.save();
+        ctx.fillStyle = color;
+        // Warplane fighter silhouette
+        ctx.beginPath();
+        ctx.moveTo(x, y - 4.5);
+        ctx.lineTo(x + 4.5, y + 1);
+        ctx.lineTo(x + 1, y);
+        ctx.lineTo(x + 1, y + 3.5);
+        ctx.lineTo(x + 2, y + 4.5);
+        ctx.lineTo(x - 2, y + 4.5);
+        ctx.lineTo(x - 1, y + 3.5);
+        ctx.lineTo(x - 1, y);
+        ctx.lineTo(x - 4.5, y + 1);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+    }
+
+    _drawVectorStar(ctx, cx, cy, spikes = 5, outerRadius = 6, innerRadius = 3, color = '#fbbf24') {
+        ctx.save();
+        let rot = Math.PI / 2 * 3;
+        let x = cx;
+        let y = cy;
+        const step = Math.PI / spikes;
+
+        ctx.beginPath();
+        ctx.moveTo(cx, cy - outerRadius);
+        for (let i = 0; i < spikes; i++) {
+            x = cx + Math.cos(rot) * outerRadius;
+            y = cy + Math.sin(rot) * outerRadius;
+            ctx.lineTo(x, y);
+            rot += step;
+
+            x = cx + Math.cos(rot) * innerRadius;
+            y = cy + Math.sin(rot) * innerRadius;
+            ctx.lineTo(x, y);
+            rot += step;
+        }
+        ctx.lineTo(cx, cy - outerRadius);
+        ctx.closePath();
+        ctx.fillStyle = color;
+        ctx.fill();
+        ctx.strokeStyle = '#78350f';
+        ctx.lineWidth = 0.8;
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    _drawVectorFactory(ctx, cx, cy, color = '#38bdf8') {
+        ctx.save();
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.moveTo(cx - 5, cy + 4);
+        ctx.lineTo(cx + 5, cy + 4);
+        ctx.lineTo(cx + 5, cy - 1);
+        ctx.lineTo(cx + 2, cy + 1);
+        ctx.lineTo(cx + 2, cy - 2);
+        ctx.lineTo(cx - 1, cy);
+        ctx.lineTo(cx - 1, cy - 4);
+        ctx.lineTo(cx - 5, cy - 2);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
     }
 
     _updateAnimations(timestamp) {
@@ -698,12 +879,36 @@ export class MapRenderer {
                 const t = anim.progress;
                 const curX = anim.startX + (anim.targetX - anim.startX) * t;
                 const curY = anim.startY + (anim.targetY - anim.startY) * t;
+                const angle = Math.atan2(anim.targetY - anim.startY, anim.targetX - anim.startX);
 
                 ctx.save();
-                ctx.font = '22px sans-serif';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText('✈️', curX, curY);
+                ctx.translate(curX, curY);
+                ctx.rotate(angle + Math.PI / 2);
+                ctx.fillStyle = '#38bdf8';
+                ctx.strokeStyle = '#0284c7';
+                ctx.lineWidth = 1.5;
+
+                // Sleek tactical fighter silhouette
+                ctx.beginPath();
+                ctx.moveTo(0, -12);
+                ctx.lineTo(2.5, -2);
+                ctx.lineTo(13, 3);
+                ctx.lineTo(13, 6);
+                ctx.lineTo(2.5, 4);
+                ctx.lineTo(2.5, 10);
+                ctx.lineTo(6, 13);
+                ctx.lineTo(6, 15);
+                ctx.lineTo(0, 13);
+                ctx.lineTo(-6, 15);
+                ctx.lineTo(-6, 13);
+                ctx.lineTo(-2.5, 10);
+                ctx.lineTo(-2.5, 4);
+                ctx.lineTo(-13, 6);
+                ctx.lineTo(-13, 3);
+                ctx.lineTo(-2.5, -2);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
                 ctx.restore();
             } else if (anim.type === 'explosion') {
                 const t = anim.progress;

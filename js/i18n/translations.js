@@ -13,25 +13,25 @@ export const TRANSLATIONS = {
         campaign_phase: "HAREKAT AŞAMASI",
         phase_1_name: "AŞAMA 1: ÜRETİM & TAKVİYE",
         phase_2_name: "AŞAMA 2: ASKERİ TAARRUZ",
-        btn_next_to_combat: "⚔️ HAREKAT AŞAMASINA GEÇ",
-        btn_end_turn: "⏭️ TURU BİTİR",
-        btn_sound_on: "🔊 Ses: Açık",
-        btn_sound_off: "🔇 Ses: Kapalı",
-        btn_save: "💾 Kaydet",
-        btn_load: "📂 Yükle",
-        btn_room_prefix: "🔑 Oda:",
+        btn_next_to_combat: "HAREKAT AŞAMASINA GEÇ",
+        btn_end_turn: "TURU BİTİR",
+        btn_sound_on: "Ses: Açık",
+        btn_sound_off: "Ses: Kapalı",
+        btn_save: "Kaydet",
+        btn_load: "Yükle",
+        btn_room_prefix: "Oda:",
         room_copied: "Oda Kodu Kopyalandı:",
         zoom_in: "+",
         zoom_out: "-",
-        zoom_reset: "⟲ Haritayı Ortala",
+        zoom_reset: "Haritayı Ortala",
         zoom_reset_title: "Haritayı Ortala & Görünümü Sıfırla",
 
         // Navigation Tabs
-        tab_production: "🪖 ÜRETİM",
-        tab_combat: "⚔️ TAARRUZ",
-        tab_movement: "🚚 İNTİKAL",
-        tab_intel: "📊 İSTİHBARAT",
-        tab_radio: "📻 TELSİZ",
+        tab_production: "ÜRETİM",
+        tab_combat: "TAARRUZ",
+        tab_movement: "İNTİKAL",
+        tab_intel: "İSTİHBARAT",
+        tab_radio: "TELSİZ",
 
         // Tab 1: Production
         title_selected_garrison: "SEÇİLİ GARNİZON ÜSSÜ",
@@ -43,8 +43,8 @@ export const TRANSLATIONS = {
         unit_arm_desc: "Maliyet: 6 IP | Taarruz Yarma Gücü",
         unit_air_name: "Hava Filosu (Avcı/Bombardıman)",
         unit_air_desc: "Maliyet: 8 IP | Hava Bombardımanı & Destek",
-        btn_deploy_units: "🪖 BİRLİKLERİ BÖLGEYE KONUŞLANDIR",
-        btn_deploy_disabled: "⚠️ YALNIZCA DOST BÖLGEYE TAKVİYE YAPILABİLİR",
+        btn_deploy_units: "BİRLİKLERİ BÖLGEYE KONUŞLANDIR",
+        btn_deploy_disabled: "YALNIZCA DOST BÖLGEYE TAKVİYE YAPILABİLİR",
         select_region_prompt: "Bölge Seçiniz",
 
         // Tab 2: Combat
@@ -57,9 +57,9 @@ export const TRANSLATIONS = {
         slider_attack_inf: "Taarruz Piyadesi",
         slider_attack_arm: "Taarruz Panzeri",
         slider_air_sortie: "Hava Sortisi",
-        btn_ground_assault: "⚔️ KARA HAREKATI BAŞLAT",
-        btn_air_strike: "✈️ STRATEJİK HAVA HAREKATI",
-        btn_blitzkrieg: "⚡ BLITZKRIEG (YILDIRIM TAARRUZU)",
+        btn_ground_assault: "KARA HAREKATI BAŞLAT",
+        btn_air_strike: "STRATEJİK HAVA HAREKATI",
+        btn_blitzkrieg: "BLITZKRIEG (YILDIRIM TAARRUZU)",
         terrain_label: "Arazi:",
         defense_bonus_label: "Savunma Bonusu:",
 
@@ -69,7 +69,7 @@ export const TRANSLATIONS = {
         slider_move_inf: "Taşınacak Piyade",
         slider_move_arm: "Taşınacak Panzer",
         slider_move_air: "Taşınacak Uçak",
-        btn_execute_move: "🚚 İNTİKAL EMRİ VER",
+        btn_execute_move: "İNTİKAL EMRİ VER",
 
         // Tab 4: Intel
         title_balance_of_power: "AVRUPA SANAYİ VE HAKİMİYET DENGESİ",
@@ -85,7 +85,7 @@ export const TRANSLATIONS = {
         btn_send_chat: "GÖNDER",
 
         // Lobby Modal
-        lobby_title: "⚔️ 2. DÜNYA SAVAŞI KOMUTA MERKEZİ",
+        lobby_title: "2. DÜNYA SAVAŞI KOMUTA MERKEZİ",
         lobby_subtitle: "WebRTC P2P Sıra Tabanlı Strateji Motoru. Lobi kurarak arkadaşlarınızı davet edin veya doğrudan bilgisayara karşı tek oyunculu sefere başlayın.",
         mode_singleplayer_title: "TEK OYUNCULU",
         mode_singleplayer_desc: "Bilgisayara karşı tek başınıza hemen oynayın. İnternet veya sunucu gerektirmez (%100 Çevrimdışı).",
@@ -96,26 +96,26 @@ export const TRANSLATIONS = {
         btn_lobby_join: "BAĞLAN",
         label_select_faction: "KOMUTA EDİLECEK ÜLKE SEÇİMİ:",
         label_commander_name: "KOMUTAN ADI:",
-        btn_start_singleplayer: "🚀 HAREKATI HEMEN BAŞLAT (TEK OYUNCULU)",
-        btn_start_host: "🌐 LOBİ OLUŞTUR VE TOPLANMAYA BAŞLA",
-        lang_switch_label: "🌐 DİL / LANGUAGE / 言語:",
+        btn_start_singleplayer: "HAREKATI HEMEN BAŞLAT (TEK OYUNCULU)",
+        btn_start_host: "LOBİ OLUŞTUR VE TOPLANMAYA BAŞLA",
+        lang_switch_label: "DİL / LANGUAGE / 言語:",
 
         // Waiting Room & Hot-Join
-        waiting_room_title: "🎖️ ASKERİ TOPLANMA ODASI (BEKLEME LOBİSİ)",
+        waiting_room_title: "ASKERİ TOPLANMA ODASI (BEKLEME LOBİSİ)",
         waiting_room_subtitle: "Oda kodunu arkadaşlarınızla paylaşın. Katılmayan ülkeler otomatik olarak Yapay Zeka (Bot) tarafından yönetilecektir.",
         room_code_label: "ODA KODU:",
         btn_copy_code: "Kodu Kopyala",
         btn_copy_link: "Davet Linki Kopyala",
         btn_leave_lobby: "Lobiden Ayrıl",
         btn_start_campaign_now: "HAREKATI BAŞLAT (HERKESİ SAVAŞA SOK)",
-        hotjoin_modal_title: "🎖️ SAVAŞA KATIL (KOMUTAYI DEVRAL)",
+        hotjoin_modal_title: "SAVAŞA KATIL (KOMUTAYI DEVRAL)",
         hotjoin_modal_desc: "Host katılımınızı onayladı! Savaş alanında halen aktif olan ve botlar tarafından yönetilen bir ülkeyi seçin:",
         btn_claim_and_battle: "KOMUTAYI AL VE SAVAŞA GİR",
         toast_code_copied: "Oda kodu panoya kopyalandı!",
         toast_link_copied: "Davet linki panoya kopyalandı!",
-        hotjoin_prompt_title: "⚠️ SAVAŞA KATILIM İSTEĞİ",
+        hotjoin_prompt_title: "SAVAŞA KATILIM İSTEĞİ",
         hotjoin_prompt_desc: "devam eden savaşa katılmak istiyor!",
-        btn_hotjoin_accept: "✅ KABUL ET",
+        btn_hotjoin_accept: "KABUL ET",
         toast_hotjoin_rejected: "Host katılım isteğinizi reddetti.",
         toast_hotjoin_no_factions: "Savaş alanında komuta edilecek uygun bot ülke kalmadı!",
 
@@ -128,9 +128,22 @@ export const TRANSLATIONS = {
         btn_dev_proceed: "Ziyaret Et (Onayla)",
         btn_cancel: "İptal",
 
+        // Strategic Briefing Modal
+        header_player_command: "SİZİN KOMUTANIZ:",
+        briefing_modal_title: "STRATEJİK HAREKAT DİREKTİFİ",
+        briefing_modal_subtitle: "Avrupa & Akdeniz Harp Sahası Görev Emri",
+        briefing_nation_directive_title: "MİLLİ HAREKAT STRATEJİSİ",
+        briefing_key_tips_title: "TEMEL HARP İPUÇLARI",
+        briefing_tip_1: "1. İkmal & Üretim: Dost bir bölgenize tıklayın, Sanayi Puanınızla (IP) piyade, panzer veya uçak konuşlandırın.",
+        briefing_tip_2: "2. Taarruz Planı: Çıkış üssünüzü ve komşu düşman bölgesini seçip taarruz veya stratejik hava sortisi emri verin.",
+        briefing_tip_3: "3. Taktik İntikal: Dost bölgeleriniz arasında birlik kaydırarak cephe hattınızı güçlendirin.",
+        briefing_tip_4: "4. Zafer Koşulu: Avrupa sanayisinin %70'ini ele geçirin veya düşman ittifakın 2 ana başkentini düşürün.",
+        briefing_dont_show: "Bu brifingi başlangıçta bir daha gösterme",
+        btn_briefing_enter: "KOMUTAYI AL VE HAREKATA BAŞLA",
+
 
         // Combat Report Modal
-        combat_modal_title: "⚔️ MUHAREBE RAPORU",
+        combat_modal_title: "MUHAREBE RAPORU",
         combat_attacker: "TAARRUZ EDEN",
         combat_defender: "SAVUNAN",
         combat_losses: "Kayıplar",
@@ -142,8 +155,8 @@ export const TRANSLATIONS = {
         combat_defeat: "TAARRUZ PÜSKÜRTÜLDÜ! SAVUNMA DÜŞMEDİ",
 
         // Game Over Modal
-        game_over_victory: "🎖️ ZAFER! AVRUPA ÖZGÜRLEŞTİRİLDİ",
-        game_over_defeat: "💀 YENİLGİ! CEPHEDE ÇÖKÜŞ",
+        game_over_victory: "ZAFER! AVRUPA ÖZGÜRLEŞTİRİLDİ",
+        game_over_defeat: "YENİLGİ! CEPHEDE ÇÖKÜŞ",
         btn_restart: "YENİ HAREKAT BAŞLAT",
 
         // Toasts & Messages
@@ -152,11 +165,11 @@ export const TRANSLATIONS = {
         toast_select_friendly_region: "Lütfen önce asker yerleştirilecek dost bölgenizi seçin!",
         toast_select_enemy_target: "Lütfen geçerli bir komşu düşman bölgesi seçin!",
         toast_enter_code: "Lütfen 6 haneli oda kodunu girin.",
-        toast_turn_yours: "🚩 Sıra Sizde! Komutan:",
-        toast_game_saved: "💾 Oyun tarayıcı hafızasına kaydedildi.",
-        toast_game_loaded: "📂 Kayıtlı oyun başarıyla yüklendi.",
+        toast_turn_yours: "Sıra Sizde! Komutan:",
+        toast_game_saved: "Oyun tarayıcı hafızasına kaydedildi.",
+        toast_game_loaded: "Kayıtlı oyun başarıyla yüklendi.",
         toast_no_save_found: "Kayıtlı oyun bulunamadı.",
-        toast_map_centered: "🗺️ Harita ortalandı ve taktik görünüm sıfırlandı.",
+        toast_map_centered: "Harita ortalandı ve taktik görünüm sıfırlandı.",
 
         // Factions
         faction_germany_name: "Almanya",
@@ -164,9 +177,9 @@ export const TRANSLATIONS = {
         faction_ussr_name: "Sovyetler Birliği",
         faction_italy_name: "İtalya",
         slot_bot_name: "Yapay Zeka (Bot)",
-        slot_host_badge: "👑 HOST",
-        slot_player_badge: "👤 OYUNCU",
-        slot_bot_badge: "🤖 BOT",
+        slot_host_badge: "HOST",
+        slot_player_badge: "OYUNCU",
+        slot_bot_badge: "BOT",
         odds_no_units: "Birlik Tahsis Edilmedi",
         odds_no_selection: "Seçim Yapılmadı",
         odds_overwhelming: "Ezici Üstünlük",
@@ -174,10 +187,38 @@ export const TRANSLATIONS = {
         odds_balanced: "Dengeli",
         odds_risky: "Yüksek Risk / Savunma Üstün",
         factions: {
-            germany: { name: "Almanya", fullName: "German Reich", desc: "Almanya (Mihver - Yüksek Başlangıç Panzer Gücü)" },
-            uk: { name: "Birleşik Krallık", fullName: "United Kingdom", desc: "Birleşik Krallık (Müttefikler - Atlantik & Kraliyet Donanması)" },
-            ussr: { name: "Sovyetler Birliği", fullName: "Soviet Union", desc: "Sovyetler Birliği (Müttefikler - Muazzam İnsan Gücü & Sanayi)" },
-            italy: { name: "İtalya", fullName: "Kingdom of Italy", desc: "İtalya (Mihver - Akdeniz & Kuzey Afrika Cephesi)" },
+            germany: { 
+                name: "Almanya", 
+                fullName: "German Reich", 
+                desc: "Almanya (Mihver - Yüksek Başlangıç Panzer Gücü)",
+                directiveTitle: "Yıldırım Taarruzu (Blitzkrieg) & Sanayi Üstünlüğü",
+                directiveDesc: "Ruhr ve Berlin'deki devasa panzer ve sanayi gücünüzle Batı ve Doğu cephelerinde hızlı yarmalar yapın. Müttefikler mobilize olmadan önce Polonya ve Fransa'yı düşürün.",
+                allianceName: "MİHVER İTTİFAKI (AXIS)"
+            },
+            uk: { 
+                name: "Birleşik Krallık", 
+                fullName: "United Kingdom", 
+                desc: "Birleşik Krallık (Müttefikler - Atlantik & Kraliyet Donanması)",
+                directiveTitle: "Ada Savunması & Kraliyet Hava/Deniz Üstünlüğü",
+                directiveDesc: "İngiltere Adası ve Atlantik deniz konvoy hattını hava ve deniz unsurlarıyla koruyun. Stratejik hava bombardımanları ile Mihver sanayisini yıpratıp kıta çıkarması hazırlayın.",
+                allianceName: "MÜTTEFİK GÜÇLER (ALLIES)"
+            },
+            ussr: { 
+                name: "Sovyetler Birliği", 
+                fullName: "Soviet Union", 
+                desc: "Sovyetler Birliği (Müttefikler - Muazzam İnsan Gücü & Sanayi)",
+                directiveTitle: "Muazzam İnsan Gücü & Derin Savunma Hatları",
+                directiveDesc: "Geniş coğrafyanızı ve zengin insan gücünüzü kullanarak ilk taarruzları göğüsleyin. Moskova, Stalingrad ve Leningrad tahkimatlarını koruyup Ural ağır sanayisiyle karşı taarruza geçin.",
+                allianceName: "MÜTTEFİK GÜÇLER (ALLIES)"
+            },
+            italy: { 
+                name: "İtalya", 
+                fullName: "Kingdom of Italy", 
+                desc: "İtalya (Mihver - Akdeniz & Kuzey Afrika Cephesi)",
+                directiveTitle: "Akdeniz Hakimiyeti & Çöl Lojistiği",
+                directiveDesc: "Akdeniz deniz yollarını ve Kuzey Afrika çöl cephesini kontrol altında tutun. Süveyş ve Mısır yönünde ilerleyerek Mihver ittifakının güney kanadını güvenceye alın.",
+                allianceName: "MİHVER İTTİFAKI (AXIS)"
+            },
             neutral: { name: "Tarafsızlar", fullName: "Neutral Nations", desc: "Tarafsız Ülkeler" }
         },
 
@@ -249,25 +290,25 @@ export const TRANSLATIONS = {
         campaign_phase: "CAMPAIGN PHASE",
         phase_1_name: "PHASE 1: PRODUCTION & REINFORCEMENTS",
         phase_2_name: "PHASE 2: MILITARY OPERATIONS & COMBAT",
-        btn_next_to_combat: "⚔️ ADVANCE TO COMBAT PHASE",
-        btn_end_turn: "⏭️ END TURN",
-        btn_sound_on: "🔊 Sound: On",
-        btn_sound_off: "🔇 Sound: Off",
-        btn_save: "💾 Save",
-        btn_load: "📂 Load",
-        btn_room_prefix: "🔑 Room:",
+        btn_next_to_combat: "ADVANCE TO COMBAT PHASE",
+        btn_end_turn: "END TURN",
+        btn_sound_on: "Sound: On",
+        btn_sound_off: "Sound: Off",
+        btn_save: "Save",
+        btn_load: "Load",
+        btn_room_prefix: "Room:",
         room_copied: "Room Code Copied:",
         zoom_in: "+",
         zoom_out: "-",
-        zoom_reset: "⟲ Center Map",
+        zoom_reset: "Center Map",
         zoom_reset_title: "Center Map & Reset View",
 
         // Navigation Tabs
-        tab_production: "🪖 PRODUCTION",
-        tab_combat: "⚔️ COMBAT",
-        tab_movement: "🚚 MOVEMENT",
-        tab_intel: "📊 INTEL",
-        tab_radio: "📻 RADIO",
+        tab_production: "PRODUCTION",
+        tab_combat: "COMBAT",
+        tab_movement: "MOVEMENT",
+        tab_intel: "INTEL",
+        tab_radio: "RADIO",
 
         // Tab 1: Production
         title_selected_garrison: "SELECTED GARRISON BASE",
@@ -279,8 +320,8 @@ export const TRANSLATIONS = {
         unit_arm_desc: "Cost: 6 IP | Assault Breakthrough",
         unit_air_name: "Air Wing (Fighters/Bombers)",
         unit_air_desc: "Cost: 8 IP | Aerial Bombardment & Strike",
-        btn_deploy_units: "🪖 DEPLOY UNITS TO REGION",
-        btn_deploy_disabled: "⚠️ REINFORCEMENTS ONLY IN FRIENDLY TERRITORIES",
+        btn_deploy_units: "DEPLOY UNITS TO REGION",
+        btn_deploy_disabled: "REINFORCEMENTS ONLY IN FRIENDLY TERRITORIES",
         select_region_prompt: "Select Territory",
 
         // Tab 2: Combat
@@ -293,9 +334,9 @@ export const TRANSLATIONS = {
         slider_attack_inf: "Attacking Infantry",
         slider_attack_arm: "Attacking Armor",
         slider_air_sortie: "Air Sorties",
-        btn_ground_assault: "⚔️ LAUNCH GROUND ASSAULT",
-        btn_air_strike: "✈️ STRATEGIC AIR STRIKE",
-        btn_blitzkrieg: "⚡ BLITZKRIEG (LIGHTNING ASSAULT)",
+        btn_ground_assault: "LAUNCH GROUND ASSAULT",
+        btn_air_strike: "STRATEGIC AIR STRIKE",
+        btn_blitzkrieg: "BLITZKRIEG (LIGHTNING ASSAULT)",
         terrain_label: "Terrain:",
         defense_bonus_label: "Defense Bonus:",
 
@@ -305,7 +346,7 @@ export const TRANSLATIONS = {
         slider_move_inf: "Infantry to Move",
         slider_move_arm: "Armor to Move",
         slider_move_air: "Air to Move",
-        btn_execute_move: "🚚 ORDER REPOSITIONING",
+        btn_execute_move: "ORDER REPOSITIONING",
 
         // Tab 4: Intel
         title_balance_of_power: "EUROPEAN INDUSTRIAL DOMINANCE",
@@ -321,7 +362,7 @@ export const TRANSLATIONS = {
         btn_send_chat: "SEND",
 
         // Lobby Modal
-        lobby_title: "⚔️ WAR ROOM 1942: SUPREME HEADQUARTERS",
+        lobby_title: "WAR ROOM 1942: SUPREME HEADQUARTERS",
         lobby_subtitle: "Serverless WebRTC P2P Turn-Based Strategy Engine. Host a multiplayer room with friends or launch an immediate solo campaign against autonomous AI.",
         mode_singleplayer_title: "SOLO CAMPAIGN",
         mode_singleplayer_desc: "Play instantly against autonomous AI. Zero servers or setup required (100% Offline).",
@@ -332,26 +373,26 @@ export const TRANSLATIONS = {
         btn_lobby_join: "CONNECT",
         label_select_faction: "SELECT YOUR FACTION:",
         label_commander_name: "COMMANDER NAME:",
-        btn_start_singleplayer: "🚀 LAUNCH CAMPAIGN (SOLO PLAY)",
-        btn_start_host: "🌐 CREATE ROOM & OPEN GATHERING LOBBY",
-        lang_switch_label: "🌐 LANGUAGE / DİL / 言語:",
+        btn_start_singleplayer: "LAUNCH CAMPAIGN (SOLO PLAY)",
+        btn_start_host: "CREATE ROOM & OPEN GATHERING LOBBY",
+        lang_switch_label: "LANGUAGE / DİL / 言語:",
 
         // Waiting Room & Hot-Join
-        waiting_room_title: "🎖️ MILITARY BRIEFING ROOM (GATHERING LOBBY)",
+        waiting_room_title: "MILITARY BRIEFING ROOM (GATHERING LOBBY)",
         waiting_room_subtitle: "Share the room code with friends. Unclaimed factions will automatically be commanded by autonomous AI bots.",
         room_code_label: "ROOM CODE:",
         btn_copy_code: "Copy Code",
         btn_copy_link: "Copy Invite Link",
         btn_leave_lobby: "Leave Lobby",
         btn_start_campaign_now: "LAUNCH CAMPAIGN (START WAR FOR ALL)",
-        hotjoin_modal_title: "🎖️ JOIN ONGOING BATTLE (TAKE COMMAND)",
+        hotjoin_modal_title: "JOIN ONGOING BATTLE (TAKE COMMAND)",
         hotjoin_modal_desc: "Host approved your request! Choose an active faction currently commanded by an AI bot:",
         btn_claim_and_battle: "CLAIM COMMAND & ENTER BATTLE",
         toast_code_copied: "Room code copied to clipboard!",
         toast_link_copied: "Invite link copied to clipboard!",
-        hotjoin_prompt_title: "⚠️ REINFORCEMENT REQUEST",
+        hotjoin_prompt_title: "REINFORCEMENT REQUEST",
         hotjoin_prompt_desc: "wants to join the ongoing war!",
-        btn_hotjoin_accept: "✅ APPROVE",
+        btn_hotjoin_accept: "APPROVE",
         toast_hotjoin_rejected: "Host rejected your join request.",
         toast_hotjoin_no_factions: "No available bot-commanded factions remaining!",
 
@@ -364,9 +405,22 @@ export const TRANSLATIONS = {
         btn_dev_proceed: "Visit (Confirm)",
         btn_cancel: "Cancel",
 
+        // Strategic Briefing Modal
+        header_player_command: "YOUR COMMAND:",
+        briefing_modal_title: "STRATEGIC CAMPAIGN DIRECTIVE",
+        briefing_modal_subtitle: "European & Mediterranean Theater of War",
+        briefing_nation_directive_title: "NATIONAL STRATEGY & OBJECTIVES",
+        briefing_key_tips_title: "ESSENTIAL WARFARE DIRECTIVES",
+        briefing_tip_1: "1. Procurement & Reserves: Click any friendly territory to recruit Infantry, Panzer Armor, or Air Wings using Industry Points (IP).",
+        briefing_tip_2: "2. Tactical Combat: Select your origin base and an adjacent hostile territory to execute ground assaults or strategic air strikes.",
+        briefing_tip_3: "3. Strategic Movement: Relocate garrison units between connected friendly territories to reinforce contested frontlines.",
+        briefing_tip_4: "4. Victory Condition: Control 70% of total European industry or capture 2 opposing enemy capital cities.",
+        briefing_dont_show: "Do not show this briefing again on startup",
+        btn_briefing_enter: "ASSUME COMMAND & ENTER WAR ROOM",
+
 
         // Combat Report Modal
-        combat_modal_title: "⚔️ AFTER-ACTION REPORT (AAR)",
+        combat_modal_title: "AFTER-ACTION REPORT (AAR)",
         combat_attacker: "ATTACKING FORCE",
         combat_defender: "DEFENDING FORCE",
         combat_losses: "Casualties",
@@ -378,8 +432,8 @@ export const TRANSLATIONS = {
         combat_defeat: "ASSAULT REPELLED! DEFENDING FORCES HELD",
 
         // Game Over Modal
-        game_over_victory: "🎖️ VICTORY! EUROPE IS LIBERATED",
-        game_over_defeat: "💀 DEFEAT! STRATEGIC COLLAPSE",
+        game_over_victory: "VICTORY! EUROPE IS LIBERATED",
+        game_over_defeat: "DEFEAT! STRATEGIC COLLAPSE",
         btn_restart: "START NEW CAMPAIGN",
 
         // Toasts & Messages
@@ -388,11 +442,11 @@ export const TRANSLATIONS = {
         toast_select_friendly_region: "Please select a friendly territory to deploy troops.",
         toast_select_enemy_target: "Please select an adjacent enemy territory to target.",
         toast_enter_code: "Please enter a 6-digit room code.",
-        toast_turn_yours: "🚩 It's Your Turn! Commander:",
-        toast_game_saved: "💾 Game saved to browser storage.",
-        toast_game_loaded: "📂 Saved campaign restored successfully.",
+        toast_turn_yours: "It's Your Turn! Commander:",
+        toast_game_saved: "Game saved to browser storage.",
+        toast_game_loaded: "Saved campaign restored successfully.",
         toast_no_save_found: "No saved campaign found in storage.",
-        toast_map_centered: "🗺️ Map centered & tactical view reset.",
+        toast_map_centered: "Map centered & tactical view reset.",
 
         // Factions
         faction_germany_name: "Germany",
@@ -400,9 +454,9 @@ export const TRANSLATIONS = {
         faction_ussr_name: "Soviet Union",
         faction_italy_name: "Italy",
         slot_bot_name: "Artificial Intelligence (Bot)",
-        slot_host_badge: "👑 HOST",
-        slot_player_badge: "👤 PLAYER",
-        slot_bot_badge: "🤖 BOT",
+        slot_host_badge: "HOST",
+        slot_player_badge: "PLAYER",
+        slot_bot_badge: "BOT",
         odds_no_units: "No Units Assigned",
         odds_no_selection: "No Selection",
         odds_overwhelming: "Decisive Superiority",
@@ -410,10 +464,38 @@ export const TRANSLATIONS = {
         odds_balanced: "Balanced",
         odds_risky: "High Risk / Defense Favored",
         factions: {
-            germany: { name: "Germany", fullName: "German Reich", desc: "Germany (Axis - High Initial Panzer Strength)" },
-            uk: { name: "United Kingdom", fullName: "United Kingdom", desc: "United Kingdom (Allies - Atlantic & Royal Navy)" },
-            ussr: { name: "Soviet Union", fullName: "Soviet Union", desc: "Soviet Union (Allies - Immense Manpower & Industry)" },
-            italy: { name: "Italy", fullName: "Kingdom of Italy", desc: "Italy (Axis - Mediterranean & North Africa)" },
+            germany: { 
+                name: "Germany", 
+                fullName: "German Reich", 
+                desc: "Germany (Axis - High Initial Panzer Strength)",
+                directiveTitle: "Blitzkrieg & Industrial Supremacy",
+                directiveDesc: "Leverage formidable Panzer divisions in Ruhr and Berlin to strike swiftly through Poland and Western Europe before Soviet industrial mobilization.",
+                allianceName: "AXIS POWERS"
+            },
+            uk: { 
+                name: "United Kingdom", 
+                fullName: "United Kingdom", 
+                desc: "United Kingdom (Allies - Atlantic & Royal Navy)",
+                directiveTitle: "Island Fortress & Royal Navy",
+                directiveDesc: "Defend the British Isles and Atlantic convoy lines with air and naval superiority. Soften enemy industrial hubs with strategic air strikes before launching cross-channel assaults.",
+                allianceName: "ALLIED POWERS"
+            },
+            ussr: { 
+                name: "Soviet Union", 
+                fullName: "Soviet Union", 
+                desc: "Soviet Union (Allies - Immense Manpower & Industry)",
+                directiveTitle: "Immense Manpower & Strategic Depth",
+                directiveDesc: "Absorb initial Axis pushes across vast territories. Fortify Moscow, Stalingrad, and Leningrad while mobilizing Ural heavy industry for massive counter-offensives.",
+                allianceName: "ALLIED POWERS"
+            },
+            italy: { 
+                name: "Italy", 
+                fullName: "Kingdom of Italy", 
+                desc: "Italy (Axis - Mediterranean & North Africa)",
+                directiveTitle: "Mediterranean Dominance & North Africa",
+                directiveDesc: "Dominate the Mediterranean sea lanes and advance through North Africa towards Egypt and the Suez Canal, securing the Axis southern flank.",
+                allianceName: "AXIS POWERS"
+            },
             neutral: { name: "Neutrals", fullName: "Neutral Nations", desc: "Neutral Nations" }
         },
 
@@ -485,25 +567,25 @@ export const TRANSLATIONS = {
         campaign_phase: "作戦フェーズ",
         phase_1_name: "第1段階: 生産・増援配備",
         phase_2_name: "第2段階: 軍事作戦・戦闘",
-        btn_next_to_combat: "⚔️ 戦闘フェーズへ移行",
-        btn_end_turn: "⏭️ ターン終了",
-        btn_sound_on: "🔊 音声: オン",
-        btn_sound_off: "🔇 音声: オフ",
-        btn_save: "💾 セーブ",
-        btn_load: "📂 ロード",
-        btn_room_prefix: "🔑 ルーム:",
+        btn_next_to_combat: "戦闘フェーズへ移行",
+        btn_end_turn: "ターン終了",
+        btn_sound_on: "音声: オン",
+        btn_sound_off: "音声: オフ",
+        btn_save: "セーブ",
+        btn_load: "ロード",
+        btn_room_prefix: "ルーム:",
         room_copied: "ルームコードをコピーしました:",
         zoom_in: "+",
         zoom_out: "-",
-        zoom_reset: "⟲ マップを中央揃え",
+        zoom_reset: "マップを中央揃え",
         zoom_reset_title: "マップを中央に配置して視点をリセット",
 
         // Navigation Tabs
-        tab_production: "🪖 軍備生産",
-        tab_combat: "⚔️ 作戦攻撃",
-        tab_movement: "🚚 部隊再配置",
-        tab_intel: "📊 戦況諜報",
-        tab_radio: "📻 無線通信",
+        tab_production: "軍備生産",
+        tab_combat: "作戦攻撃",
+        tab_movement: "部隊再配置",
+        tab_intel: "戦況諜報",
+        tab_radio: "無線通信",
 
         // Tab 1: Production
         title_selected_garrison: "選択中の駐留拠点",
@@ -515,8 +597,8 @@ export const TRANSLATIONS = {
         unit_arm_desc: "コスト: 6 IP | 強襲突撃・戦線突破",
         unit_air_name: "航空航空隊 (戦闘・爆撃機)",
         unit_air_desc: "コスト: 8 IP | 戦略爆撃・航空支援",
-        btn_deploy_units: "🪖 部隊を地域に配備する",
-        btn_deploy_disabled: "⚠️ 自軍の領土にのみ増援配備が可能です",
+        btn_deploy_units: "部隊を地域に配備する",
+        btn_deploy_disabled: "自軍の領土にのみ増援配備が可能です",
         select_region_prompt: "領土を選択してください",
 
         // Tab 2: Combat
@@ -529,9 +611,9 @@ export const TRANSLATIONS = {
         slider_attack_inf: "出撃歩兵",
         slider_attack_arm: "出撃戦車",
         slider_air_sortie: "航空出撃",
-        btn_ground_assault: "⚔️ 地上総攻撃を開始",
-        btn_air_strike: "✈️ 戦略爆撃を実施",
-        btn_blitzkrieg: "⚡ 電撃戦 (ブリッツクリーク)",
+        btn_ground_assault: "地上総攻撃を開始",
+        btn_air_strike: "戦略爆撃を実施",
+        btn_blitzkrieg: "電撃戦 (ブリッツクリーク)",
         terrain_label: "地形:",
         defense_bonus_label: "防御補正:",
 
@@ -541,7 +623,7 @@ export const TRANSLATIONS = {
         slider_move_inf: "移動歩兵数",
         slider_move_arm: "移動戦車数",
         slider_move_air: "移動航空機数",
-        btn_execute_move: "🚚 部隊再配置命令を発令",
+        btn_execute_move: "部隊再配置命令を発令",
 
         // Tab 4: Intel
         title_balance_of_power: "欧州工業生産力と勢力均衡",
@@ -557,7 +639,7 @@ export const TRANSLATIONS = {
         btn_send_chat: "送信",
 
         // Lobby Modal
-        lobby_title: "⚔️ 1942作戦司令部 (第2次世界大戦)",
+        lobby_title: "1942作戦司令部 (第2次世界大戦)",
         lobby_subtitle: "サーバー不要のWebRTC P2Pターン制戦略エンジン。ルームを作成して世界中の仲間と対戦するか、AIとの単独作戦を開始してください。",
         mode_singleplayer_title: "単独作戦 (ソロプレイ)",
         mode_singleplayer_desc: "自律思考AIを相手に即座に対戦。外部サーバー・ネットワーク設定は一切不要 (100%オフライン対応)。",
@@ -568,26 +650,26 @@ export const TRANSLATIONS = {
         btn_lobby_join: "接続する",
         label_select_faction: "指揮する国家を選択:",
         label_commander_name: "指揮官名:",
-        btn_start_singleplayer: "🚀 作戦を直ちに開始 (単独作戦)",
-        btn_start_host: "🌐 ロビーを作成して集結を開始",
-        lang_switch_label: "🌐 言語 / LANGUAGE / DİL:",
+        btn_start_singleplayer: "作戦を直ちに開始 (単独作戦)",
+        btn_start_host: "ロビーを作成して集結を開始",
+        lang_switch_label: "言語 / LANGUAGE / DİL:",
 
         // Waiting Room & Hot-Join
-        waiting_room_title: "🎖️ 作戦集結司令部 (待機ロビー)",
+        waiting_room_title: "作戦集結司令部 (待機ロビー)",
         waiting_room_subtitle: "ルームコードを仲間に共有してください。未参戦の国家はすべて自律思考AIボットが自動で指揮します。",
         room_code_label: "作戦コード:",
         btn_copy_code: "コードをコピー",
         btn_copy_link: "招待リンクをコピー",
         btn_leave_lobby: "ロビーを退室",
         btn_start_campaign_now: "作戦を開始する (全員で開戦)",
-        hotjoin_modal_title: "🎖️ 戦場に途中参戦 (指揮権の継承)",
+        hotjoin_modal_title: "戦場に途中参戦 (指揮権の継承)",
         hotjoin_modal_desc: "ホストが参戦を承認しました！現在AIボットが指揮している生存国家を選択してください:",
         btn_claim_and_battle: "指揮を執り戦場へ突入",
         toast_code_copied: "ルームコードをクリップボードにコピーしました！",
         toast_link_copied: "招待リンクをクリップボードにコピーしました！",
-        hotjoin_prompt_title: "⚠️ 援軍参戦リクエスト",
+        hotjoin_prompt_title: "援軍参戦リクエスト",
         hotjoin_prompt_desc: "が進行中の作戦への参戦を希望しています！",
-        btn_hotjoin_accept: "✅ 承認する",
+        btn_hotjoin_accept: "承認する",
         toast_hotjoin_rejected: "ホストにより参戦リクエストが拒否されました。",
         toast_hotjoin_no_factions: "現在指揮可能なAI国家はありません！",
 
@@ -600,9 +682,22 @@ export const TRANSLATIONS = {
         btn_dev_proceed: "移動する (承認)",
         btn_cancel: "キャンセル",
 
+        // Strategic Briefing Modal
+        header_player_command: "あなたの指揮国:",
+        briefing_modal_title: "戦略作戦発動司令書",
+        briefing_modal_subtitle: "欧州および地中海戦域作戦要綱",
+        briefing_nation_directive_title: "国家戦略方針と主要目標",
+        briefing_key_tips_title: "作戦行動の基本指針",
+        briefing_tip_1: "1. 軍備生産と配備: 自軍の支配地域を選択し、工業生産力 (IP) を用いて歩兵・戦車・航空部隊を増援配備します。",
+        briefing_tip_2: "2. 前線作戦攻撃: 出撃拠点と隣接する敵領土を選択し、地上電撃侵攻または戦略空爆を実施します。",
+        briefing_tip_3: "3. 部隊戦略再配置: 友軍地域間で戦力を移動させ、最前線の防衛線を強化します。",
+        briefing_tip_4: "4. 勝利達成条件: 全欧州工業生産力の70%を掌握するか、敵対陣営の主要2大首都を陥落させます。",
+        briefing_dont_show: "起動時にこの作戦司令書を再表示しない",
+        btn_briefing_enter: "指揮権を掌握し、作戦を開始する",
+
 
         // Combat Report Modal
-        combat_modal_title: "⚔️ 戦闘詳報 (交戦結果報告)",
+        combat_modal_title: "戦闘詳報 (交戦結果報告)",
         combat_attacker: "攻撃側部隊",
         combat_defender: "防衛側部隊",
         combat_losses: "損害数",
@@ -614,8 +709,8 @@ export const TRANSLATIONS = {
         combat_defeat: "攻撃失敗！ 敵防衛部隊の頑強な抵抗により撃退",
 
         // Game Over Modal
-        game_over_victory: "🎖️ 偉大なる勝利！ 欧州戦線完全制覇",
-        game_over_defeat: "💀 敗北！ 全戦線の戦略的崩壊",
+        game_over_victory: "偉大なる勝利！ 欧州戦線完全制覇",
+        game_over_defeat: "敗北！ 全戦線の戦略的崩壊",
         btn_restart: "新たな作戦を開始する",
 
         // Toasts & Messages
@@ -624,11 +719,11 @@ export const TRANSLATIONS = {
         toast_select_friendly_region: "増援を配備する友軍領土を選択してください！",
         toast_select_enemy_target: "攻撃対象となる隣接する敵領土を選択してください！",
         toast_enter_code: "6桁のルームコードを入力してください。",
-        toast_turn_yours: "🚩 あなたの手番です！ 指揮官:",
-        toast_game_saved: "💾 ブラウザのローカルメモリにゲームを保存しました。",
-        toast_game_loaded: "📂 保存された作戦状況を復元しました。",
+        toast_turn_yours: "あなたの手番です！ 指揮官:",
+        toast_game_saved: "ブラウザのローカルメモリにゲームを保存しました。",
+        toast_game_loaded: "保存された作戦状況を復元しました。",
         toast_no_save_found: "セーブデータが見つかりませんでした。",
-        toast_map_centered: "🗺️ マップを中央揃えにし、視点をリセットしました。",
+        toast_map_centered: "マップを中央揃えにし、視点をリセットしました。",
 
         // Factions
         faction_germany_name: "ドイツ国",
@@ -636,9 +731,9 @@ export const TRANSLATIONS = {
         faction_ussr_name: "ソビエト連邦",
         faction_italy_name: "イタリア王国",
         slot_bot_name: "人工知能 (AI Bot)",
-        slot_host_badge: "👑 ホスト",
-        slot_player_badge: "👤 プレイヤー",
-        slot_bot_badge: "🤖 ボット",
+        slot_host_badge: "ホスト",
+        slot_player_badge: "プレイヤー",
+        slot_bot_badge: "ボット",
         odds_no_units: "部隊未割り当て",
         odds_no_selection: "未選択",
         odds_overwhelming: "圧倒的優位",
@@ -646,10 +741,38 @@ export const TRANSLATIONS = {
         odds_balanced: "互角",
         odds_risky: "危険 / 敵防衛優位",
         factions: {
-            germany: { name: "ドイツ国", fullName: "German Reich", desc: "ドイツ国 (枢軸国 - 強力な機甲戦力)" },
-            uk: { name: "イギリス", fullName: "United Kingdom", desc: "イギリス (連合国 - 大西洋航路と海空軍)" },
-            ussr: { name: "ソビエト連邦", fullName: "Soviet Union", desc: "ソビエト連邦 (連合国 - 膨大な人的資源と重工業)" },
-            italy: { name: "イタリア王国", fullName: "Kingdom of Italy", desc: "イタリア王国 (枢軸国 - 地中海・北アフリカ戦線)" },
+            germany: { 
+                name: "ドイツ国", 
+                fullName: "German Reich", 
+                desc: "ドイツ国 (枢軸国 - 強力な機甲戦力)",
+                directiveTitle: "電撃戦と圧倒的工業力",
+                directiveDesc: "ルールおよびベルリンの強力な機甲戦力を集中運用し、ポーランドと西欧を迅速に制圧せよ。東方のソ連重工業が本格稼働する前に勝敗を決せよ。",
+                allianceName: "枢軸国陣営 (AXIS)"
+            },
+            uk: { 
+                name: "イギリス", 
+                fullName: "United Kingdom", 
+                desc: "イギリス (連合国 - 大西洋航路と海空軍)",
+                directiveTitle: "要塞島と海空軍の誇り",
+                directiveDesc: "英本土と大西洋輸送航路を防衛せよ。戦略航空隊による爆撃で敵の工業基盤を削り、欧州大陸反攻の足がかりを築け。",
+                allianceName: "連合国陣営 (ALLIES)"
+            },
+            ussr: { 
+                name: "ソビエト連邦", 
+                fullName: "Soviet Union", 
+                desc: "ソビエト連邦 (連合国 - 膨大な人的資源と重工業)",
+                directiveTitle: "膨大な人的資源と縦深防御",
+                directiveDesc: "広大な国土と無尽蔵の動員力を活かして初期の敵攻勢を吸収せよ。モスクワ・スターリングラードの防衛線を死守し、ウラル重工業で反攻せよ。",
+                allianceName: "連合国陣営 (ALLIES)"
+            },
+            italy: { 
+                name: "イタリア王国", 
+                fullName: "Kingdom of Italy", 
+                desc: "イタリア王国 (枢軸国 - 地中海・北アフリカ戦線)",
+                directiveTitle: "地中海制圧と砂漠戦線",
+                directiveDesc: "地中海の制海権を確保し、北アフリカからエジプト・スエズ方面へ進出せよ。枢軸陣営の南部戦線を確実に防衛せよ。",
+                allianceName: "枢軸国陣営 (AXIS)"
+            },
             neutral: { name: "中立国", fullName: "Neutral Nations", desc: "中立国" }
         },
 
@@ -725,8 +848,33 @@ class I18nManager {
     }
 
     t(key) {
+        if (!key) return '';
         const dict = TRANSLATIONS[this.currentLang] || TRANSLATIONS.tr;
+        if (key.includes('.')) {
+            const parts = key.split('.');
+            let val = dict;
+            for (const p of parts) {
+                if (val && val[p] !== undefined) val = val[p];
+                else { val = undefined; break; }
+            }
+            if (val !== undefined) return val;
+
+            let defVal = TRANSLATIONS.tr;
+            for (const p of parts) {
+                if (defVal && defVal[p] !== undefined) defVal = defVal[p];
+                else { defVal = undefined; break; }
+            }
+            return defVal !== undefined ? defVal : key;
+        }
         return dict[key] !== undefined ? dict[key] : (TRANSLATIONS.tr[key] || key);
+    }
+
+    getFactionData(factionId) {
+        const dict = TRANSLATIONS[this.currentLang] || TRANSLATIONS.tr;
+        if (dict.factions && dict.factions[factionId]) {
+            return dict.factions[factionId];
+        }
+        return (TRANSLATIONS.tr.factions && TRANSLATIONS.tr.factions[factionId]) || {};
     }
 
     getRegionName(regionId) {

@@ -48,8 +48,7 @@ export const FACTIONS = {
         color: '#1e293b',       // Wehrmacht Dark Iron Slate / Gunmetal
         accentColor: '#fbbf24', // Golden Eagle Amber
         textColor: '#f8fafc',
-        capital: 'berlin',
-        flagEmoji: '🦅'
+        capital: 'berlin'
     },
     ITALY: {
         id: 'italy',
@@ -59,8 +58,7 @@ export const FACTIONS = {
         color: '#15803d',       // Regio Esercito Alpine Green
         accentColor: '#86efac',
         textColor: '#ffffff',
-        capital: 'rome',
-        flagEmoji: '👑'
+        capital: 'rome'
     },
     UK: {
         id: 'uk',
@@ -70,8 +68,7 @@ export const FACTIONS = {
         color: '#1d4ed8',       // Royal Navy Deep Blue
         accentColor: '#93c5fd',
         textColor: '#ffffff',
-        capital: 'london',
-        flagEmoji: '🦁'
+        capital: 'london'
     },
     USSR: {
         id: 'ussr',
@@ -81,8 +78,7 @@ export const FACTIONS = {
         color: '#b91c1c',       // Soviet Red Army Crimson
         accentColor: '#fca5a5',
         textColor: '#ffffff',
-        capital: 'moscow',
-        flagEmoji: '⭐'
+        capital: 'moscow'
     },
     NEUTRAL: {
         id: 'neutral',
@@ -92,8 +88,7 @@ export const FACTIONS = {
         color: '#716550',       // Warm Earth / Desert Khaki (distinct from Germany's slate steel)
         accentColor: '#d6c7a1',
         textColor: '#f5f5f4',
-        capital: null,
-        flagEmoji: '🕊️'
+        capital: null
     }
 };
 
@@ -104,7 +99,6 @@ export const UNIT_TYPES = {
         cost: 3,
         attackPower: 2,   // base combat weight
         defensePower: 3,  // infantry excels at holding ground
-        icon: '🪖',
         description: 'Düşük maliyetli, savunması güçlü temel hat askeri.'
     },
     ARMOR: {
@@ -113,7 +107,6 @@ export const UNIT_TYPES = {
         cost: 6,
         attackPower: 5,   // spearhead assault
         defensePower: 3,
-        icon: '🚜',
         description: 'Yüksek taarruz gücüne sahip zırhlı yarma kuvveti.'
     },
     AIR: {
@@ -122,7 +115,6 @@ export const UNIT_TYPES = {
         cost: 8,
         attackPower: 4,
         defensePower: 2,
-        icon: '✈️',
         range: 2,         // can strike 1-2 regions away
         description: 'Taktik bombardıman ile düşman tahkimatını yumuşatır.'
     }
@@ -133,36 +125,31 @@ export const TERRAIN_TYPES = {
         id: 'plains',
         name: 'Düzlük / Ova',
         defenseBonus: 0.0,
-        armorAttackBonus: 0.10,
-        icon: '🌾'
+        armorAttackBonus: 0.10
     },
     CITY: {
         id: 'city',
         name: 'Şehir / Metropol',
         defenseBonus: 0.25,
-        armorAttackBonus: -0.15,
-        icon: '🏙️'
+        armorAttackBonus: -0.15
     },
     MOUNTAINS: {
         id: 'mountains',
         name: 'Dağlık Arazi',
         defenseBonus: 0.40,
-        armorAttackBonus: -0.25,
-        icon: '⛰️'
+        armorAttackBonus: -0.25
     },
     DESERT: {
         id: 'desert',
         name: 'Çöl Arazisi',
         defenseBonus: 0.0,
-        armorAttackBonus: 0.20,
-        icon: '🏜️'
+        armorAttackBonus: 0.20
     },
     COASTAL: {
         id: 'coastal',
         name: 'Kıyı / Boğaz',
         defenseBonus: 0.15,
-        armorAttackBonus: 0.0,
-        icon: '⚓'
+        armorAttackBonus: 0.0
     }
 };
 

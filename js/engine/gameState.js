@@ -275,7 +275,7 @@ export class GameState {
             // Defender wiped out: target region captured!
             to.owner = attackerFaction.id;
             to.units = { ...report.survivingAttackerUnits };
-            this.addLog(`🚩 FETİH: ${attName}, ${toName} bölgesini ele geçirdi!`);
+            this.addLog(`FETİH: ${attName}, ${toName} bölgesini ele geçirdi!`);
         } else {
             // Attack repelled: surviving defenders remain, surviving attackers return to origin
             // If both sides were wiped out in mutual combat, ensure defender holds 1 militia survivor
@@ -286,7 +286,7 @@ export class GameState {
             from.units.infantry += report.survivingAttackerUnits.infantry;
             from.units.armor += report.survivingAttackerUnits.armor;
             from.units.air += report.survivingAttackerUnits.air;
-            this.addLog(`🛡️ PÜSKÜRTÜLDÜ: ${defName}, ${toName} savunmasını başarıyla korudu.`);
+            this.addLog(`PÜSKÜRTÜLDÜ: ${defName}, ${toName} savunmasını başarıyla korudu.`);
         }
 
         this.updateFactionStats();
@@ -327,7 +327,7 @@ export class GameState {
 
         const attAirName = this.getFactionDisplayName(attackerFaction.id);
         const toAirName = this.getRegionDisplayName(to.id);
-        this.addLog(`✈️ HAVA HAREKATI: ${attAirName}, ${toAirName} mevzilerini bombaladı! (${airResult.hits} isabet).`);
+        this.addLog(`HAVA HAREKATI: ${attAirName}, ${toAirName} mevzilerini bombaladı! (${airResult.hits} isabet).`);
         this.updateFactionStats();
 
         return {
@@ -448,7 +448,7 @@ export class GameState {
                 name: 'Müttefik Devletler (Allies)',
                 reason: 'Berlin ve Roma başkentleri ele geçirilerek Mihver teslim alındı!'
             };
-            this.addLog(`🏆 KESİN ZAFER: ${this.winner.name} kazandı! ${this.winner.reason}`);
+            this.addLog(`KESİN ZAFER: ${this.winner.name} kazandı! ${this.winner.reason}`);
             return this.winner;
         }
 
@@ -461,7 +461,7 @@ export class GameState {
                 name: 'Mihver Devletleri (Axis)',
                 reason: 'Londra ve Moskova başkentleri ele geçirilerek Müttefikler dize getirildi!'
             };
-            this.addLog(`🏆 KESİN ZAFER: ${this.winner.name} kazandı! ${this.winner.reason}`);
+            this.addLog(`KESİN ZAFER: ${this.winner.name} kazandı! ${this.winner.reason}`);
             return this.winner;
         }
 
@@ -486,7 +486,7 @@ export class GameState {
                 name: 'Mihver Devletleri (Axis)',
                 reason: `Avrupa sanayisinin %${Math.round((axisIP/totalMapIP)*100)}'ü kontrol altına alındı!`
             };
-            this.addLog(`🏆 KESİN ZAFER: ${this.winner.name} kazandı!`);
+            this.addLog(`KESİN ZAFER: ${this.winner.name} kazandı!`);
             return this.winner;
         }
 
@@ -496,7 +496,7 @@ export class GameState {
                 name: 'Müttefik Devletler (Allies)',
                 reason: `Avrupa sanayisinin %${Math.round((alliesIP/totalMapIP)*100)}'i kontrol altına alındı!`
             };
-            this.addLog(`🏆 KESİN ZAFER: ${this.winner.name} kazandı!`);
+            this.addLog(`KESİN ZAFER: ${this.winner.name} kazandı!`);
             return this.winner;
         }
 
@@ -589,7 +589,7 @@ export class GameState {
         try {
             const data = this.serialize();
             localStorage.setItem(slot, JSON.stringify(data));
-            this.addLog('💾 Oyun yerel hafızaya (localStorage) kaydedildi.');
+            this.addLog('Oyun yerel hafızaya (localStorage) kaydedildi.');
             return true;
         } catch (err) {
             console.error('Save failed', err);
@@ -607,7 +607,7 @@ export class GameState {
             const data = JSON.parse(saved);
             const success = this.deserialize(data);
             if (success) {
-                this.addLog('📂 Kayıtlı oyun başarıyla yüklendi.');
+                this.addLog('Kayıtlı oyun başarıyla yüklendi.');
             }
             return success;
         } catch (err) {
