@@ -108,7 +108,8 @@ $$\text{Tur Başı IP Geliri} = \sum (\text{Kontrol Edilen Bölge Sanayisi}) + \
 ### 🏛️ Ülke Başlangıç Taktikleri
 
 - **🦅 Almanya (Mihver):** Geniş sanayi ve zırhlı gücüyle başlar. İlk turlarda Fransa ve Polonya'yı hızla düşürüp sanayisini katlamalı, iki cepheli savaşa yakalanmadan önce doğu veya batıdan birini emniyete almalıdır.
-- **🦁 İngiltere (Müttefik):** Manş Denizi ve donanma yollarıyla korunan bir ada kalesidir. Güçlü hava filosuyla kıtadaki düşman yığınaklarını yıpratmalı, Kuzey Afrika ve Akdeniz'i İtalyanlara kaptırmamalıdır.
+- **🦁 İngiltere (Müttefik):** Manş Deniz
+i ve donanma yollarıyla korunan bir ada kalesidir. Güçlü hava filosuyla kıtadaki düşman yığınaklarını yıpratmalı, Kuzey Afrika ve Akdeniz'i İtalyanlara kaptırmamalıdır.
 - **⭐ Sovyetler Birliği (Müttefik):** Geniş insan gücü ve derin toprakları vardır. Moskova ve Stalingrad'ı tahkim edip kış rezervlerini toplamalı, Mihver taarruzu kırıldığında karşı taarruza geçmelidir.
 - **🐺 İtalya (Mihver):** Akdeniz havzasının kilit gücüdür. Balkanlar ve Kuzey Afrika'ya doğru genişleyerek Süveyş kanalını zorlamalı, güney cephesini müttefik çıkarmalarına karşı emniyete almalıdır.
 
@@ -130,11 +131,41 @@ Instead of plain square tiles or abstract grids, the game features a seamless ve
 - 🚀 **Zero Setup & Instant Play:** No Redis, no SQL, no backend configuration. Just double-click and play.
 - 🗺️ **35 Handcrafted Vector Territories:** Organic coastal curves, natural peninsulas, maritime choke points, and tactical fronts.
 - 🎨 **Distinct Faction Color Palettes:** Germany is rendered in Wehrmacht slate charcoal (`#1e293b`), Neutrals in warm sandstone tan (`#716550`), the UK in Royal Blue (`#1d4ed8`), the USSR in Crimson Red (`#b91c1c`), and Italy in Alpine Green (`#15803d`).
-- 🌐 **Serverless P2P Multiplayer (WebRTC):** The room host acts as the authoritative match engine. Share your 6-digit room code with a friend for direct peer-to-peer combat.
-- 🎖️ **Dynamic Starting Turns:** Whichever faction you pick (Germany, UK, USSR, or Italy), you start first on Turn 1. Autonomous AI bots step in seamlessly when their turn arrives.
+- 🌐 **Serverless P2P Multiplayer (WebRTC):** The room host acts as the authoritative match engine. Share your 6-digit room code with a friend for direct peer-to-peer combat over encrypted DataChannels.
+- 🛡️ **Bypasses Fortinet, Enterprise Firewalls & School Blockers:** Runs seamlessly across corporate networks, universities, and strict internet filters:
+  - Uses standard **HTTPS (Port 443) and WebRTC TLS/WSS** instead of blocked game ports (Steam 27015, Minecraft 25565, etc.).
+  - Deep packet inspection filters (Fortinet FortiGate, Cisco Umbrella, Zscaler, Palo Alto) recognize it as ordinary secure web traffic.
+  - 100% in-browser client execution: zero executable downloads or third-party launchers required.
+- 🌍 **Trilingual Global Interface:** Seamlessly switch between **English (EN)**, **Turkish (TR)**, and **Japanese (日本語)** with a single click. The entire map, unit descriptions, combat logs, and HUD adapt in real time.
+- 🎖️ **Dynamic Starting Turns & Smart Lobby:** Select your game mode at your own pace; the game waits until you click the launch button. Whichever nation you command (Germany, UK, USSR, or Italy), you start first on Turn 1.
 - ⚡ **60 FPS Hardware-Accelerated Canvas:** Replaced heavy CPU gaussian blurs with dual-stroke vector passes and cached measurements for butter-smooth map navigation.
 - 🔊 **Procedural Web Audio Engine:** Generates realistic artillery thuds, sirens, and radio communications dynamically using the Web Audio API without downloading audio files.
 - 💾 **Local Campaign Saves:** Save and restore your battle progress directly in browser storage at any time.
+
+---
+
+### 🌐 Deploying to Netlify & Custom Domain (`bugrakadioglu.dev`)
+
+You can publish the game online and connect it to a subdomain of your personal website (e.g., `game.bugrakadioglu.dev`) in just 2 minutes:
+
+#### Step 1: Deploy on Netlify
+1. Log in to [Netlify.com](https://www.netlify.com) using your GitHub account.
+2. Click **"Add new site" -> "Import an existing project"** and select **GitHub**.
+3. Choose the repository `Bugrakadiogluu/Strategy-Game`.
+4. In **Build Settings**:
+   - **Build command:** *(Leave empty)* — It's pure HTML/JS/CSS, no build step needed!
+   - **Publish directory:** `.` (root directory).
+5. Click **"Deploy site"**. Your game is live in seconds at `https://[your-site].netlify.app`!
+
+#### Step 2: Connect Subdomain (`game.bugrakadioglu.dev`) via WordPress DNS
+1. In Netlify, go to **Site configuration** -> **Domain management** -> **Add custom domain** and enter `game.bugrakadioglu.dev`.
+2. In WordPress.com Domain Manager, go to **Domains** -> `bugrakadioglu.dev` -> **Manage DNS / DNS Records**.
+3. Click **Add New Record**:
+   - **Type:** `CNAME`
+   - **Name (Host):** `game`
+   - **Target (Points to):** Your Netlify domain (e.g., `strategy-game-1942.netlify.app`)
+   - **TTL:** 3600
+4. Save the record. Within 5–10 minutes, Netlify automatically provisions a free SSL certificate, and your game is accessible worldwide at `https://game.bugrakadioglu.dev`!
 
 ---
 

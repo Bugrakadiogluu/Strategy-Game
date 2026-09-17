@@ -5,6 +5,7 @@
  */
 
 import { FACTIONS, UNIT_TYPES, TERRAIN_TYPES, TURN_PHASES } from '../network/protocol.js';
+import { i18n } from '../i18n/translations.js';
 
 export class HUD {
     constructor(gameState, soundEngine) {
@@ -52,7 +53,7 @@ export class HUD {
         if (btnSoundToggle) {
             btnSoundToggle.addEventListener('click', () => {
                 const muted = this.sound.toggleMute();
-                btnSoundToggle.innerHTML = muted ? '🔇 Ses: Kapalı' : '🔊 Ses: Açık';
+                btnSoundToggle.innerHTML = muted ? i18n.t('btn_sound_off') : i18n.t('btn_sound_on');
                 btnSoundToggle.classList.toggle('active', !muted);
             });
         }
@@ -79,9 +80,9 @@ export class HUD {
                 this.sound.playClick();
                 const code = document.getElementById('hud-room-code')?.textContent || '';
                 navigator.clipboard.writeText(code).then(() => {
-                    this.showToast(`Oda Kodu Kopyalandı: ${code}`, 'success');
+                    this.showToast(`${i18n.t('room_copied')} ${code}`, 'success');
                 }).catch(() => {
-                    this.showToast(`Oda Kodu: ${code}`, 'info');
+                    this.showToast(`${i18n.t('btn_room_prefix')} ${code}`, 'info');
                 });
             });
         }
@@ -326,11 +327,11 @@ export class HUD {
     _updateTopBar() {
         const curFaction = this.gameState.getCurrentFaction();
         const turnNumElem = document.getElementById('hud-turn-number');
-        if (turnNumElem) turnNumElem.textContent = `TUR ${this.gameState.turnNumber}`;
+        if (turnNumElem) turnNumElem.textContent = `${i18n.t('status_turn')} ${this.gameState.turnNumber}`;
 
         const factionNameElem = document.getElementById('hud-active-faction-name');
         if (factionNameElem) {
-            factionNameElem.innerHTML = `${curFaction.flagEmoji} ${curFaction.nameTr}`;
+            factionNameElem.innerHTML = `${curFaction.flagEmoji} ${i18n.getFactionName(curFaction.id)}`;
             factionNameElem.style.color = curFaction.accentColor;
         }
 
@@ -343,11 +344,11 @@ export class HUD {
         const nextPhaseBtn = document.getElementById('btn-next-phase');
         if (phaseElem && nextPhaseBtn) {
             if (this.gameState.currentPhase === TURN_PHASES.PRODUCTION) {
-                phaseElem.textContent = 'AŞAMA 1: ÜRETİM & TAKVİYE';
-                nextPhaseBtn.textContent = '⚔️ HAREKAT AŞAMASINA GEÇ';
+                phaseElem.textContent = i18n.t('phase_1_name');
+                nextPhaseBtn.textContent = i18n.t('btn_next_to_combat');
             } else if (this.gameState.currentPhase === TURN_PHASES.COMBAT) {
-                phaseElem.textContent = 'AŞAMA 2: ASKERİ TAARRUZ';
-                nextPhaseBtn.textContent = '⏭️ TURU BİTİR';
+                phaseElem.textContent = i18n.t('phase_2_name');
+                nextPhaseBtn.textContent = i18n.t('btn_end_turn');
             }
         }
     }
@@ -363,19 +364,21 @@ export class HUD {
             if (origin) {
                 const fac = FACTIONS[origin.owner.toUpperCase()] || FACTIONS.NEUTRAL;
                 const isMine = origin.owner === this.gameState.getCurrentFaction().id;
-                prodRegionTitle.innerHTML = `${origin.name} <small style="color:${fac.accentColor}">(${fac.nameTr})</small>`;
+                const originName = i18n.getRegionName(origin.id);
+                const facName = i18n.getFactionName(fac.id);
+                prodRegionTitle.innerHTML = `${originName} <small style="color:${fac.accentColor}">(${facName})</small>`;
 
                 if (btnDeploy) {
                     btnDeploy.disabled = !isMine;
                     btnDeploy.style.opacity = isMine ? '1.0' : '0.45';
-                    btnDeploy.innerHTML = isMine ? '🎖️ BİRLİKLERİ BÖLGEYE KONUŞLANDIR' : '⚠️ YALNIZCA DOST BÖLGEYE TAKVİYE YAPILABİLİR';
+                    btnDeploy.innerHTML = isMine ? i18n.t('btn_deploy_units') : i18n.t('btn_deploy_disabled');
                 }
             } else {
-                prodRegionTitle.textContent = 'Bölge Seçiniz';
+                prodRegionTitle.textContent = i18n.t('select_region_prompt');
                 if (btnDeploy) {
                     btnDeploy.disabled = false;
                     btnDeploy.style.opacity = '1.0';
-                    btnDeploy.innerHTML = '🎖️ BİRLİKLERİ BÖLGEYE KONUŞLANDIR';
+                    btnDeploy.innerHTML = i18n.t('btn_deploy_units');
                 }
             }
         }
@@ -387,9 +390,11 @@ export class HUD {
         if (combatFromElem) {
             if (origin) {
                 const originFac = FACTIONS[origin.owner.toUpperCase()] || FACTIONS.NEUTRAL;
-                combatFromElem.innerHTML = `<strong>${origin.name}</strong> <span style="color:${originFac.accentColor}">[${originFac.nameTr}]</span><br><small>(🪖 ${origin.units.infantry} | 🚜 ${origin.units.armor} | ✈️ ${origin.units.air}) | Sanayi: ${origin.industry} IP</small>`;
+                const oName = i18n.getRegionName(origin.id);
+                const oFac = i18n.getFactionName(originFac.id);
+                combatFromElem.innerHTML = `<strong>${oName}</strong> <span style="color:${originFac.accentColor}">[${oFac}]</span><br><small>(🪖 ${origin.units.infantry} | 🚜 ${origin.units.armor} | ✈️ ${origin.units.air}) | ${i18n.t('industry_points')}: ${origin.industry} IP</small>`;
             } else {
-                combatFromElem.textContent = 'Haritadan çıkış bölgesi seçin';
+                combatFromElem.textContent = i18n.t('hint_select_origin_first');
             }
         }
 
@@ -397,9 +402,12 @@ export class HUD {
             if (target) {
                 const targetFac = FACTIONS[target.owner.toUpperCase()] || FACTIONS.NEUTRAL;
                 const terrain = TERRAIN_TYPES[target.terrain.toUpperCase()] || TERRAIN_TYPES.PLAINS;
-                combatToElem.innerHTML = `<strong>${target.name}</strong> <span style="color:${targetFac.accentColor}">[${targetFac.nameTr}]</span><br><small>(🪖 ${target.units.infantry} | 🚜 ${target.units.armor} | ✈️ ${target.units.air})<br>Arazi: ${terrain.name} (${terrain.icon}) Savunma Bonusu: +%${Math.round(terrain.defenseBonus*100)}</small>`;
+                const tName = i18n.getRegionName(target.id);
+                const tFac = i18n.getFactionName(targetFac.id);
+                const terrainName = i18n.getTerrainName(target.terrain);
+                combatToElem.innerHTML = `<strong>${tName}</strong> <span style="color:${targetFac.accentColor}">[${tFac}]</span><br><small>(🪖 ${target.units.infantry} | 🚜 ${target.units.armor} | ✈️ ${target.units.air})<br>${i18n.t('terrain_label')} ${terrainName} (${terrain.icon}) ${i18n.t('defense_bonus_label')} +%${Math.round(terrain.defenseBonus*100)}</small>`;
             } else {
-                combatToElem.textContent = 'Haritadan komşu hedef bölge seçin';
+                combatToElem.textContent = i18n.t('hint_select_target_second');
             }
         }
 
@@ -568,25 +576,27 @@ export class HUD {
         const content = document.getElementById('combat-modal-body');
 
         if (title) {
-            title.textContent = report.attackerVictorious ? '🚩 TAARRUZ BAŞARILI - BÖLGE ELE GEÇİRİLDİ' : '🛡️ TAARRUZ PÜSKÜRTÜLDÜ';
+            title.textContent = report.attackerVictorious ? i18n.t('combat_victory') : i18n.t('combat_defeat');
             title.style.color = report.attackerVictorious ? '#4ade80' : '#ef4444';
         }
 
         if (content) {
             const attLosses = report.attackerLosses.infantry + report.attackerLosses.armor + report.attackerLosses.air;
             const defLosses = report.defenderLosses.infantry + report.defenderLosses.armor + report.defenderLosses.air;
+            const attackerFactionName = i18n.getFactionName(report.attackerInfo.id || report.attackerInfo.owner) || report.attackerInfo.name;
+            const defenderFactionName = i18n.getFactionName(report.defenderInfo.id || report.defenderInfo.owner) || report.defenderInfo.name;
 
             content.innerHTML = `
                 <div class="combat-summary-grid">
                     <div class="combat-box">
-                        <h4>${report.attackerInfo.name} (Taarruz)</h4>
-                        <p>Kayıplar: <strong>${attLosses}</strong> birim</p>
+                        <h4>${attackerFactionName} (${i18n.t('combat_attacker')})</h4>
+                        <p>${i18n.t('combat_losses')}: <strong>${attLosses}</strong></p>
                         <p><small>(🪖 ${report.attackerLosses.infantry} | 🚜 ${report.attackerLosses.armor} | ✈️ ${report.attackerLosses.air})</small></p>
                     </div>
                     <div class="combat-vs">VS</div>
                     <div class="combat-box">
-                        <h4>${report.defenderInfo.name} (Savunma)</h4>
-                        <p>Kayıplar: <strong>${defLosses}</strong> birim</p>
+                        <h4>${defenderFactionName} (${i18n.t('combat_defender')})</h4>
+                        <p>${i18n.t('combat_losses')}: <strong>${defLosses}</strong></p>
                         <p><small>(🪖 ${report.defenderLosses.infantry} | 🚜 ${report.defenderLosses.armor} | ✈️ ${report.defenderLosses.air})</small></p>
                     </div>
                 </div>
@@ -600,6 +610,7 @@ export class HUD {
 
         const btnDismiss = document.getElementById('btn-close-combat-modal');
         if (btnDismiss) {
+            btnDismiss.textContent = i18n.t('btn_close_combat_modal');
             btnDismiss.onclick = () => {
                 this.sound.playClick();
                 modal.classList.remove('visible');
@@ -613,9 +624,11 @@ export class HUD {
 
         const title = document.getElementById('game-over-title');
         const desc = document.getElementById('game-over-desc');
+        const btnRestart = document.getElementById('btn-restart-game');
 
+        const winnerName = i18n.getFactionName(winner.id) || winner.name;
         if (title) {
-            title.textContent = `🏆 ${winner.name.toUpperCase()} KAZANDI!`;
+            title.textContent = `🏆 ${winnerName.toUpperCase()} ${i18n.t('game_over_victory')}`;
         }
         if (desc) {
             desc.textContent = winner.reason;
@@ -623,8 +636,8 @@ export class HUD {
 
         modal.classList.add('visible');
 
-        const btnRestart = document.getElementById('btn-restart-game');
         if (btnRestart) {
+            btnRestart.textContent = i18n.t('btn_restart');
             btnRestart.onclick = () => {
                 this.sound.playClick();
                 window.location.reload();

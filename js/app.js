@@ -11,6 +11,7 @@ import { MSG_TYPES, TURN_PHASES } from './network/protocol.js';
 import { MapRenderer } from './ui/renderer.js';
 import { SoundEngine } from './ui/sound.js';
 import { HUD } from './ui/hud.js';
+import { i18n } from './i18n/translations.js';
 
 class WW2GameApp {
     constructor() {
@@ -27,11 +28,19 @@ class WW2GameApp {
         this.userFactionId = 'germany'; // Default human player faction
         this.isAiRunning = false;
 
+        // Apply localization
+        i18n.applyToDOM();
+        i18n.addListener(() => {
+            this._updateFactionOptionsI18n();
+            this.hud.update(this.selectedOriginId, this.selectedTargetId);
+        });
+
         this._initMapInteractions();
         this._initNetworkCallbacks();
         this._initHudCallbacks();
         this._initLobbyModal();
         this._initZoomButtons();
+        this._updateFactionOptionsI18n();
 
         // Initial HUD render
         this.hud.update(null, null);
@@ -592,6 +601,64 @@ class WW2GameApp {
         const btnSingle = document.getElementById('btn-start-singleplayer-quick');
         const cardSingle = document.getElementById('card-mode-singleplayer');
 
+        // Selected mode: 'singleplayer' | 'host'
+        let selectedMode = 'singleplayer';
+
+        const updateSelectedModeUI = () => {
+            if (selectedMode === 'singleplayer') {
+                if (cardSingle) cardSingle.classList.add('selected');
+                if (cardHost) cardHost.classList.remove('selected');
+                if (btnSingle) {
+                    btnSingle.textContent = i18n.t('btn_start_singleplayer');
+                    btnSingle.setAttribute('data-i18n', 'btn_start_singleplayer');
+                }
+            } else if (selectedMode === 'host') {
+                if (cardSingle) cardSingle.classList.remove('selected');
+                if (cardHost) cardHost.classList.add('selected');
+                if (btnSingle) {
+                    btnSingle.textContent = i18n.t('btn_start_host');
+                    btnSingle.setAttribute('data-i18n', 'btn_start_host');
+                }
+            }
+        };
+
+        // Language Buttons in Modal
+        document.querySelectorAll('.lang-selector-bar .btn-lang').forEach(btn => {
+            btn.addEventListener('click', () => {
+                this.sound.playClick();
+                const lang = btn.getAttribute('data-lang');
+                i18n.setLanguage(lang);
+                updateSelectedModeUI();
+            });
+        });
+
+        // Language Buttons in Top Header
+        document.querySelectorAll('.top-header .btn-lang-mini').forEach(btn => {
+            btn.addEventListener('click', () => {
+                this.sound.playClick();
+                const lang = btn.getAttribute('data-lang');
+                i18n.setLanguage(lang);
+                updateSelectedModeUI();
+            });
+        });
+
+        // Clicking cards SELECTS mode without immediately starting the game
+        if (cardSingle) {
+            cardSingle.addEventListener('click', () => {
+                this.sound.playClick();
+                selectedMode = 'singleplayer';
+                updateSelectedModeUI();
+            });
+        }
+
+        if (cardHost) {
+            cardHost.addEventListener('click', () => {
+                this.sound.playClick();
+                selectedMode = 'host';
+                updateSelectedModeUI();
+            });
+        }
+
         const launchSingleplayer = () => {
             this.sound.playClick();
             this.userFactionId = factionSelect.value;
@@ -608,18 +675,15 @@ class WW2GameApp {
             modal.classList.remove('visible');
 
             document.getElementById('hud-room-code').textContent = 'OFFLINE';
-            this.hud.showToast(`Harekat Başladı! Komuta: ${this.gameState.factions[this.userFactionId].nameTr}`, 'success');
+            const fName = i18n.getFactionName(this.userFactionId);
+            this.hud.showToast(`${i18n.t('toast_turn_yours')} ${fName}`, 'success');
             this.hud.update(null, null);
 
             // If player chosen is not the first in turn order, let AI start
             this.checkAndRunAI();
         };
 
-        if (btnSingle) btnSingle.addEventListener('click', launchSingleplayer);
-        if (cardSingle) cardSingle.addEventListener('click', launchSingleplayer);
-
         // Host Multiplayer Room
-        const cardHost = document.getElementById('card-mode-host');
         const launchHost = (customRoomCode = null, pName = null) => {
             this.sound.playClick();
             this.userFactionId = factionSelect.value;
@@ -645,7 +709,18 @@ class WW2GameApp {
             });
         };
 
-        if (cardHost) cardHost.addEventListener('click', () => launchHost());
+        // Main action button launches the chosen mode!
+        if (btnSingle) {
+            btnSingle.addEventListener('click', () => {
+                if (selectedMode === 'singleplayer') {
+                    launchSingleplayer();
+                } else if (selectedMode === 'host') {
+                    launchHost();
+                }
+            });
+        }
+
+        updateSelectedModeUI();
 
         // Join Multiplayer Room
         const btnJoin = document.getElementById('btn-lobby-join');
@@ -704,6 +779,21 @@ class WW2GameApp {
                 const name = urlParams.get('name') || 'ClientCommander';
                 launchJoin(room, name);
             }, 350);
+        }
+    }
+
+    _updateFactionOptionsI18n() {
+        const optGer = document.getElementById('opt-faction-germany');
+        const optUK = document.getElementById('opt-faction-uk');
+        const optUSSR = document.getElementById('opt-faction-ussr');
+        const optIta = document.getElementById('opt-faction-italy');
+
+        const facs = i18n.t('factions');
+        if (facs) {
+            if (optGer && facs.germany) optGer.textContent = `🦅 ${facs.germany.desc}`;
+            if (optUK && facs.uk) optUK.textContent = `🦁 ${facs.uk.desc}`;
+            if (optUSSR && facs.ussr) optUSSR.textContent = `⭐ ${facs.ussr.desc}`;
+            if (optIta && facs.italy) optIta.textContent = `👑 ${facs.italy.desc}`;
         }
     }
 

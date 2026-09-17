@@ -599,6 +599,102 @@ body::after {
     transform: translateY(-2px);
 }
 
+.lobby-choice-card.selected {
+    background: rgba(56, 189, 248, 0.22);
+    border-color: #38bdf8;
+    box-shadow: 0 0 24px rgba(56, 189, 248, 0.5), inset 0 0 12px rgba(56, 189, 248, 0.25);
+    transform: translateY(-2px);
+    position: relative;
+}
+
+.lobby-choice-card.selected::after {
+    content: "✓ ACTIVE";
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    font-size: 0.65rem;
+    font-family: var(--font-heading);
+    background: #0284c7;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 3px;
+    letter-spacing: 1px;
+}
+
+/* Multilingual Switcher Bar */
+.lang-selector-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    padding: 8px;
+    background: rgba(10, 15, 26, 0.75);
+    border: 1px solid var(--border-tactical);
+    border-radius: 6px;
+}
+
+.lang-label {
+    font-family: var(--font-heading);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    margin-right: 4px;
+}
+
+.btn-lang {
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: var(--text-muted);
+    font-family: var(--font-tactical);
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-lang:hover {
+    color: white;
+    border-color: var(--accent-cyan);
+    background: rgba(56, 189, 248, 0.15);
+}
+
+.btn-lang.active {
+    color: #38bdf8;
+    background: rgba(56, 189, 248, 0.25);
+    border-color: #38bdf8;
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.35);
+}
+
+.btn-lang-mini {
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #94a3b8;
+    font-size: 0.75rem;
+    font-family: var(--font-tactical);
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-lang-mini:hover {
+    color: white;
+    border-color: var(--accent-cyan);
+}
+
+.btn-lang-mini.active {
+    color: #38bdf8;
+    border-color: #38bdf8;
+    background: rgba(56, 189, 248, 0.2);
+}
+
 .lobby-form-group {
     margin: 12px 0;
     text-align: left;
