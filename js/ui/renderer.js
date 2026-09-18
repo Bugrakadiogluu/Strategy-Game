@@ -795,119 +795,291 @@ export class MapRenderer {
         ctx.restore();
     }
 
-    _renderRegionBadges(ctx) {
-        const regions = Object.values(this.gameState.regions);
-        const isFarOverview = this.scale < 0.48;
+    /**
+     * Determines the optimal font size and string representation to ensure text stays
+     * 100% inside physical geographic province boundaries.
+     */
+    _getFittedRegionName(r, fullName, maxSafeW, ctx, baseFontSize) {
+        // 1. Try full name first at base font size
+        ctx.font = `bold ${baseFontSize}px "Rajdhani", "Hiragino Sans", "Meiryo", "Roboto", sans-serif`;
+        let measured = ctx.measureText(fullName).width;
+        if (measured <= maxSafeW) {
+            return { text: fullName, fontSize: baseFontSize, width: measured };
+        }
 
-        for (const r of regions) {
+        // 2. Extract primary city/district name if compound (e.g. "Dortmund & Ruhr" -> "Dortmund")
+        let primaryName = fullName;
+        if (fullName.includes(' & ')) {
+            primaryName = fullName.split(' & ')[0].trim();
+        } else if (fullName.includes(' / ')) {
+            primaryName = fullName.split(' / ')[0].trim();
+        }
+
+        measured = ctx.measureText(primaryName).width;
+        if (measured <= maxSafeW) {
+            return { text: primaryName, fontSize: baseFontSize, width: measured };
+        }
+
+        // 3. Smoothly scale font size down to fit within available safe bounds
+        const minFontSize = 7.5;
+        const scaledFont = Math.max(minFontSize, Math.floor(baseFontSize * (maxSafeW / measured)));
+        ctx.font = `bold ${scaledFont}px "Rajdhani", "Hiragino Sans", "Meiryo", "Roboto", sans-serif`;
+        measured = ctx.measureText(primaryName).width;
+
+        if (measured <= maxSafeW) {
+            return { text: primaryName, fontSize: scaledFont, width: measured };
+        }
+
+        // 4. If even at minFontSize it slightly exceeds safe boundaries, truncate with ellipsis
+        let truncated = primaryName;
+        while (truncated.length > 2 && ctx.measureText(truncated + '…').width > maxSafeW) {
+            truncated = truncated.slice(0, -1);
+        }
+        if (truncated.length < primaryName.length) {
+            truncated = truncated.trim() + '…';
+        }
+        measured = ctx.measureText(truncated).width;
+        return { text: truncated, fontSize: scaledFont, width: measured };
+    }
+
+    _renderRegionBadges(ctx) {
+        const allRegions = Object.values(this.gameState.regions);
+        const isFarOverview = this.scale < 0.48;
+        const selectedId = this.selectedRegionId;
+        const hoveredId = this.hoveredRegionId;
+
+        // Partition into standard pass and priority overlay pass (capitals, selected, hovered)
+        const standardPass = [];
+        const priorityPass = [];
+
+        for (const r of allRegions) {
+            if (r.id === hoveredId || r.id === selectedId || r.capital) {
+                priorityPass.push(r);
+            } else {
+                standardPass.push(r);
+            }
+        }
+
+        const renderQueue = standardPass.concat(priorityPass);
+
+        // Smooth zoom growth: scales smoothly as the camera zooms in, up to 15.5px
+        const zoomGrowth = Math.min(6.5, Math.max(0, (this.scale - 0.45) * 8.5));
+        const baseFontSize = Math.min(16, Math.max(9.5, 9.5 + zoomGrowth));
+
+        for (const r of renderQueue) {
             const faction = FACTIONS[r.owner.toUpperCase()] || FACTIONS.NEUTRAL;
             const cx = r.x;
             const cy = r.y;
+            const isSelected = r.id === selectedId;
+            const isHovered = r.id === hoveredId;
+            const isCapital = Boolean(r.capital);
+            const isHighIndustry = (r.industry || 1) >= 4;
+
+            const inf = r.units.infantry || 0;
+            const arm = r.units.armor || 0;
+            const air = r.units.air || 0;
+            const totalUnits = inf + arm + air;
+
+            // Compute actual geographic safe boundaries from bounds
+            const b = r.bounds || { minX: cx - 35, maxX: cx + 35, minY: cy - 25, maxY: cy + 25 };
+            const regW = Math.max(26, b.maxX - b.minX);
+            const regH = Math.max(20, b.maxY - b.minY);
+            const maxSafeW = Math.max(26, regW * 0.78);
+            const maxSafeH = Math.max(20, regH * 0.80);
+
+            // LOD Density Control:
+            // In far continental overview (scale < 0.48), avoid rendering 106 full overlapping boxes.
+            // Only draw full badge for capitals, major hubs, selected, or hovered.
+            if (isFarOverview && !isCapital && !isHighIndustry && !isSelected && !isHovered) {
+                // If units are present in a minor province at far zoom, show a sleek micro-marker
+                if (totalUnits > 0) {
+                    ctx.save();
+                    ctx.fillStyle = faction.color || '#38bdf8';
+                    ctx.strokeStyle = '#0f172a';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, 3.5, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+                    ctx.restore();
+                }
+                continue;
+            }
 
             ctx.save();
 
-            const localizedName = (i18n.getRegionName(r.id) || r.name).toUpperCase();
-            if (!r._cachedNameWidths) r._cachedNameWidths = {};
-            const lang = i18n.currentLang || 'tr';
-            if (r._cachedNameWidths[lang] === undefined) {
-                r._cachedNameWidths[lang] = ctx.measureText(localizedName).width;
-            }
+            const fullName = (i18n.getRegionName(r.id) || r.name).toUpperCase();
+            const fitted = this._getFittedRegionName(r, fullName, maxSafeW, ctx, baseFontSize);
 
-            if (isFarOverview) {
-                // Sleek, minimal overview pill for far-out camera (no clutter, zero collision)
-                ctx.font = 'bold 11px "Rajdhani", sans-serif';
+            // 1. Far Overview Mode (Capitals / Hubs / Hovered)
+            if (isFarOverview && !isSelected && !isHovered) {
+                ctx.font = `bold ${fitted.fontSize}px "Rajdhani", sans-serif`;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                const textW = Math.max(48, ctx.measureText(localizedName).width + 12);
+                const pillW = Math.min(maxSafeW, fitted.width + 10);
+                const pillH = 15;
 
-                ctx.fillStyle = 'rgba(10, 15, 26, 0.88)';
-                ctx.strokeStyle = faction.accentColor || 'rgba(255, 255, 255, 0.3)';
-                ctx.lineWidth = 1;
+                ctx.fillStyle = isCapital ? 'rgba(30, 20, 10, 0.92)' : 'rgba(10, 15, 26, 0.88)';
+                ctx.strokeStyle = isCapital ? '#fbbf24' : (faction.accentColor || 'rgba(255, 255, 255, 0.3)');
+                ctx.lineWidth = isCapital ? 1.4 : 1;
                 ctx.beginPath();
-                ctx.roundRect(cx - textW / 2, cy - 8, textW, 16, 3);
+                ctx.roundRect(cx - pillW / 2, cy - pillH / 2, pillW, pillH, 3);
                 ctx.fill();
                 ctx.stroke();
 
-                ctx.fillStyle = '#f8fafc';
-                ctx.fillText(localizedName, cx, cy);
+                ctx.fillStyle = isCapital ? '#fef08a' : '#f8fafc';
+                ctx.fillText(fitted.text, cx, cy);
 
-                // If capital, draw small gold star on left
-                if (r.capital) {
-                    this._drawVectorStar(ctx, cx - textW / 2 - 8, cy, 5, 5, 2.5, '#fbbf24');
+                if (isCapital) {
+                    this._drawVectorStar(ctx, cx - pillW / 2 - 6, cy, 5, 4.5, 2.2, '#fbbf24');
                 }
             } else {
-                // Full tactical military badge with infantry, tank, aircraft counters
-                ctx.font = 'bold 12px "Rajdhani", "Hiragino Sans", "Meiryo", "Roboto", sans-serif';
+                // 2. Tactical Theater & Close Zoom Mode (All Regions visible, fully boundary-clamped)
+                ctx.font = `bold ${fitted.fontSize}px "Rajdhani", "Hiragino Sans", "Meiryo", "Roboto", sans-serif`;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                const textWidth = ctx.measureText(localizedName).width;
 
-                // Name Tag Badge Background
-                ctx.fillStyle = 'rgba(15, 23, 42, 0.88)';
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
-                ctx.lineWidth = 1;
-                ctx.fillRect(cx - textWidth / 2 - 8, cy - 26, textWidth + 16, 18);
-                ctx.strokeRect(cx - textWidth / 2 - 8, cy - 26, textWidth + 16, 18);
+                const pillW = Math.min(maxSafeW, fitted.width + 12);
+                const pillH = Math.min(18, Math.max(14, fitted.fontSize + 5));
 
-                ctx.fillStyle = '#f8fafc';
-                ctx.fillText(localizedName, cx, cy - 17);
+                // Vertical layout calculation: name tag stacked above unit counter
+                const hasUnitBadge = (totalUnits > 0 || isSelected || isHovered || this.scale >= 0.72);
+                const nameY = hasUnitBadge ? (cy - pillH / 2 - 2) : cy;
 
-                // Capital Star or Factory Icon
-                if (r.capital) {
-                    this._drawVectorStar(ctx, cx - textWidth / 2 - 12, cy - 17, 5, 6, 3, '#fbbf24');
-                } else if (r.industry >= 4) {
-                    this._drawVectorFactory(ctx, cx - textWidth / 2 - 12, cy - 17, '#38bdf8');
-                }
+                // Name Tag Box (glows if selected/hovered)
+                ctx.fillStyle = isSelected 
+                    ? 'rgba(245, 158, 11, 0.94)' 
+                    : (isHovered ? 'rgba(30, 58, 138, 0.94)' : (isCapital ? 'rgba(25, 20, 12, 0.90)' : 'rgba(15, 23, 42, 0.88)'));
+                ctx.strokeStyle = isSelected 
+                    ? '#ffffff' 
+                    : (isHovered ? '#38bdf8' : (isCapital ? '#fbbf24' : 'rgba(255, 255, 255, 0.28)'));
+                ctx.lineWidth = (isSelected || isHovered || isCapital) ? 1.5 : 1;
 
-                // 2. Unit Counters Badge (Military Stack Plate with Vector Silhouettes)
-                const inf = r.units.infantry || 0;
-                const arm = r.units.armor || 0;
-                const air = r.units.air || 0;
-
-                const badgeW = 92;
-                const badgeH = 22;
-                const badgeX = cx - badgeW / 2;
-                const badgeY = cy + 2;
-
-                // Plate Backdrop with faction accent
-                ctx.fillStyle = 'rgba(10, 15, 26, 0.94)';
-                ctx.strokeStyle = faction.accentColor || '#38bdf8';
-                ctx.lineWidth = 1.4;
                 ctx.beginPath();
-                ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 4);
+                ctx.roundRect(cx - pillW / 2, nameY - pillH / 2, pillW, pillH, 3);
                 ctx.fill();
                 ctx.stroke();
 
-                // Inner divider lines between unit types
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
-                ctx.lineWidth = 1;
-                ctx.beginPath();
-                ctx.moveTo(badgeX + 31, badgeY + 3);
-                ctx.lineTo(badgeX + 31, badgeY + badgeH - 3);
-                ctx.moveTo(badgeX + 62, badgeY + 3);
-                ctx.lineTo(badgeX + 62, badgeY + badgeH - 3);
-                ctx.stroke();
+                ctx.fillStyle = isSelected ? '#0f172a' : (isCapital ? '#fef08a' : '#f8fafc');
+                ctx.fillText(fitted.text, cx, nameY);
 
-                ctx.font = 'bold 11px "Rajdhani", sans-serif';
-                ctx.textAlign = 'left';
-                ctx.textBaseline = 'middle';
+                // Capital Star / Factory Indicator
+                if (isCapital && pillW + 16 <= maxSafeW) {
+                    this._drawVectorStar(ctx, cx - pillW / 2 - 6, nameY, 5, 5, 2.5, '#fbbf24');
+                } else if (r.industry >= 4 && pillW + 16 <= maxSafeW) {
+                    this._drawVectorFactory(ctx, cx - pillW / 2 - 6, nameY, '#38bdf8');
+                }
 
-                // 1. Infantry Cell (Vector Soldier Helmet + Count)
-                this._drawVectorInfantry(ctx, badgeX + 7, badgeY + 11, '#93c5fd');
-                ctx.fillStyle = '#93c5fd';
-                ctx.fillText(`${inf}`, badgeX + 15, badgeY + 11.5);
+                // 3. Responsive Military Unit Counter
+                if (hasUnitBadge) {
+                    const badgeY = cy + (hasUnitBadge ? 3 : 0);
 
-                // 2. Armor Cell (Vector WW2 Tank + Count)
-                const armCol = arm > 0 ? '#facc15' : '#64748b';
-                this._drawVectorArmor(ctx, badgeX + 38, badgeY + 11, armCol);
-                ctx.fillStyle = armCol;
-                ctx.fillText(`${arm}`, badgeX + 47, badgeY + 11.5);
+                    // If province is wide enough and camera is zoomed in: draw full 3-column military plate
+                    if (maxSafeW >= 76 && this.scale >= 0.52) {
+                        const badgeW = Math.min(86, maxSafeW);
+                        const badgeH = 20;
+                        const badgeX = cx - badgeW / 2;
+                        const colW = badgeW / 3;
 
-                // 3. Air Cell (Vector Warplane + Count)
-                const airCol = air > 0 ? '#f43f5e' : '#64748b';
-                this._drawVectorAir(ctx, badgeX + 69, badgeY + 11, airCol);
-                ctx.fillStyle = airCol;
-                ctx.fillText(`${air}`, badgeX + 77, badgeY + 11.5);
+                        ctx.fillStyle = 'rgba(10, 15, 26, 0.92)';
+                        ctx.strokeStyle = faction.accentColor || '#38bdf8';
+                        ctx.lineWidth = 1.2;
+                        ctx.beginPath();
+                        ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 3);
+                        ctx.fill();
+                        ctx.stroke();
+
+                        // Column dividers
+                        ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+                        ctx.lineWidth = 0.8;
+                        ctx.beginPath();
+                        ctx.moveTo(badgeX + colW, badgeY + 2);
+                        ctx.lineTo(badgeX + colW, badgeY + badgeH - 2);
+                        ctx.moveTo(badgeX + colW * 2, badgeY + 2);
+                        ctx.lineTo(badgeX + colW * 2, badgeY + badgeH - 2);
+                        ctx.stroke();
+
+                        ctx.font = 'bold 10px "Rajdhani", sans-serif';
+                        ctx.textAlign = 'left';
+                        ctx.textBaseline = 'middle';
+
+                        // 1. Infantry
+                        this._drawVectorInfantry(ctx, badgeX + 6, badgeY + badgeH / 2, '#93c5fd');
+                        ctx.fillStyle = '#93c5fd';
+                        ctx.fillText(`${inf}`, badgeX + 13, badgeY + badgeH / 2 + 0.5);
+
+                        // 2. Armor
+                        const armCol = arm > 0 ? '#facc15' : '#64748b';
+                        this._drawVectorArmor(ctx, badgeX + colW + 6, badgeY + badgeH / 2, armCol);
+                        ctx.fillStyle = armCol;
+                        ctx.fillText(`${arm}`, badgeX + colW + 13, badgeY + badgeH / 2 + 0.5);
+
+                        // 3. Air
+                        const airCol = air > 0 ? '#f43f5e' : '#64748b';
+                        this._drawVectorAir(ctx, badgeX + colW * 2 + 6, badgeY + badgeH / 2, airCol);
+                        ctx.fillStyle = airCol;
+                        ctx.fillText(`${air}`, badgeX + colW * 2 + 13, badgeY + badgeH / 2 + 0.5);
+                    } else {
+                        // Compact Military Stack Badge: fits seamlessly inside even the narrowest provinces
+                        const compactW = Math.min(46, maxSafeW);
+                        const compactH = 15;
+                        const badgeX = cx - compactW / 2;
+
+                        ctx.fillStyle = 'rgba(10, 15, 26, 0.94)';
+                        ctx.strokeStyle = faction.accentColor || '#38bdf8';
+                        ctx.lineWidth = 1;
+                        ctx.beginPath();
+                        ctx.roundRect(badgeX, badgeY, compactW, compactH, 3);
+                        ctx.fill();
+                        ctx.stroke();
+
+                        ctx.font = 'bold 10px "Rajdhani", sans-serif';
+                        ctx.textAlign = 'left';
+                        ctx.textBaseline = 'middle';
+
+                        // Show dominant unit silhouette + count
+                        if (arm > 0) {
+                            this._drawVectorArmor(ctx, badgeX + 7, badgeY + compactH / 2, '#facc15');
+                            ctx.fillStyle = '#facc15';
+                            ctx.fillText(`${totalUnits}`, badgeX + 17, badgeY + compactH / 2 + 0.5);
+                        } else if (air > 0) {
+                            this._drawVectorAir(ctx, badgeX + 7, badgeY + compactH / 2, '#f43f5e');
+                            ctx.fillStyle = '#f43f5e';
+                            ctx.fillText(`${totalUnits}`, badgeX + 17, badgeY + compactH / 2 + 0.5);
+                        } else {
+                            this._drawVectorInfantry(ctx, badgeX + 7, badgeY + compactH / 2, '#93c5fd');
+                            ctx.fillStyle = '#93c5fd';
+                            ctx.fillText(`${inf}`, badgeX + 17, badgeY + compactH / 2 + 0.5);
+                        }
+                    }
+                }
+
+                // 4. Elevated Tactical Hover Tooltip:
+                // When hovered, show complete full name, industry, and exact forces in an unclipped floating card
+                if (isHovered) {
+                    const tipText = `${fullName}  [${r.industry || 1} IP]`;
+                    ctx.font = 'bold 12px "Rajdhani", sans-serif';
+                    const tipW = ctx.measureText(tipText).width + 16;
+                    const tipH = 20;
+                    const tipY = cy - pillH - tipH / 2 - 8;
+
+                    ctx.fillStyle = 'rgba(15, 23, 42, 0.96)';
+                    ctx.strokeStyle = '#38bdf8';
+                    ctx.lineWidth = 1.5;
+                    ctx.shadowColor = 'rgba(56, 189, 248, 0.5)';
+                    ctx.shadowBlur = 10;
+
+                    ctx.beginPath();
+                    ctx.roundRect(cx - tipW / 2, tipY - tipH / 2, tipW, tipH, 4);
+                    ctx.fill();
+                    ctx.stroke();
+
+                    ctx.shadowBlur = 0;
+                    ctx.fillStyle = '#38bdf8';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(tipText, cx, tipY);
+                }
             }
 
             ctx.restore();
