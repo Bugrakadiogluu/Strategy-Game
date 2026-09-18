@@ -28,6 +28,7 @@ export class GameState {
         this.aiDifficulty = 'normal'; // 'easy' | 'normal' | 'hard'
         this.pacts = []; // Active non-aggression treaties: [{ f1, f2, turnsRemaining }]
         this.relations = {};
+        this.attacksThisTurn = {};
 
         this.initFactions();
         this.initRegions();
@@ -330,7 +331,34 @@ export class GameState {
         from.units.armor -= arm;
         from.units.air -= air;
 
-        // Run battle simulation with difficulty & capital occupation debuffs
+        // Track attack sequence and compute Army Morale & Blitz Fatigue
+        if (!this.attacksThisTurn) this.attacksThisTurn = {};
+        this.attacksThisTurn[attackerFaction.id] = (this.attacksThisTurn[attackerFaction.id] || 0) + 1;
+        const attackOrder = this.attacksThisTurn[attackerFaction.id];
+
+        let moralePercent = 100;
+        let damageMultiplier = 1.0;
+        let casualtyRiskMultiplier = 1.0;
+
+        if (attackOrder === 1) {
+            moralePercent = 100;
+            damageMultiplier = 1.0;
+            casualtyRiskMultiplier = 1.0;
+        } else if (attackOrder === 2) {
+            moralePercent = 75;
+            damageMultiplier = 0.75;
+            casualtyRiskMultiplier = 1.25;
+        } else if (attackOrder === 3) {
+            moralePercent = 50;
+            damageMultiplier = 0.50;
+            casualtyRiskMultiplier = 1.50;
+        } else {
+            moralePercent = 25;
+            damageMultiplier = 0.25;
+            casualtyRiskMultiplier = 2.0;
+        }
+
+        // Run battle simulation with difficulty, capital occupation & morale debuffs
         const attName = this.getFactionDisplayName(attackerFaction.id);
         const defName = this.getFactionDisplayName(defenderFaction.id);
         const fromName = this.getRegionDisplayName(from.id);
@@ -342,7 +370,11 @@ export class GameState {
                 name: attName, 
                 regionName: fromName, 
                 isAI: attackerFaction.isAI, 
-                difficulty: this.aiDifficulty 
+                difficulty: this.aiDifficulty,
+                attackOrder,
+                moralePercent,
+                damageMultiplier,
+                casualtyRiskMultiplier
             },
             { 
                 faction: defenderFaction.id, 
@@ -516,6 +548,7 @@ export class GameState {
 
         const nextFaction = this.getCurrentFaction();
         this.currentPhase = TURN_PHASES.PRODUCTION;
+        this.attacksThisTurn = {};
 
         // Check Capital Occupation & Emergency Relocation Mechanics
         if (nextFaction.id !== 'neutral' && nextFaction.capitalRegionId && this.regions[nextFaction.capitalRegionId]) {
@@ -752,6 +785,22 @@ export class GameState {
         if (this.actionHistory.length > 50) {
             this.actionHistory.pop();
         }
+    }
+
+    /**
+     * Returns current Army Morale & Attack Fatigue status for the given faction
+     * 1st attack: 100% morale (1.0x damage, 1.0x casualty risk)
+     * 2nd attack: 75% morale (0.75x damage, 1.25x casualty risk)
+     * 3rd attack: 50% morale (0.50x damage, 1.50x casualty risk)
+     * 4th+ attack: 25% morale (0.25x damage, 2.0x casualty risk)
+     */
+    getArmyMorale(factionId) {
+        const count = (this.attacksThisTurn && this.attacksThisTurn[factionId]) || 0;
+        const nextOrder = count + 1;
+        if (nextOrder === 1) return { order: nextOrder, percent: 100, damageMult: 1.0, casualtyMult: 1.0, label: '100% (Dinç Ordu / 1.0x Hasar)' };
+        if (nextOrder === 2) return { order: nextOrder, percent: 75, damageMult: 0.75, casualtyMult: 1.25, label: '75% (Taarruz Yorgunluğu / 0.75x Hasar)' };
+        if (nextOrder === 3) return { order: nextOrder, percent: 50, damageMult: 0.50, casualtyMult: 1.50, label: '50% (Ağır Yorgunluk / 0.50x Hasar)' };
+        return { order: nextOrder, percent: 25, damageMult: 0.25, casualtyMult: 2.0, label: '25% (Kritik Tükenmişlik / 0.25x Hasar, 2x Zayiat)' };
     }
 
     /**

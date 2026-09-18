@@ -176,6 +176,22 @@ export class CombatEngine {
                 effectiveDefHits = Math.ceil(defHits * 1.25);
             }
 
+            // Army Morale & Blitz Fatigue:
+            // 1st attack: 100% damage (1.0x), 1.0x casualty risk
+            // 2nd attack: 75% damage (0.75x), 1.25x casualty risk
+            // 3rd attack: 50% damage (0.50x), 1.50x casualty risk
+            // 4th+ attack: 25% damage (0.25x), 2.0x casualty risk
+            const damageMult = attackerInfo.damageMultiplier !== undefined ? attackerInfo.damageMultiplier : 1.0;
+            const casualtyRiskMult = attackerInfo.casualtyRiskMultiplier !== undefined ? attackerInfo.casualtyRiskMultiplier : 1.0;
+            const moralePercent = attackerInfo.moralePercent !== undefined ? attackerInfo.moralePercent : 100;
+
+            if (damageMult < 1.0) {
+                effectiveAttHits = Math.max(0, Math.round(effectiveAttHits * damageMult));
+            }
+            if (casualtyRiskMult > 1.0) {
+                effectiveDefHits = Math.ceil(effectiveDefHits * casualtyRiskMult);
+            }
+
             // Capital Occupied Debuff: If defender's capital is under enemy occupation, defender takes 2x damage!
             if (defenderInfo.capitalOccupied) {
                 effectiveAttHits = effectiveAttHits * 2;
@@ -196,6 +212,9 @@ export class CombatEngine {
             });
 
             let logMsg = `[Tur ${roundNumber}] Taarruz İsabeti: ${effectiveAttHits} (Kayıp verdirildi: ${roundDefLosses.infantry + roundDefLosses.armor + roundDefLosses.air}) | Karşı Ateş: ${effectiveDefHits} (Taarruz Kaybı: ${roundAttLosses.infantry + roundAttLosses.armor + roundAttLosses.air})`;
+            if (moralePercent < 100) {
+                logMsg += ` [Ordu Morali: %${moralePercent}]`;
+            }
             if (defenderInfo.capitalOccupied) {
                 logMsg += ` ⚠️ [Başkent İşgal Zafiyeti: 2x Hasar!]`;
             }

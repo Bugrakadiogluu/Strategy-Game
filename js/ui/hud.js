@@ -564,6 +564,17 @@ export class HUD {
         } else {
             oddsElem.innerHTML = `Kuvvet Oranı: <strong>${i18n.t('odds_no_selection')}</strong>`;
         }
+
+        const moraleElem = document.getElementById('combat-morale-val');
+        if (moraleElem && this.gameState) {
+            const currentFac = this.gameState.getCurrentFaction();
+            const morale = this.gameState.getArmyMorale(currentFac?.id || 'germany');
+            moraleElem.textContent = morale.label;
+            if (morale.percent === 100) moraleElem.style.color = '#38bdf8';
+            else if (morale.percent === 75) moraleElem.style.color = '#facc15';
+            else if (morale.percent === 50) moraleElem.style.color = '#fb923c';
+            else moraleElem.style.color = '#f87171';
+        }
     }
 
     _updateIntelligenceTab() {
