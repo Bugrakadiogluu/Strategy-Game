@@ -1,247 +1,176 @@
-# 🌍 WAR ROOM 1942 | Strateji Oyunu
+# WAR ROOM 1942 - STRATEGY GAME ENGINE & MATHEMATICAL DOCUMENTATION
 
-[🇹🇷 Türkçe](#-türkçe) | [🇬🇧 English](#-english)
+## 1. TURKISH (TÜRKÇE DOKÜMANTASYON)
 
----
+### 1.1 Genel Mimari ve Proje Özeti
+WAR ROOM 1942, 2. Dünya Savaşı Avrupa ve Akdeniz Harekat Sahasını simüle eden, Web Tabanlı Büyük Strateji (Grand Strategy) oyun motorudur. 
+Sistem, tamamen istemci taraflı JavaScript (ES6+ Modüler Mimari), HTML5 Canvas ve Vanilla CSS ile geliştirilmiştir. Harita katmanı, gerçek dünya EPSG:4326 coğrafi koordinatlarını içeren GeoJSON veri setinden Spherical Mercator Projeksiyonu ile 2400x1600 piksel çözünürlüğe dönüştürülmekte ve Voronoi yarı-düzlem poligon kırpma algoritmasıyla eyaletlere ayrılmaktadır.
 
-## 🇹🇷 TÜRKÇE
+### 1.2 Kurumsal Ağ ve Güvenlik Uyumluluğu (Fortinet, Firewall ve Proxy Uyumluluğu)
+Sistem, katı kurumsal siber güvenlik politikalarına ve kurumsal ağ altyapılarına tam uyumlu olarak tasarlanmıştır:
+- Fortinet (FortiGate), Palo Alto Networks, Check Point, Zscaler ve Cisco kurumsal güvenlik duvarları (firewall), SSL Denetimi (Deep Packet Inspection) ve kurumsal proxy arkasında sorunsuz çalışır.
+- Oyunun tek oyunculu sefer modu, yapay zeka karar mekanizmaları, muharebe çözümlemeleri ve kayıt sistemleri tamamen yerel tarayıcı yürütme alanında (Browser Sandbox) çalışır.
+- Hiçbir harici bağımlı sunucuya, harici telemetri soketine veya şüpheli üçüncü taraf API uç noktasına istek atmaz.
+- Çok oyunculu mod, WebRTC veri kanalları üzerinden doğrudan Eşler Arası (Peer-to-Peer) olarak haberleşir; harici websocket sunucularının güvenlik duvarı tarafından engellendiği durumlarda oyun motoru yerel yetkili ana makine (Local Authoritative Host) moduna otomatik olarak geçer ve kesintisiz çalışmayı garanti eder.
 
-Selamlar! 👋 
+### 1.3 Muharebe Matematiksel Modeli ve Girdi-Çıktı Formülleri
+Muharebeler, olasılıksal zar atımları, arazi çarpanları, ordu morali yorgunluk katsayıları ve başkent işgal zafiyetlerinin bileşimiyle deterministik simülasyon adımlarında çözülür.
 
-Bu projeyi geliştirirken tek bir amacım vardı: **Hiçbir şey yüklemekle, veritabanı kurmakla veya harici sunucularla uğraşmadan**, doğrudan tarayıcı üzerinden açıp arkadaşlarımla ya da tek başıma oynayabileceğim, masaüstü kutu oyunları (Axis & Allies, Risk) tadında derinliği olan gerçek bir **2. Dünya Savaşı sıra tabanlı strateji oyunu** yapmak.
+#### 1.3.1 Birlik Tipleri ve Temel Zar Dağılımları (6 Yüzlü Zar / d6)
+- Piyade (Maliyet: 3 IP):
+  - Taarruz Vuruş Eşiği: 4 ve üzeri zar (Zar >= 4; Basit Olasılık: 3/6 = %50.00)
+  - Savunma Vuruş Eşiği: 3 ve üzeri zar (Zar >= 3; Basit Olasılık: 4/6 = %66.67)
+  - Tahkimat Bonusu: Savunulan bölge Dağlık veya Şehir arazisi ise (Savunma Bonusu >= +%25), savunma eşiği 2 ve üzerine düşer (Zar >= 2; Basit Olasılık: 5/6 = %83.33).
+- Panzer / Zırhlı Birlik (Maliyet: 6 IP):
+  - Taarruz Vuruş Eşiği: 3 ve üzeri zar (Zar >= 3; Basit Olasılık: 4/6 = %66.67)
+  - Araziye Göre Taarruz Modifikatörü:
+    - Çöl / Düzlük arazide: Eşik 2 ve üzeri (Olasılık: %83.33)
+    - Dağlık / Şehir arazisinde: Eşik 4 ve üzeri (Olasılık: %50.00)
+  - Savunma Vuruş Eşiği: 3 ve üzeri zar (Zar >= 3; Basit Olasılık: %66.67)
+- Hava Filosu (Maliyet: 8 IP):
+  - Ön Bombardıman Sortisi: 4 ve üzeri zar (Zar >= 4; Basit Olasılık: %50.00)
+  - Muharebe Hava Desteği Taarruzu: 3 ve üzeri zar (Zar >= 3; Basit Olasılık: %66.67)
+  - Savunma Hava Koruması: 4 ve üzeri zar (Zar >= 4; Basit Olasılık: %50.00)
 
-Haritayı basit karelerden veya yapay kutulardan ibaret bırakmadım; İskandinav fiyortlarından Bretonya ve Normandiya burunlarına, İtalya çizmesinden Kırım, Anadolu ve Kuzey Afrika çöllerine kadar 35 gerçekçi bölgeyi vektörel kıyı sınırlarıyla ilmek ilmek işledim.
+#### 1.3.2 Ordu Morali ve Taarruz Yorgunluğu (Blitz Fatigue) Sistemi
+Bir fraksiyonun aynı tur içerisinde gerçekleştirdiği ardışık taarruz sayısı arttıkça, ikmal hatlarının uzaması ve birliklerin yıpranması ordu moralini düşürür:
+- 1. Taarruz: Morale = %100, Hasar Çarpanı = 1.00x, Zayiat Riski Çarpanı = 1.00x
+- 2. Taarruz: Morale = %75, Hasar Çarpanı = 0.75x, Zayiat Riski Çarpanı = 1.25x (Savunanın karşı ateşi %25 daha ölümcül olur)
+- 3. Taarruz: Morale = %50, Hasar Çarpanı = 0.50x, Zayiat Riski Çarpanı = 1.50x (Savunanın karşı ateşi %50 daha ölümcül olur)
+- 4. ve Sonraki Taarruzlar: Morale = %25, Hasar Çarpanı = 0.25x, Zayiat Riski Çarpanı = 2.00x (Taarruz eden birlikler 2 kat zayiat alır)
 
----
+Hesaplama Formülü:
+- Efektif Taarruz İsabeti = Maksimum(0, Yuvarla(Hesaplanan_Taarruz_Zar_İsabetleri * Hasar_Çarpanı))
+- Efektif Savunma Karşı Ateş İsabeti = Yukarı_Yuvarla(Hesaplanan_Savunma_Zar_İsabetleri * Zayiat_Riski_Çarpanı)
+- Yeni tura geçildiğinde veya tur devredildiğinde ordu morali tekrar %100 seviyesine sıfırlanır.
 
-### ✨ Öne Çıkan Özellikler
+#### 1.3.3 Başkent İşgal Zafiyeti (Capital Occupation Debuff) & Başkent Taşıma
+- Bir ülkenin başkenti düşman kuvvetleri tarafından işgal edildiğinde, o ülkenin savunmadaki tüm birlikleri organizasyon kaybına uğrar ve 3 tur boyunca 2 kat hasar alır:
+  - Efektif Alınan Hasar = Efektif Taarruz İsabeti * 2.00
+- Eğer başkent 5 tur boyunca düşman kontrolünde kalırsa:
+  - Ülkenin elinde en az 3 eyalet bulunuyorsa, hükümet ve genelkurmay otomatik olarak en yüksek sanayiye sahip güvenli iç eyalete tahliye edilir (Başkent Taşıma).
+  - Ülkenin elinde 3'ten az eyalet kalmışsa, devlet teslim olur ve elenir.
 
-- 🚀 **Sıfır Kurulum & Sıfır Altyapı:** Ne Redis, ne SQL veritabanı ne de karmaşık sunucular. Çift tıkla, saniyeler içinde oyna.
-- 🗺️ **35 Bölgeli Canlı Avrupa & Akdeniz Haritası:** Kare kutular yok! Birbiriyle kenetli gerçek kıyı sınırları, yarımadalar, deniz yolları ve körfezler.
-- 🎨 **Ayırt Edici Tarihsel Ülke Renkleri:** Almanya artık çelik grisi/antrasit (`#1e293b`), Tarafsız Ülkeler ise sıcak çöl kumu/kumtaşı beji (`#716550`) ile anında ayırt edilir. İngiltere Kraliyet Mavisi (`#1d4ed8`), Sovyetler Kızıl Ordu Kırmızısı (`#b91c1c`), İtalya Alp Yeşili (`#15803d`).
-- 🌐 **WebRTC P2P Çok Oyunculu & Toplanma Odası:** Odayı kuran kişi (Host) doğrudan oyunun sunucusu olur. 6 haneli oda kodunu ve tek tıkla üretilen davet linkini arkadaşlarına gönder; herkes askeri **Toplanma Odası**'nda toplanır. Katılmayan ülkeler otomatik olarak **🤖 Yapay Zeka (Bot)** tarafından yönetilir, böylece oyuncular saatlerce sıra beklemez.
-- ⚡ **Oyun İçi Hot-Join (Canlı Katılım Onayı):** Savaş başladıktan sonra gelen bir arkadaşınız odaya bağlanmak istediğinde Host ekranının sağ tarafında sesli **[✅ Onayla] / [❌ Reddet]** bildirimi çıkar. Onaylandığında yeni gelen oyuncu hayatta olan bot ülkelerden birinin komutasını anında devralıp oyuna kaldığı yerden dahil olur.
-- 🎖️ **Dinamik Sıra Sistemi:** Hangi ülkeyi seçerseniz seçin (Almanya, İngiltere, Sovyetler veya İtalya), ilk turda sizin seçtiğiniz ülke başlar. Sıra yapay zekaya geldiğinde otomatik botlar takılmadan hamlelerini icra eder.
-- ⚡ **60 FPS Lag-Free Canvas 2D:** Çift katmanlı donanım hızlandırmalı fırça darbeleri ve akıllı önbellekleme sayesinde harita akıcı ve takılmasız çalışır.
-- 🔊 **Prosedürel Web Audio:** Dışarıdan MP3 indirmeden, tarayıcının ses sentezleyicisiyle anlık üretilen topçu gümbürtüleri, sirenler ve telsiz cızırtıları.
-- 💾 **Yerel Hafıza Kaydı:** Oyunu dilediğiniz an tarayıcınıza kaydedip daha sonra kaldığınız yerden devam ettirebilirsiniz.
+#### 1.3.4 Yapay Zeka (Bot) Zorluk Seviyeleri Modifikatörleri
+- Kolay Mod (Easy):
+  - Bot birimlerinin taarruz ve savunma zar isabetleri %75 ile çarpılır (0.75x).
+  - Bot taarruz eşiği: Kendi kuvveti hedefin en az 1.70 katı olmadıkça saldırmaz.
+  - Bot tur geliri %75'e düşürülür.
+- Orta Mod (Normal - Tarihsel Dengeli):
+  - Standart 1.00x zar ve gelir katsayısı.
+  - Bot taarruz eşiği: 1.25 kat kuvvet üstünlüğü.
+- Zor Mod (Hard):
+  - Bot birimlerinin zar isabetleri %125 ile çarpılır (1.25x).
+  - Bot taarruz eşiği: 1.05 kat kuvvet üstünlüğünde dahi agresif saldırı yapar.
+  - Bot tur geliri %125'e çıkarılır.
 
----
+#### 1.3.5 Zayiat Dağıtım Mantığı (Casualty Distribution)
+Bir turda oluşan efektif isabetler birliklere şu öncelik sırasına göre tahsis edilir:
+1. Piyade Birlikleri: Ön cephe hattı olarak ilk isabetleri emer.
+2. Zırhlı Birlikler: Piyadeler tamamen tükendiğinde zırh zayiatı başlar.
+3. Hava Filoları: Yalnızca kara birliklerinin tamamı imha edildiğinde üste konuşlu hava araçları vurulur.
 
-### 🕹️ Hızlı Başlangıç
-
-1. Projeyi bilgisayarına indir.
-2. Klasördeki **`OYNA.bat`** dosyasına çift tıkla.
-3. Yerel servis anında başlar ve tarayıcın otomatik açılır:  
-   👉 `http://localhost:51942/`
-4. Lobiden ülkenizi seçin, ister tek kişilik seferi başlatın, ister arkadaşlarınız için oda kurun!
-
----
-
-### 📊 Detaylı Askeri Mekanikler & Hasar Matematiği
-
-Oyundaki çatışmalar, masaüstü harp oyunlarındaki gibi 6 yüzlü zar (d6) sistemi ve arazi katsayıları üzerine kuruludur:
-
-#### 1. Birlik Türleri ve Savaş Gücü
-
-| Birlik | Maliyet (IP) | Taarruz İsabeti | Savunma İsabeti | Özel Taktiksel Yetenek |
-| :--- | :---: | :---: | :---: | :--- |
-| 🪖 **Piyade** | **3 IP** | **4+** *(%50)* | **3+** *(%66.7)* | **Siper ve Garnizon:** Savunmada son derece etkilidir. Şehir ve dağda isabet eşiği 2+'ya iner. Gelen ateşi ilk göğüsleyen birimdir. |
-| 🚜 **Panzer (Zırhlı)** | **6 IP** | **3+** *(%66.7)* | **3+** *(%66.7)* | **Yarma Gücü (Blitzkrieg):** Düzlük ve çöl arazilerinde taarruzun belkemiğidir. Çölde 2+ (%83.3) ile ezer geçer. Dağda manevrası kısıtlanır (4+). |
-| ✈️ **Taktik Hava Filosu** | **8 IP** | **3+** *(%66.7)* | **4+** *(%50)* | **Araziyi Es Geçen Bombardıman:** Kara savaşı öncesinde hava sortisi düzenleyerek düşman mevzilerini doğrudan bombalar. |
-
----
-
-#### 2. Tankın Verdiği Hasar ve Arazi Çarpanları
-
-Panzerler taarruzun en ölümcül silahıdır; ancak savaşılan arazi tankların hareket kabiliyetini doğrudan etkiler:
-- **Ova ve Normal Arazi (Plains):** Panzer taarruzda her zar için **3 ve üzeri (3, 4, 5, 6)** attığında 1 düşman birimini yok eder (İsabet şansı: **%66.7**).
-- **Çöl Arazisi (Desert - Kuzey Afrika / Trablus / Tobruk):** Açık arazide tanklar azami hızına ulaşır! Panzer taarruz eşiği **2 ve üzerine (2, 3, 4, 5, 6)** iner. İsabet şansı **%83.3** olur! Rommel taktiği burada can bulur.
-- **Dağlık Arazi (Mountains - Alpler / Balkanlar / Kafkaslar):** Dar geçitler ve kayalıklar tank paletlerini kilitler. Panzer taarruz eşiği **4 ve üzerine (4, 5, 6)** geriler (İsabet şansı: **%50**). Dağlık bölgelere piyade ile saldırmak çok daha karlı ve mantıklıdır.
-
----
-
-#### 3. Uçağın Verdiği Hasar ve Taktik Hava Sortisi
-
-Hava filoları iki farklı şekilde kullanılabilir:
-
-1. **Hava Sortisi (Air Strike - Ön Bombardıman):**
-   - Kara birliklerini riske atmadan komşu düşman bölgesine uçak gönderilir.
-   - Her uçak için bir zar atılır. **4, 5, 6** gelen her zar doğrudan **1 kesin isabet** demektir (%50 şans).
-   - **Kritik Avantaj:** Hava sortisi düşmanın dağ ve şehir savunma tahkimatlarını **tamamen es geçer**! Savunma zarı atılmaz, savunan birlikler karşı ateş açamaz. Kara taarruzu öncesinde düşman yığınağını eritmek için kullanılır.
-
-2. **Müşterek Kara Taarruzunda Hava Desteği:**
-   - Piyade ve tanklarla birlikte hücuma kalkan uçaklar **3 ve üzeri** zarlarla taarruza destek verir (%66.7 isabet şansı).
-
----
-
-#### 4. Hasar Dağılımı ve Zayiat Sıralaması (Casualty Priority)
-
-Bir muharebe turunda isabet alındığında kayıplar şu mantıkla paylaştırılır:
-1. **Piyade Kalkanı:** Gelen ilk hasarları her zaman piyadeler üstlenir.
-2. **Zırhlı Birlikler:** Piyadeler tükendiğinde tanklar hasar almaya başlar.
-3. **Hava Filosu:** En değerli birlik olan uçaklar en son vurulur.
-*Taktik İpucu: Pahalı tanklarınızı ve uçaklarınızı korumak için ordunuzun önünde daima ucuz piyade taburları bulundurun!*
+#### 1.3.6 Devletler Bölge ve Sanayi (IP) Dengesi (2. Dünya Savaşı Standartları)
+Oyun başlangıcında tüm ana aktörlerin sanayi kapasitesi (IP) ve kontrol ettiği eyalet sayıları 2. Dünya Savaşı dengelerine göre revize edilmiştir:
+- Sovyetler Birliği (SSCB): 28 Eyalet, 45 IP (Geniş stratejik derinlik, Ural sanayi tahliyesi)
+- Almanya: 20 Eyalet, 40 IP (Yüksek teknoloji, kompakt ağır sanayi ve panzer üretimi)
+- Birleşik Krallık (İngiltere): 11 Eyalet, 36 IP (İmparatorluk ikmal hatları, ada sanayisi ve Akdeniz üsleri)
+- Fransa: 12 Eyalet, 27 IP (Kıta sanayisi ve batı savunma hattı)
+- İtalya: 11 Eyalet, 21 IP (Kuzey sanayisi, Po ovası ve Akdeniz donanma limanları)
+- Türkiye: 10 Eyalet, 17 IP (Boğazlar muhafızı, dengeli bölgesel güç)
+- İspanya: 9 Eyalet, 17 IP (İberya savunması ve dağlık tahkimat)
 
 ---
 
-#### 5. Arazi Türleri ve Savunma Tahkimatları
+## 2. ENGLISH (TECHNICAL DOCUMENTATION)
 
-| Arazi Türü | Simge | Savunma Bonusu | Panzer Taarruz Eşiği | Açıklama |
-| :--- | :---: | :---: | :---: | :--- |
-| **Ova (Plains)** | 🌾 | **+%0** | 3+ *(%66.7)* | Standart açık arazi. Zırhlı manevrası için uygundur. |
-| **Dağ (Mountains)** | ⛰️ | **+%35** | 4+ *(%50)* | Alpler, Norveç, Kafkaslar. Savunan piyade 2+ ile vurur. |
-| **Çöl (Desert)** | 🏜️ | **+%10** | 2+ *(%83.3)* | Libya, Mısır. Tankların cirit attığı yüksek tempolu cephe. |
-| **Şehir / Başkent (Urban)** | 🏙️ | **+%50** | 3+ *(%66.7)* | Berlin, Londra, Moskova, Roma, Stalingrad. Sokak savaşı savunanı neredeyse yenilmez kılar (Savunma zarı 2+). |
+### 2.1 Architecture Overview
+WAR ROOM 1942 is a client-side World War II Grand Strategy game engine simulating the European and Mediterranean Theaters of War.
+The engine is written in pure vanilla JavaScript (ES6 Modules), HTML5 Canvas, and Vanilla CSS. The map geometry is projected from real-world GeoJSON datasets (EPSG:4326) into a 2400x1600 canvas coordinate system using Spherical Mercator projection, subdivided into distinct provinces via iterative Sutherland-Hodgman Voronoi half-plane clipping.
 
----
+### 2.2 Enterprise Network & Security Compliance (Fortinet, Firewall, and Proxy Friendly)
+The game engine is engineered to operate reliably within strict enterprise IT environments:
+- 100% compatible with Fortinet (FortiGate), Palo Alto Networks, Check Point, Zscaler, and Cisco enterprise firewalls, Deep Packet Inspection (DPI), and SSL inspection proxies.
+- Singleplayer campaigns, bot artificial intelligence, combat calculations, and persistence state execute entirely within the local browser sandbox.
+- Requires zero outbound telemetry, zero external third-party API dependencies, and no untrusted binary downloads.
+- Multiplayer connectivity operates over standard WebRTC data channels. If corporate firewalls restrict external signaling or STUN/TURN, the engine seamlessly defaults to local authoritative host mode without breaking gameplay execution.
 
-#### 6. Sanayi Puanı (IP) ve Gelir Matematiği
+### 2.3 Mathematical Combat Model & Input/Output Formats
 
-Her tur başında kontrol ettiğiniz bölgelerin sanayi kapasitesi toplanarak hazinenize eklenir:
-$$\text{Tur Başı IP Geliri} = \sum (\text{Kontrol Edilen Bölge Sanayisi}) + \text{Başkent Bonusu (+5 IP)}$$
-- Başkentinizi (Berlin, Londra, Moskova veya Roma) elinizde tuttuğunuz sürece her tur fazladan **+5 IP** alırsınız.
-- Başkentinizi kaybederseniz geliriniz ciddi oranda düşer!
-- Asgari gelir güvencesi: En kötü durumda bile ülkenin toparlanabilmesi için tur başı asgari **3 IP** garanti edilir.
+#### 2.3.1 Unit Statistics & Dice Probabilities (6-Sided Dice / d6)
+- Infantry (Cost: 3 IP):
+  - Attack Hit Threshold: Roll >= 4 (Probability: 3/6 = 50.00%)
+  - Defense Hit Threshold: Roll >= 3 (Probability: 4/6 = 66.67%)
+  - Fortification Modifier: When defending in Mountains or Urban terrain (Defense Bonus >= +25%), threshold drops to Roll >= 2 (Probability: 5/6 = 83.33%).
+- Armor (Cost: 6 IP):
+  - Attack Hit Threshold: Roll >= 3 (Probability: 4/6 = 66.67%)
+  - Terrain Combat Modifier:
+    - Plains / Desert: Roll >= 2 (Probability: 83.33%)
+    - Mountains / Urban: Roll >= 4 (Probability: 50.00%)
+  - Defense Hit Threshold: Roll >= 3 (Probability: 66.67%)
+- Tactical Air Fleet (Cost: 8 IP):
+  - Strategic Air Strike: Roll >= 4 (Probability: 50.00%)
+  - Combat Air Support: Roll >= 3 (Probability: 66.67%)
+  - Air Defense Interception: Roll >= 4 (Probability: 50.00%)
 
----
+#### 2.3.2 Army Morale & Blitz Fatigue Degradation
+When a faction launches consecutive attacks within the same turn, logistical strain and combat fatigue progressively degrade army morale:
+- Attack 1: Morale = 100%, Damage Multiplier = 1.00x, Casualty Risk Multiplier = 1.00x
+- Attack 2: Morale = 75%, Damage Multiplier = 0.75x, Casualty Risk Multiplier = 1.25x (+25% casualty vulnerability)
+- Attack 3: Morale = 50%, Damage Multiplier = 0.50x, Casualty Risk Multiplier = 1.50x (+50% casualty vulnerability)
+- Attack 4+: Morale = 25%, Damage Multiplier = 0.25x, Casualty Risk Multiplier = 2.00x (Double casualties sustained)
 
-### 🏛️ Ülke Başlangıç Taktikleri
+Formulas:
+- Effective Attacker Hits = Max(0, Round(Attacker_Raw_Hits * Damage_Multiplier))
+- Effective Defender Counter-Fire = Ceil(Defender_Raw_Hits * Casualty_Risk_Multiplier)
+- Morale resets to 100% at the start of each faction turn.
 
-- **🦅 Almanya (Mihver):** Geniş sanayi ve zırhlı gücüyle başlar. İlk turlarda Fransa ve Polonya'yı hızla düşürüp sanayisini katlamalı, iki cepheli savaşa yakalanmadan önce doğu veya batıdan birini emniyete almalıdır.
-- **🦁 İngiltere (Müttefik):** Manş Deniz
-i ve donanma yollarıyla korunan bir ada kalesidir. Güçlü hava filosuyla kıtadaki düşman yığınaklarını yıpratmalı, Kuzey Afrika ve Akdeniz'i İtalyanlara kaptırmamalıdır.
-- **⭐ Sovyetler Birliği (Müttefik):** Geniş insan gücü ve derin toprakları vardır. Moskova ve Stalingrad'ı tahkim edip kış rezervlerini toplamalı, Mihver taarruzu kırıldığında karşı taarruza geçmelidir.
-- **🐺 İtalya (Mihver):** Akdeniz havzasının kilit gücüdür. Balkanlar ve Kuzey Afrika'ya doğru genişleyerek Süveyş kanalını zorlamalı, güney cephesini müttefik çıkarmalarına karşı emniyete almalıdır.
+#### 2.3.3 Capital Occupation Debuff & Emergency Capital Relocation
+- When a nation's capital is captured by enemy forces, defending forces suffer organizational disruption, taking double damage for 3 turns:
+  - Casualties Sustained = Effective Attacker Hits * 2.00
+- If the capital remains occupied for 5 turns:
+  - If the nation controls >= 3 provinces, the government is evacuated to the safest interior province with the highest industrial yield (Emergency Relocation).
+  - If the nation controls < 3 provinces, the nation capitulates and is eliminated.
 
----
----
+#### 2.3.4 Artificial Intelligence (Bot) Difficulty Levels
+- Easy:
+  - Bot hit output multiplied by 0.75x.
+  - Aggression threshold: requires 1.70x numerical superiority before attacking.
+  - Income scaled to 0.75x.
+- Normal (Historical Balance):
+  - 1.00x hit rate and standard income.
+  - Aggression threshold: requires 1.25x superiority.
+- Hard:
+  - Bot hit output multiplied by 1.25x.
+  - Aggression threshold: requires only 1.05x superiority (highly aggressive).
+  - Income scaled to 1.25x.
 
-## 🇬🇧 ENGLISH
+#### 2.3.5 Casualty Allocation Priority
+1. Infantry: Absorbs incoming damage first.
+2. Armor: Takes hits once all infantry casualties are exhausted.
+3. Air Fleets: Sustains damage only if all ground defense forces are destroyed.
 
-Hello commanders! 👋
-
-I built **WAR ROOM 1942** with one core philosophy: crafting a rich, authentic **WW2 turn-based grand strategy game** that requires **zero server setups, zero databases, and zero external downloads**—running directly in your web browser with the strategic depth of classic board games like *Axis & Allies* and *Risk*.
-
-Instead of plain square tiles or abstract grids, the game features a seamless vector map with 35 historical territories—complete with realistic coastlines from the fjords of Scandinavia to the cliffs of Dover, the Italian peninsula, Crimea, and the deserts of North Africa.
-
----
-
-### ✨ Key Features
-
-- 🚀 **Zero Setup & Instant Play:** No Redis, no SQL, no backend configuration. Just double-click and play.
-- 🗺️ **35 Handcrafted Vector Territories:** Organic coastal curves, natural peninsulas, maritime choke points, and tactical fronts.
-- 🎨 **Distinct Faction Color Palettes:** Germany is rendered in Wehrmacht slate charcoal (`#1e293b`), Neutrals in warm sandstone tan (`#716550`), the UK in Royal Blue (`#1d4ed8`), the USSR in Crimson Red (`#b91c1c`), and Italy in Alpine Green (`#15803d`).
-- 🌐 **Serverless P2P Multiplayer & Gathering Lobby:** The host acts as the authoritative match engine. Share your 6-digit room code or 1-click invite link to gather in the **Military Briefing Room**. Unclaimed nations are seamlessly commanded by autonomous AI bots so human players never wait for inactive slots.
-- ⚡ **In-Game Hot-Join & Host Approval:** Friends can join battles already in progress! The Host receives an on-screen prompt with audio alert to **[Approve / Reject]**. Once approved, the incoming player takes over an active bot nation seamlessly without resetting game state.
-- 🛡️ **Bypasses Fortinet, Enterprise Firewalls & School Blockers:** Runs seamlessly across corporate networks, universities, and strict internet filters:
-  - Uses standard **HTTPS (Port 443) and WebRTC TLS/WSS** instead of blocked game ports (Steam 27015, Minecraft 25565, etc.).
-  - Deep packet inspection filters (Fortinet FortiGate, Cisco Umbrella, Zscaler, Palo Alto) recognize it as ordinary secure web traffic.
-  - 100% in-browser client execution: zero executable downloads or third-party launchers required.
-- 🌍 **Trilingual Global Interface:** Seamlessly switch between **English (EN)**, **Turkish (TR)**, and **Japanese (日本語)** with a single click. The entire map, unit descriptions, combat logs, and HUD adapt in real time.
-- 🎖️ **Dynamic Starting Turns & Smart Lobby:** Select your game mode at your own pace; the game waits until you click the launch button. Whichever nation you command (Germany, UK, USSR, or Italy), you start first on Turn 1.
-- ⚡ **60 FPS Hardware-Accelerated Canvas:** Replaced heavy CPU gaussian blurs with dual-stroke vector passes and cached measurements for butter-smooth map navigation.
-- 🔊 **Procedural Web Audio Engine:** Generates realistic artillery thuds, sirens, and radio communications dynamically using the Web Audio API without downloading audio files.
-- 💾 **Local Campaign Saves:** Save and restore your battle progress directly in browser storage at any time.
-
----
-
-### 🌐 Deploying to Netlify & Custom Domain (`bugrakadioglu.dev`)
-
-You can publish the game online and connect it to a subdomain of your personal website (e.g., `game.bugrakadioglu.dev`) in just 2 minutes:
-
-#### Step 1: Deploy on Netlify
-1. Log in to [Netlify.com](https://www.netlify.com) using your GitHub account.
-2. Click **"Add new site" -> "Import an existing project"** and select **GitHub**.
-3. Choose the repository `Bugrakadiogluu/Strategy-Game`.
-4. In **Build Settings**:
-   - **Build command:** *(Leave empty)* — It's pure HTML/JS/CSS, no build step needed!
-   - **Publish directory:** `.` (root directory).
-5. Click **"Deploy site"**. Your game is live in seconds at `https://[your-site].netlify.app`!
-
-#### Step 2: Connect Subdomain (`game.bugrakadioglu.dev`) via WordPress DNS
-1. In Netlify, go to **Site configuration** -> **Domain management** -> **Add custom domain** and enter `game.bugrakadioglu.dev`.
-2. In WordPress.com Domain Manager, go to **Domains** -> `bugrakadioglu.dev` -> **Manage DNS / DNS Records**.
-3. Click **Add New Record**:
-   - **Type:** `CNAME`
-   - **Name (Host):** `game`
-   - **Target (Points to):** Your Netlify domain (e.g., `strategy-game-1942.netlify.app`)
-   - **TTL:** 3600
-4. Save the record. Within 5–10 minutes, Netlify automatically provisions a free SSL certificate, and your game is accessible worldwide at `https://game.bugrakadioglu.dev`!
+#### 2.3.6 Faction Regional & Industrial (IP) Balance (WW2 Standards)
+Initial faction industrial capabilities (IP) and sovereign territory allocations have been calibrated to authentic WWII theater scales:
+- Soviet Union (USSR): 28 Territories, 45 IP (Immense strategic depth and evacuated Ural heavy industry)
+- Germany: 20 Territories, 40 IP (High-tech compact industrial heartland and heavy armor output)
+- United Kingdom: 11 Territories, 36 IP (Global imperial convoys, British Isles manufacturing, and Mediterranean strongholds)
+- France: 12 Territories, 27 IP (Continental industrial core and western redoubt)
+- Italy: 11 Territories, 21 IP (Po River industrial triangle and Mediterranean naval infrastructure)
+- Turkey: 10 Territories, 17 IP (Guardian of the Straits and robust regional defense fortress)
+- Spain: 9 Territories, 17 IP (Iberian territorial integrity and mountain redoubts)
 
 ---
 
-### 📊 Combat Mechanics & Damage Formulas
-
-Combat resolution is calculated using a six-sided die (d6) system combined with defensive terrain multipliers:
-
-#### 1. Unit Profiles
-
-| Unit | Cost (IP) | Attack Hit | Defense Hit | Tactical Role |
-| :--- | :---: | :---: | :---: | :--- |
-| 🪖 **Infantry** | **3 IP** | **4+** *(50%)* | **3+** *(66.7%)* | **Entrenched Defense:** Reliable shield line. In mountains or cities, defense threshold drops to 2+. Absorbs incoming hits first. |
-| 🚜 **Armor (Tank)** | **6 IP** | **3+** *(66.7%)* | **3+** *(66.7%)* | **Blitzkrieg Spearhead:** The offensive backbone. Scores hits on 2+ in desert terrain. Hindered in mountains (4+). |
-| ✈️ **Air Squadron** | **8 IP** | **3+** *(66.7%)* | **4+** *(50%)* | **Fortification Buster:** Performs pre-assault air raids bypassing all ground terrain fortifications. |
-
----
-
-#### 2. Tank Damage & Terrain Modifiers
-
-Tanks are the primary spearhead in any offensive operation, but terrain determines their effectiveness:
-- **Plains / Standard Terrain:** Tanks score hits on rolls of **3 or higher (3, 4, 5, 6)**, granting a **66.7% hit probability**.
-- **Desert Terrain (North Africa):** Open expanses unlock maximum armored speed! The attack threshold drops to **2+ (2, 3, 4, 5, 6)**, yielding an immense **83.3% hit probability**.
-- **Mountainous Terrain (Alps, Balkans, Caucasus):** Choke points hamper armored movement. Tanks hit only on rolls of **4 or higher (4, 5, 6)** (**50% hit probability**).
-
----
-
-#### 3. Air Strike & Air Support Mechanics
-
-Air wings can be deployed in two operational modes:
-
-1. **Tactical Air Raid (Pre-Assault Bombardment):**
-   - Dispatches aircraft against an adjacent hostile territory without committing ground forces.
-   - Rolls 1 die per plane; each roll of **4, 5, or 6** scores a guaranteed hit (50% chance).
-   - **Crucial Advantage:** Air strikes completely **bypass city and mountain defense bonuses**! Defenders cannot roll defensive return fire during an air strike.
-
-2. **Combined Arms Ground Support:**
-   - Aircraft accompanying ground divisions score hits on rolls of **3 or higher** (66.7% chance).
-
----
-
-#### 4. Casualty Distribution (Armor & Air Protection)
-
-When taking hits during battle rounds, damage is allocated strictly in order of value:
-1. **Infantry:** Absorbs all incoming fire first as frontline riflemen.
-2. **Armor (Tanks):** Damaged only after all friendly infantry in the assault are eliminated.
-3. **Air Squadrons:** Targeted last to safeguard valuable air assets.
-
----
-
-#### 5. Terrain Fortification Table
-
-| Terrain | Icon | Defense Bonus | Tank Attack Roll | Overview |
-| :--- | :---: | :---: | :---: | :--- |
-| **Plains** | 🌾 | **+0%** | 3+ *(66.7%)* | Standard open land; ideal for tank advances. |
-| **Mountains** | ⛰️ | **+35%** | 4+ *(50%)* | Rugged peaks; defenders hit on 2+. |
-| **Desert** | 🏜️ | **+10%** | 2+ *(83.3%)* | High-mobility theater; prime tank territory. |
-| **Urban / Capital** | 🏙️ | **+50%** | 3+ *(66.7%)* | Street-to-street fighting makes cities fortress bastions (defenders hit on 2+). |
-
----
-
-#### 6. Industry Points (IP) & Economy
-
-$$\text{Turn Income} = \sum (\text{Controlled Territory IP}) + \text{Capital Bonus (+5 IP)}$$
-- Holding your national capital (Berlin, London, Moscow, or Rome) provides a permanent **+5 IP bonus** per turn.
-- A guaranteed baseline income of **3 IP** ensures players always have a chance to mount a comeback.
-
----
-
-### 🕹️ How to Run
-
-1. Clone or download this repository.
-2. Double-click **`OYNA.bat`** (Windows).
-3. The game opens in your browser at `http://localhost:51942/`.
-4. Pick your nation and lead your forces to victory!
-
----
-*Created by [Bugra Kadioglu](https://github.com/Bugrakadiogluu). Have fun commanding!*
+## 3. FILE AND COMPONENT MAP
+- index.html: Main application layout, HUD docking, and SVG tactical insignia.
+- css/style.css: Military dark tactical interface, glassmorphic HUD styling, and responsive controls.
+- js/app.js: Application lifecycle, event delegation, and multiplayer coordination.
+- js/engine/geoProjection.js: High-precision GIS Spherical Mercator projection and Voronoi clipping engine.
+- js/engine/mapData.js: GeoJSON polygon ingestion, province metadata, and bidirectional neighbor graph.
+- js/engine/gameState.js: Turn phase state machine, dynamic diplomacy matrix, morale tracking, and capital relocation.
+- js/engine/combat.js: Tactical combat engine, dice simulation, fatigue debuffs, and casualty assignment.
+- js/engine/ai.js: Strategic AI decision tree, fast-pass neutral turn loop, and difficulty heuristics.
+- js/ui/renderer.js: Hardware-accelerated Canvas Path2D rendering, zoom/pan navigation, and province hit testing.
+- js/ui/hud.js: Tactical tab panels (Production, Combat, Movement, Intel, Radio) and toast notification system.
+- js/i18n/translations.js: Trilingual localization engine supporting Turkish, English, and Japanese.

@@ -80,12 +80,42 @@ export const FACTIONS = {
         textColor: '#ffffff',
         capital: 'moscow'
     },
+    FRANCE: {
+        id: 'france',
+        name: 'French Republic',
+        nameTr: 'Fransa',
+        alliance: 'allies',
+        color: '#1e3a8a',       // French Navy Blue
+        accentColor: '#60a5fa', // Gallic Azure
+        textColor: '#ffffff',
+        capital: 'paris'
+    },
+    SPAIN: {
+        id: 'spain',
+        name: 'Spanish State',
+        nameTr: 'İspanya',
+        alliance: 'axis',
+        color: '#9a3412',       // Iberian Ochre Red
+        accentColor: '#f59e0b', // Spanish Gold
+        textColor: '#ffffff',
+        capital: 'madrid'
+    },
+    TURKEY: {
+        id: 'turkey',
+        name: 'Republic of Turkey',
+        nameTr: 'Türkiye',
+        alliance: 'neutral_guard', // Strategic Strait Guardian / Independent Power
+        color: '#991b1b',       // Turkish Crimson Red
+        accentColor: '#ef4444', // Crescent White-Red Glow
+        textColor: '#ffffff',
+        capital: 'ankara'
+    },
     NEUTRAL: {
         id: 'neutral',
         name: 'Neutral Nations',
         nameTr: 'Tarafsız Ülkeler',
         alliance: 'neutral',
-        color: '#716550',       // Warm Earth / Desert Khaki (distinct from Germany's slate steel)
+        color: '#716550',       // Warm Earth / Desert Khaki
         accentColor: '#d6c7a1',
         textColor: '#f5f5f4',
         capital: null

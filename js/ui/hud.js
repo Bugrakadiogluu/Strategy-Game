@@ -22,6 +22,10 @@ export class HUD {
         this.onSaveGameRequested = () => {};
         this.onLoadGameRequested = () => {};
         this.onSendChatRequested = () => {};
+        this.onProposeAlliance = () => {};
+        this.onLeaveAlliance = () => {};
+        this.onSignPact = () => {};
+        this.onSendAid = () => {};
 
         this.activeTab = 'tab-production';
         this.selectedOriginId = null;
@@ -560,40 +564,66 @@ export class HUD {
         } else {
             oddsElem.innerHTML = `Kuvvet Oranı: <strong>${i18n.t('odds_no_selection')}</strong>`;
         }
+
+        const moraleElem = document.getElementById('combat-morale-val');
+        if (moraleElem && this.gameState) {
+            const currentFac = this.gameState.getCurrentFaction();
+            const morale = this.gameState.getArmyMorale(currentFac?.id || 'germany');
+            moraleElem.textContent = morale.label;
+            if (morale.percent === 100) moraleElem.style.color = '#38bdf8';
+            else if (morale.percent === 75) moraleElem.style.color = '#facc15';
+            else if (morale.percent === 50) moraleElem.style.color = '#fb923c';
+            else moraleElem.style.color = '#f87171';
+        }
     }
 
     _updateIntelligenceTab() {
-        // Axis vs Allies Dominance
+        // Dynamic Alliances & Industrial Balance of Power
         let totalIP = 0;
-        let axisIP = 0;
-        let alliesIP = 0;
+        const allianceIP = {};
+        const allianceMembers = {};
 
         for (const r of Object.values(this.gameState.regions)) {
+            if (r.owner === 'neutral') continue;
             const ip = r.industry || 1;
             totalIP += ip;
-            if (r.owner === 'germany' || r.owner === 'italy') axisIP += ip;
-            else if (r.owner === 'uk' || r.owner === 'ussr') alliesIP += ip;
+            const f = this.gameState.factions[r.owner];
+            const aId = f?.allianceId || r.owner;
+            allianceIP[aId] = (allianceIP[aId] || 0) + ip;
+            if (!allianceMembers[aId]) allianceMembers[aId] = new Set();
+            allianceMembers[aId].add(r.owner);
         }
 
-        const axisPct = Math.round((axisIP / totalIP) * 100);
-        const alliesPct = Math.round((alliesIP / totalIP) * 100);
+        const sortedAlliances = Object.entries(allianceIP).sort((a, b) => b[1] - a[1]);
+        const top1 = sortedAlliances[0] || ['none', 0];
+        const top2 = sortedAlliances[1] || ['none', 0];
+
+        const top1Pct = totalIP > 0 ? Math.round((top1[1] / totalIP) * 100) : 50;
+        const remainingPct = 100 - top1Pct;
 
         const axisBar = document.getElementById('intel-axis-bar');
         const alliesBar = document.getElementById('intel-allies-bar');
         const axisText = document.getElementById('intel-axis-pct');
         const alliesText = document.getElementById('intel-allies-pct');
 
-        if (axisBar) axisBar.style.width = `${axisPct}%`;
-        if (alliesBar) alliesBar.style.width = `${alliesPct}%`;
-        if (axisText) axisText.textContent = `${i18n.t('label_axis')}: %${axisPct} (${axisIP} IP)`;
-        if (alliesText) alliesText.textContent = `${i18n.t('label_allies')}: %${alliesPct} (${alliesIP} IP)`;
+        if (axisBar) axisBar.style.width = `${top1Pct}%`;
+        if (alliesBar) alliesBar.style.width = `${remainingPct}%`;
 
-        // Capitals status
+        const top1Names = Array.from(allianceMembers[top1[0]] || [top1[0]]).map(fId => i18n.getFactionName(fId)).join(' & ');
+        const top2Names = Array.from(allianceMembers[top2[0]] || [top2[0]]).map(fId => i18n.getFactionName(fId)).join(' & ');
+
+        if (axisText) axisText.textContent = `${top1Names || '1. Güç'}: %${top1Pct} (${top1[1]} IP)`;
+        if (alliesText) alliesText.textContent = `${top2Names || 'Diğer Güçler'}: %${remainingPct} (${totalIP - top1[1]} IP)`;
+
+        // Strategic Capitals status
         const capitals = [
             { id: 'berlin', name: 'Berlin', owner: this.gameState.regions['berlin']?.owner },
             { id: 'rome', name: 'Roma', owner: this.gameState.regions['rome']?.owner },
+            { id: 'madrid', name: 'Madrid', owner: this.gameState.regions['madrid']?.owner },
             { id: 'london', name: 'Londra', owner: this.gameState.regions['london']?.owner },
-            { id: 'moscow', name: 'Moskova', owner: this.gameState.regions['moscow']?.owner }
+            { id: 'paris', name: 'Paris', owner: this.gameState.regions['paris']?.owner },
+            { id: 'moscow', name: 'Moskova', owner: this.gameState.regions['moscow']?.owner },
+            { id: 'ankara', name: 'Ankara', owner: this.gameState.regions['ankara']?.owner }
         ];
 
         const capsContainer = document.getElementById('intel-capitals-list');
@@ -604,6 +634,107 @@ export class HUD {
                 const facName = i18n.getFactionName(fac.id);
                 return `<div class="capital-item"><span style="display:inline-flex; align-items:center; gap:6px;"><span class="svg-icon" style="color:#fbbf24;">${ICONS.star}</span> ${capName}</span> <span style="display:inline-flex; align-items:center; gap:6px; color:${fac.accentColor}">${getFactionInsignia(fac.id, 16)} ${facName}</span></div>`;
             }).join('');
+        }
+
+        // Diplomacy & Alliance Headquarters
+        const dipContainer = document.getElementById('intel-diplomacy-list');
+        if (dipContainer) {
+            const myFactionId = this.playerFactionId || this.gameState.getCurrentFaction().id;
+            const otherFactions = Object.values(this.gameState.factions).filter(f => f.id !== myFactionId && f.id !== 'neutral');
+
+            dipContainer.innerHTML = otherFactions.map(f => {
+                const facInfo = FACTIONS[f.id?.toUpperCase()] || FACTIONS.GERMANY;
+                const facName = i18n.getFactionName(f.id);
+                const isAllied = this.gameState.isAllied(myFactionId, f.id);
+                const pact = this.gameState.pacts.find(p => ((p.f1 === myFactionId && p.f2 === f.id) || (p.f1 === f.id && p.f2 === myFactionId)) && p.turnsRemaining > 0);
+                const relation = this.gameState.getRelation(myFactionId, f.id);
+                const chance = this.gameState.getAllianceAcceptanceChance(myFactionId, f.id);
+
+                let statusBadge = `<span class="dip-status-badge independent">${i18n.t('dip_status_independent')}</span>`;
+                if (isAllied) {
+                    statusBadge = `<span class="dip-status-badge allied">${i18n.t('dip_status_allied')}</span>`;
+                } else if (pact) {
+                    statusBadge = `<span class="dip-status-badge pact">${i18n.t('dip_status_pact').replace('{turns}', pact.turnsRemaining)}</span>`;
+                }
+
+                let barColor = '#f59e0b';
+                if (relation >= 60) barColor = '#10b981';
+                else if (relation < 40) barColor = '#ef4444';
+
+                const allianceBtn = isAllied
+                    ? `<button class="btn-tactical btn-danger btn-dip-action btn-dip-leave" data-target="${f.id}">
+                        ${i18n.t('btn_leave_alliance')}
+                       </button>`
+                    : `<button class="btn-tactical btn-primary btn-dip-action btn-dip-propose" data-target="${f.id}">
+                        ${i18n.t('btn_propose_alliance')} (%${chance})
+                       </button>`;
+
+                const pactBtn = pact
+                    ? `<button class="btn-tactical btn-dip-action" disabled style="opacity:0.5;">
+                        Pakt (${pact.turnsRemaining}T)
+                       </button>`
+                    : `<button class="btn-tactical btn-dip-action btn-dip-pact" data-target="${f.id}" title="5 IP karşılığı 5 turluk saldırmazlık paktı imzala">
+                        ${i18n.t('btn_sign_pact')}
+                       </button>`;
+
+                return `
+                    <div class="diplomacy-card ${isAllied ? 'is-allied' : ''}">
+                        <div class="dip-header">
+                            <div class="dip-faction-info">
+                                ${getFactionInsignia(f.id, 20)}
+                                <span class="dip-faction-name" style="color:${facInfo.accentColor}">${facName}</span>
+                            </div>
+                            ${statusBadge}
+                        </div>
+                        <div class="dip-metrics-row">
+                            <span>${i18n.t('dip_relation')}: <strong style="color:${barColor};">${relation}/100</strong></span>
+                            <span>${i18n.t('dip_acceptance_chance')}: <strong>%${chance}</strong></span>
+                        </div>
+                        <div class="dip-bar-track">
+                            <div class="dip-bar-fill" style="width:${Math.max(0, relation)}%; background:${barColor};"></div>
+                        </div>
+                        <div class="dip-actions-row">
+                            ${allianceBtn}
+                            ${pactBtn}
+                            <button class="btn-tactical btn-dip-action btn-dip-aid" data-target="${f.id}" title="10 IP gönder, ilişkileri 20 puan artır">
+                                ${i18n.t('btn_send_aid')}
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Attach listeners
+            dipContainer.querySelectorAll('.btn-dip-propose').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    this.sound.playClick();
+                    const targetFId = btn.getAttribute('data-target');
+                    this.onProposeAlliance(myFactionId, targetFId);
+                });
+            });
+
+            dipContainer.querySelectorAll('.btn-dip-leave').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    this.sound.playClick();
+                    this.onLeaveAlliance(myFactionId);
+                });
+            });
+
+            dipContainer.querySelectorAll('.btn-dip-pact').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    this.sound.playClick();
+                    const targetFId = btn.getAttribute('data-target');
+                    this.onSignPact(myFactionId, targetFId);
+                });
+            });
+
+            dipContainer.querySelectorAll('.btn-dip-aid').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    this.sound.playClick();
+                    const targetFId = btn.getAttribute('data-target');
+                    this.onSendAid(myFactionId, targetFId);
+                });
+            });
         }
     }
 

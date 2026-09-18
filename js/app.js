@@ -49,6 +49,7 @@ class WW2GameApp {
         this._initDeveloperModalListeners();
         this._initZoomButtons();
         this._initBriefingModalListeners();
+        this._initExitGameListeners();
         this._updateFactionOptionsI18n();
 
         // Initial HUD render & viewport fit
@@ -71,8 +72,74 @@ class WW2GameApp {
             const world = this.renderer.screenToWorld(pos.x, pos.y);
             const clickedRegionId = this.renderer.getRegionAt(world.x, world.y);
 
+            // If lobby modal is active, clicking map selects that country
+            const lobbyModal = document.getElementById('modal-lobby');
+            if (lobbyModal && lobbyModal.classList.contains('visible')) {
+                if (clickedRegionId) {
+                    const region = this.gameState.regions[clickedRegionId];
+                    if (region && region.owner && region.owner !== 'neutral') {
+                        this.selectLobbyFaction(region.owner);
+                        return;
+                    }
+                }
+            }
+
             this.handleRegionClick(clickedRegionId);
         });
+
+        // Also allow clicking directly on the lobby modal backdrop outside the dialog box
+        const lobbyModal = document.getElementById('modal-lobby');
+        if (lobbyModal) {
+            lobbyModal.addEventListener('click', (e) => {
+                if (e.target === lobbyModal) {
+                    const rect = this.canvas.getBoundingClientRect();
+                    const mouseX = e.clientX - rect.left;
+                    const mouseY = e.clientY - rect.top;
+                    const world = this.renderer.screenToWorld(mouseX, mouseY);
+                    const clickedRegionId = this.renderer.getRegionAt(world.x, world.y);
+                    if (clickedRegionId) {
+                        const region = this.gameState.regions[clickedRegionId];
+                        if (region && region.owner && region.owner !== 'neutral') {
+                            this.selectLobbyFaction(region.owner);
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    selectLobbyFaction(factionId) {
+        if (!factionId || factionId === 'neutral') return;
+        this.userFactionId = factionId;
+        this.sound.playClick();
+
+        const factionSelect = document.getElementById('lobby-faction-select');
+        if (factionSelect) factionSelect.value = factionId;
+
+        document.querySelectorAll('.faction-pill-card').forEach(p => {
+            p.classList.toggle('selected', p.dataset.faction === factionId);
+        });
+
+        this.renderer.setPlayerFaction(factionId);
+        this.hud.updatePlayerFaction(factionId);
+
+        const capitals = {
+            germany: 'berlin',
+            uk: 'london',
+            ussr: 'moscow',
+            italy: 'rome',
+            france: 'paris',
+            spain: 'madrid',
+            turkey: 'ankara'
+        };
+        const capId = capitals[factionId];
+        if (capId && this.gameState.regions[capId]) {
+            this.renderer.setSelectedRegion(capId);
+            this.renderer.focusOnRegion(capId, 0.78);
+        }
+
+        const facName = i18n.getFactionName(factionId);
+        this.hud.showToast(`${facName} seçildi!`, 'info');
     }
 
     handleRegionClick(regionId) {
@@ -294,6 +361,62 @@ class WW2GameApp {
             } else {
                 this.network.sendToHost(MSG_TYPES.CHAT_MESSAGE, { text: logEntry });
             }
+        };
+
+        // Dynamic Diplomacy Actions
+        this.hud.onProposeAlliance = (fromFId, toFId) => {
+            const res = this.gameState.proposeAlliance(fromFId, toFId);
+            if (res.success) {
+                this.sound.playDeploy();
+                this.hud.showToast(res.message, 'success');
+            } else {
+                this.sound.playClick();
+                this.hud.showToast(res.reason, 'warning');
+            }
+            this.hud.update(this.selectedOriginId, this.selectedTargetId);
+            this.syncNetworkState();
+        };
+
+        this.hud.onLeaveAlliance = (fId) => {
+            const res = this.gameState.leaveAlliance(fId);
+            if (res.success) {
+                this.sound.playClick();
+                this.hud.showToast(res.message, 'info');
+            }
+            this.hud.update(this.selectedOriginId, this.selectedTargetId);
+            this.syncNetworkState();
+        };
+
+        this.hud.onSignPact = (fromFId, toFId) => {
+            const f = this.gameState.factions[fromFId];
+            if (!f || f.industryPoints < 5) {
+                this.hud.showToast(i18n.t('toast_not_enough_ip'), 'warning');
+                return;
+            }
+            f.industryPoints -= 5;
+            const res = this.gameState.signNonAggressionPact(fromFId, toFId, 5);
+            if (res.success) {
+                this.sound.playDeploy();
+                this.hud.showToast(res.message, 'success');
+            } else {
+                this.sound.playClick();
+                this.hud.showToast(res.reason, 'warning');
+            }
+            this.hud.update(this.selectedOriginId, this.selectedTargetId);
+            this.syncNetworkState();
+        };
+
+        this.hud.onSendAid = (fromFId, toFId) => {
+            const res = this.gameState.sendDiplomaticAid(fromFId, toFId, 10);
+            if (res.success) {
+                this.sound.playDeploy();
+                this.hud.showToast(res.message, 'success');
+            } else {
+                this.sound.playClick();
+                this.hud.showToast(res.reason, 'warning');
+            }
+            this.hud.update(this.selectedOriginId, this.selectedTargetId);
+            this.syncNetworkState();
         };
     }
 
@@ -683,7 +806,10 @@ class WW2GameApp {
             germany: { playerId: null, name: 'Yapay Zeka (Bot)', isHost: false, isAI: true },
             uk: { playerId: null, name: 'Yapay Zeka (Bot)', isHost: false, isAI: true },
             ussr: { playerId: null, name: 'Yapay Zeka (Bot)', isHost: false, isAI: true },
-            italy: { playerId: null, name: 'Yapay Zeka (Bot)', isHost: false, isAI: true }
+            italy: { playerId: null, name: 'Yapay Zeka (Bot)', isHost: false, isAI: true },
+            france: { playerId: null, name: 'Yapay Zeka (Bot)', isHost: false, isAI: true },
+            spain: { playerId: null, name: 'Yapay Zeka (Bot)', isHost: false, isAI: true },
+            turkey: { playerId: null, name: 'Yapay Zeka (Bot)', isHost: false, isAI: true }
         };
     }
 
@@ -691,7 +817,7 @@ class WW2GameApp {
         if (!this.lobbySlots) {
             this._initLobbySlots();
         }
-        const available = ['germany', 'uk', 'ussr', 'italy'].filter(fId => this.lobbySlots[fId].isAI);
+        const available = ['germany', 'uk', 'ussr', 'italy', 'france', 'spain', 'turkey'].filter(fId => this.lobbySlots[fId].isAI);
         let assigned = null;
         if (requestedFaction && available.includes(requestedFaction)) {
             assigned = requestedFaction;
@@ -713,7 +839,7 @@ class WW2GameApp {
         const codeDisplay = document.getElementById('waiting-room-code-display');
         if (codeDisplay) codeDisplay.textContent = this.network.roomCode || 'LOCAL';
 
-        const factions = ['germany', 'uk', 'ussr', 'italy'];
+        const factions = ['germany', 'uk', 'ussr', 'italy', 'france', 'spain', 'turkey'];
         factions.forEach(fId => {
             const slot = this.lobbySlots ? this.lobbySlots[fId] : null;
             const badgeEl = document.getElementById(`slot-badge-${fId}`);
@@ -1069,6 +1195,20 @@ class WW2GameApp {
             });
         }
 
+        // Interactive Faction Pills
+        document.querySelectorAll('.faction-pill-card').forEach(pill => {
+            pill.addEventListener('click', () => {
+                const fId = pill.getAttribute('data-faction');
+                this.selectLobbyFaction(fId);
+            });
+        });
+
+        if (factionSelect) {
+            factionSelect.addEventListener('change', () => {
+                this.selectLobbyFaction(factionSelect.value);
+            });
+        }
+
         const launchSingleplayer = () => {
             this.sound.playClick();
             this.userFactionId = factionSelect.value;
@@ -1091,6 +1231,8 @@ class WW2GameApp {
             this.hud.updatePlayerFaction(this.userFactionId);
             this.renderer.setPlayerFaction(this.userFactionId);
             this.hud.update(null, null);
+
+            this.renderer.focusOnFaction(this.userFactionId, 0.82);
 
             this._showStrategicBriefing();
 
@@ -1185,6 +1327,32 @@ class WW2GameApp {
             });
         }
 
+        // AI Bot Difficulty Selection (Sync between Lobby and Waiting Room)
+        const bindDiffPills = (containerId) => {
+            const cont = document.getElementById(containerId);
+            if (!cont) return;
+            cont.querySelectorAll('.diff-pill').forEach(pill => {
+                pill.addEventListener('click', () => {
+                    this.sound.playClick();
+                    const diff = pill.getAttribute('data-difficulty');
+                    this.gameState.aiDifficulty = diff;
+                    cont.querySelectorAll('.diff-pill').forEach(p => {
+                        p.classList.toggle('active', p.getAttribute('data-difficulty') === diff);
+                    });
+                    const descElem = document.getElementById('lobby-difficulty-desc');
+                    if (descElem) {
+                        descElem.textContent = i18n.t(`diff_${diff}_desc`);
+                    }
+                    const otherId = containerId === 'lobby-difficulty-pills' ? 'waiting-room-difficulty-pills' : 'lobby-difficulty-pills';
+                    document.querySelectorAll(`#${otherId} .diff-pill`).forEach(p => {
+                        p.classList.toggle('active', p.getAttribute('data-difficulty') === diff);
+                    });
+                });
+            });
+        };
+        bindDiffPills('lobby-difficulty-pills');
+        bindDiffPills('waiting-room-difficulty-pills');
+
         // Prefill room code from URL parameters (?room=W2XXXX or ?join=W2XXXX)
         const urlParams = new URLSearchParams(window.location.search);
         const prefillRoom = urlParams.get('room') || urlParams.get('join');
@@ -1196,9 +1364,12 @@ class WW2GameApp {
                 const fac = urlParams.get('faction');
                 if (fac && factionSelect) factionSelect.value = fac;
                 launchSingleplayer();
+                if (urlParams.get('overview') === '1') {
+                    this.renderer.resetOverview();
+                }
                 const sel = urlParams.get('select');
                 if (sel) {
-                    setTimeout(() => this.handleRegionClick(sel), 700);
+                    this.handleRegionClick(sel);
                 }
             }, 150);
         } else if (urlParams.get('autostart') === 'host') {
@@ -1225,6 +1396,9 @@ class WW2GameApp {
         const optUK = document.getElementById('opt-faction-uk');
         const optUSSR = document.getElementById('opt-faction-ussr');
         const optIta = document.getElementById('opt-faction-italy');
+        const optFra = document.getElementById('opt-faction-france');
+        const optSpa = document.getElementById('opt-faction-spain');
+        const optTur = document.getElementById('opt-faction-turkey');
 
         const facs = i18n.t('factions');
         if (facs) {
@@ -1232,28 +1406,55 @@ class WW2GameApp {
             if (optUK && facs.uk) optUK.textContent = facs.uk.desc;
             if (optUSSR && facs.ussr) optUSSR.textContent = facs.ussr.desc;
             if (optIta && facs.italy) optIta.textContent = facs.italy.desc;
+            if (optFra && facs.france) optFra.textContent = facs.france.desc;
+            if (optSpa && facs.spain) optSpa.textContent = facs.spain.desc;
+            if (optTur && facs.turkey) optTur.textContent = facs.turkey.desc;
         }
+
+        document.querySelectorAll('.faction-pill-card').forEach(pill => {
+            const fId = pill.getAttribute('data-faction');
+            const nameEl = pill.querySelector('.faction-pill-name');
+            if (nameEl) nameEl.textContent = i18n.getFactionName(fId);
+            const subEl = pill.querySelector('.faction-pill-sub');
+            if (subEl) {
+                const subKey = `faction_${fId}_sub`;
+                const subText = i18n.t(subKey);
+                if (subText && subText !== subKey) {
+                    subEl.textContent = subText;
+                }
+            }
+        });
     }
 
     _initZoomButtons() {
         const btnIn = document.getElementById('btn-zoom-in');
         const btnOut = document.getElementById('btn-zoom-out');
         const btnReset = document.getElementById('btn-zoom-reset');
+        const btnHomeland = document.getElementById('btn-zoom-homeland');
 
         if (btnIn) {
             btnIn.onclick = () => {
-                this.renderer.scale = Math.min(this.renderer.maxScale, this.renderer.scale * 1.2);
+                this.sound.playClick();
+                this.renderer.zoomIn(1.25);
             };
         }
         if (btnOut) {
             btnOut.onclick = () => {
-                this.renderer.scale = Math.max(this.renderer.minScale, this.renderer.scale * 0.8);
+                this.sound.playClick();
+                this.renderer.zoomOut(0.80);
+            };
+        }
+        if (btnHomeland) {
+            btnHomeland.onclick = () => {
+                this.sound.playClick();
+                this.renderer.focusOnFaction(this.userFactionId, 0.82);
+                this.hud.showToast(i18n.t('zoom_homeland_title') || 'Başkente odaklanıldı', 'info');
             };
         }
         if (btnReset) {
             btnReset.onclick = () => {
                 this.sound.playClick();
-                this.renderer.fitToScreen();
+                this.renderer.resetOverview();
                 this.hud.showToast(i18n.t('toast_map_centered'), 'info');
             };
         }
@@ -1282,17 +1483,105 @@ class WW2GameApp {
                 this.renderer.setPlayerFaction(this.userFactionId);
             });
         }
+
+        // Back button to choose another country
+        const btnBack = document.getElementById('btn-briefing-back');
+        if (btnBack) {
+            btnBack.addEventListener('click', () => {
+                this.sound.playClick();
+                if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                }
+                const modal = document.getElementById('modal-briefing');
+                if (modal) modal.classList.remove('visible');
+                const lobbyModal = document.getElementById('modal-lobby');
+                if (lobbyModal) lobbyModal.classList.add('visible');
+                this.isGameStarted = false;
+            });
+        }
+    }
+
+    /* ======================================================================
+       EXIT GAME AND LOBBY RESET
+       ====================================================================== */
+    _initExitGameListeners() {
+        const btnExit = document.getElementById('btn-exit-game');
+        const modalExit = document.getElementById('modal-exit-confirm');
+        const btnCancel = document.getElementById('btn-exit-cancel');
+        const btnConfirm = document.getElementById('btn-exit-confirm');
+
+        if (btnExit) {
+            btnExit.addEventListener('click', () => {
+                this.sound.playClick();
+                if (modalExit) modalExit.classList.add('visible');
+            });
+        }
+
+        if (btnCancel) {
+            btnCancel.addEventListener('click', () => {
+                this.sound.playClick();
+                if (modalExit) modalExit.classList.remove('visible');
+            });
+        }
+
+        if (btnConfirm) {
+            btnConfirm.addEventListener('click', () => {
+                this.sound.playDeploy();
+                if (modalExit) modalExit.classList.remove('visible');
+                this._exitToLobby();
+            });
+        }
+    }
+
+    _exitToLobby() {
+        if (this.network) {
+            try { this.network.leave(); } catch (e) {}
+        }
+
+        if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+        }
+
+        // Close active modals
+        document.getElementById('modal-briefing')?.classList.remove('visible');
+        document.getElementById('modal-combat-report')?.classList.remove('visible');
+        document.getElementById('modal-game-over')?.classList.remove('visible');
+        document.getElementById('modal-waiting-room')?.classList.remove('visible');
+        document.getElementById('modal-hotjoin-select')?.classList.remove('visible');
+
+        // Re-initialize GameState
+        this.gameState = new GameState();
+        this.renderer.gameState = this.gameState;
+        this.hud.gameState = this.gameState;
+        this.selectedOriginId = null;
+        this.selectedTargetId = null;
+        this.isGameStarted = false;
+        this.isAiRunning = false;
+
+        this.renderer.clearSelection();
+        this.renderer.resetOverview();
+        this.hud.update(null, null);
+
+        const roomEl = document.getElementById('hud-room-code');
+        if (roomEl) roomEl.textContent = 'LOCAL';
+
+        const lobbyModal = document.getElementById('modal-lobby');
+        if (lobbyModal) lobbyModal.classList.add('visible');
+        this.hud.showToast('Sefer sonlandırıldı. Komuta merkezine dönüldü.', 'info');
     }
 
     _showStrategicBriefing() {
         const modal = document.getElementById('modal-briefing');
         const capitalMap = {
-            germany: 'berlin',
-            uk: 'london',
-            ussr: 'moscow',
-            italy: 'rome'
+            germany: 'de',
+            uk: 'gb',
+            ussr: 'ru',
+            italy: 'it',
+            france: 'fr',
+            spain: 'es',
+            turkey: 'tr'
         };
-        const capitalId = capitalMap[this.userFactionId] || 'berlin';
+        const capitalId = capitalMap[this.userFactionId] || 'de';
 
         // Audio announcement with Web Speech API
         this._announcePlayerFactionVoice();
@@ -1301,7 +1590,9 @@ class WW2GameApp {
         const urlParams = new URLSearchParams(window.location.search);
         const dontShow = localStorage.getItem('warroom_hide_briefing') === 'true' || urlParams.get('skipbriefing') === '1';
         if (dontShow || !modal) {
-            this.renderer.playCinematicIntro(capitalId);
+            if (urlParams.get('skipbriefing') !== '1') {
+                this.renderer.playCinematicIntro(capitalId);
+            }
             return;
         }
 

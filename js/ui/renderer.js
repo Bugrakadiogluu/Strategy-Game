@@ -14,11 +14,12 @@ export class MapRenderer {
         this.gameState = gameState;
 
         // Viewport Transform (Pan & Zoom)
-        this.scale = 1.0;
-        this.minScale = 0.55;
-        this.maxScale = 2.6;
+        this.scale = 0.82;
+        this.minScale = 0.26;
+        this.maxScale = 3.2;
         this.offsetX = 0;
         this.offsetY = 0;
+        this._hasUserView = false;
 
         // Interactive States
         this.hoveredRegionId = null;
@@ -51,26 +52,94 @@ export class MapRenderer {
         this.fitToScreen();
     }
 
-    fitToScreen() {
+    fitToScreen(forceReset = false) {
         if (!this.canvas) return;
         const rect = this.canvas.getBoundingClientRect();
         const displayW = Math.round(rect.width) > 50 ? Math.round(rect.width) : Math.max(800, window.innerWidth - 420);
         const displayH = Math.round(rect.height) > 50 ? Math.round(rect.height) : Math.max(600, window.innerHeight - 60);
 
+        const oldW = this.canvas.width;
+        const oldH = this.canvas.height;
         this.canvas.width = displayW;
         this.canvas.height = displayH;
 
-        // Center map
-        const mapW = this.gameState?.dimensions?.width || 1400;
-        const mapH = this.gameState?.dimensions?.height || 900;
+        if (!this._hasUserView || forceReset) {
+            const mapW = this.gameState?.dimensions?.width || 2400;
+            const mapH = this.gameState?.dimensions?.height || 1600;
+            const scaleX = displayW / mapW;
+            const scaleY = displayH / mapH;
+            this.scale = Math.max(this.minScale, Math.min(scaleX, scaleY) * 0.94);
+            this.offsetX = (displayW - mapW * this.scale) / 2;
+            this.offsetY = (displayH - mapH * this.scale) / 2;
+            this._hasUserView = true;
+        } else if (oldW > 0 && oldH > 0 && (oldW !== displayW || oldH !== displayH)) {
+            this.offsetX += (displayW - oldW) / 2;
+            this.offsetY += (displayH - oldH) / 2;
+        }
+    }
 
-        const scaleX = displayW / mapW;
-        const scaleY = displayH / mapH;
-        this.scale = Math.min(scaleX, scaleY) * 0.94;
-        this.scale = Math.max(this.minScale, Math.min(this.scale, this.maxScale));
+    focusOnRegion(regionId, targetScale = null) {
+        this.isCinematicActive = false;
+        const r = this.gameState.regions[regionId];
+        if (!r || !this.canvas) return;
 
-        this.offsetX = (displayW - mapW * this.scale) / 2;
-        this.offsetY = (displayH - mapH * this.scale) / 2;
+        const rect = this.canvas.getBoundingClientRect();
+        if (rect.width > 50 && rect.height > 50) {
+            this.canvas.width = Math.round(rect.width);
+            this.canvas.height = Math.round(rect.height);
+        }
+        const displayW = this.canvas.width || 1200;
+        const displayH = this.canvas.height || 800;
+
+        const desiredScale = targetScale !== null ? targetScale : 0.82;
+        this.scale = Math.max(this.minScale, Math.min(desiredScale, this.maxScale));
+        this.offsetX = (displayW / 2) - r.x * this.scale;
+        this.offsetY = (displayH / 2) - r.y * this.scale;
+        this._hasUserView = true;
+    }
+
+    focusOnFaction(factionId, targetScale = null) {
+        this.isCinematicActive = false;
+        const fac = this.gameState.factions[factionId?.toLowerCase()];
+        const capId = fac?.capitalRegionId || {
+            germany: 'de_berlin',
+            uk: 'gb_london',
+            ussr: 'ru_moscow',
+            italy: 'it_rome',
+            france: 'fr_paris',
+            spain: 'es_madrid',
+            turkey: 'tr_ankara'
+        }[factionId?.toLowerCase()] || 'de_berlin';
+        this.focusOnRegion(capId, targetScale !== null ? targetScale : 0.82);
+    }
+
+    zoomIn(delta = 1.25) {
+        this.isCinematicActive = false;
+        this._zoomAtCenter(delta);
+    }
+
+    zoomOut(delta = 0.80) {
+        this.isCinematicActive = false;
+        this._zoomAtCenter(delta);
+    }
+
+    _zoomAtCenter(factor) {
+        this.isCinematicActive = false;
+        if (!this.canvas) return;
+        const oldScale = this.scale;
+        const newScale = Math.max(this.minScale, Math.min(this.scale * factor, this.maxScale));
+        if (newScale === oldScale) return;
+        const centerX = this.canvas.width / 2;
+        const centerY = this.canvas.height / 2;
+        this.offsetX = centerX - (centerX - this.offsetX) * (newScale / oldScale);
+        this.offsetY = centerY - (centerY - this.offsetY) * (newScale / oldScale);
+        this.scale = newScale;
+        this._hasUserView = true;
+    }
+
+    resetOverview() {
+        this.isCinematicActive = false;
+        this.fitToScreen(true);
     }
 
     setPlayerFaction(factionId) {
@@ -79,10 +148,13 @@ export class MapRenderer {
 
     /**
      * Cinematic Satellite Zoom-Out on game launch
-     * Starts focused closely on player's capital, then smoothly zooms out to the overview.
+     * Starts focused closely on player's capital, then smoothly decelerates to tactical operational view.
      */
     playCinematicIntro(capitalRegionId, onComplete) {
-        const capital = this.gameState.regions[capitalRegionId] || this.gameState.regions['berlin'] || Object.values(this.gameState.regions)[0];
+        const capital = this.gameState.regions[capitalRegionId] || 
+                        this.gameState.regions['de'] || 
+                        this.gameState.regions['berlin'] || 
+                        Object.values(this.gameState.regions)[0];
         if (!capital || !this.canvas) {
             if (onComplete) onComplete();
             return;
@@ -95,17 +167,13 @@ export class MapRenderer {
         this.canvas.width = displayW;
         this.canvas.height = displayH;
 
-        const mapW = this.gameState?.dimensions?.width || 1400;
-        const mapH = this.gameState?.dimensions?.height || 900;
-
-        const scaleX = displayW / mapW;
-        const scaleY = displayH / mapH;
-        const targetScale = Math.max(this.minScale, Math.min(Math.min(scaleX, scaleY) * 0.94, this.maxScale));
-        const targetOffsetX = (displayW - mapW * targetScale) / 2;
-        const targetOffsetY = (displayH - mapH * targetScale) / 2;
+        // Tactical operational zoom centered on the player's capital
+        const targetScale = 0.82;
+        const targetOffsetX = (displayW / 2) - capital.x * targetScale;
+        const targetOffsetY = (displayH / 2) - capital.y * targetScale;
 
         // Initial zoomed-in coordinates focused on the capital
-        const startScale = Math.min(this.maxScale, targetScale * 2.0);
+        const startScale = Math.min(this.maxScale, targetScale * 1.6);
         const startOffsetX = (displayW / 2) - capital.x * startScale;
         const startOffsetY = (displayH / 2) - capital.y * startScale;
 
@@ -119,6 +187,7 @@ export class MapRenderer {
         };
 
         const animate = (now) => {
+            if (!this.isCinematicActive) return;
             const elapsed = now - startTime;
             const progress = Math.min(1.0, elapsed / duration);
             // Ease-out cubic for realistic military camera deceleration
@@ -133,7 +202,10 @@ export class MapRenderer {
             } else {
                 this.isCinematicActive = false;
                 this.cinematicCapital = null;
-                this.fitToScreen();
+                this.scale = targetScale;
+                this.offsetX = targetOffsetX;
+                this.offsetY = targetOffsetY;
+                this._hasUserView = true;
                 if (onComplete) onComplete();
             }
         };
@@ -275,14 +347,32 @@ export class MapRenderer {
 
         const regions = Object.values(this.gameState.regions);
 
-        // 1. Native Path2D point-in-path test (accurate curves, bays, natural peninsulas)
+        // 1. Native Path2D point-in-path test (accurate curves, bays, natural peninsulas & islands)
         for (let i = regions.length - 1; i >= 0; i--) {
             const r = regions[i];
-            if (!r.path2d && r.path) {
-                try { r.path2d = new Path2D(r.path); } catch (e) { /* ignore */ }
+            if (!r.path2d && (r.svgPath || r.path)) {
+                try { r.path2d = new Path2D(r.svgPath || r.path); } catch (e) { /* ignore */ }
             }
             if (r.path2d && this._scratchCtx.isPointInPath(r.path2d, worldX, worldY)) {
                 return r.id;
+            }
+        }
+
+        // 1b. Fallback: Ray-casting point-in-polygon for projectedPolygons
+        for (let i = regions.length - 1; i >= 0; i--) {
+            const r = regions[i];
+            if (r.projectedPolygons) {
+                for (const poly of r.projectedPolygons) {
+                    for (const ring of poly) {
+                        if (ring && ring.length >= 3 && this._isPointInPolygon(worldX, worldY, ring)) {
+                            return r.id;
+                        }
+                    }
+                }
+            } else if (r.polygon && r.polygon.length >= 3) {
+                if (this._isPointInPolygon(worldX, worldY, r.polygon)) {
+                    return r.id;
+                }
             }
         }
 
@@ -383,8 +473,19 @@ export class MapRenderer {
         this.lastFrameTime = timestamp;
         this.pulseTime += dt * 3.5;
 
-        this._render();
-        this._updateAnimations(timestamp);
+        try {
+            this._render();
+            this._updateAnimations(timestamp);
+        } catch (err) {
+            console.error('MapRenderer render error:', err);
+            try {
+                fetch('/api/test-result', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ context: 'MapRenderer._render', message: err.message, stack: err.stack })
+                });
+            } catch (_) {}
+        }
 
         requestAnimationFrame(this._renderLoop);
     }
@@ -430,17 +531,17 @@ export class MapRenderer {
 
     _renderSeaNames(ctx) {
         const seas = [
-            { id: 'atlantic_ocean', x: 150, y: 410, angle: -0.15 },
-            { id: 'north_sea', x: 470, y: 280, angle: 0 },
-            { id: 'baltic_sea', x: 740, y: 230, angle: 0.25 },
-            { id: 'west_med', x: 460, y: 720, angle: 0 },
-            { id: 'east_med', x: 750, y: 750, angle: 0 },
-            { id: 'black_sea', x: 990, y: 550, angle: 0 },
-            { id: 'caspian_sea', x: 1330, y: 580, angle: 0.1 }
+            { id: 'atlantic_ocean', x: 120, y: 920, angle: -0.15 },
+            { id: 'north_sea', x: 700, y: 760, angle: 0 },
+            { id: 'baltic_sea', x: 1240, y: 680, angle: 0.2 },
+            { id: 'west_med', x: 720, y: 1360, angle: 0 },
+            { id: 'east_med', x: 1480, y: 1520, angle: 0 },
+            { id: 'black_sea', x: 1720, y: 1260, angle: 0 },
+            { id: 'caspian_sea', x: 2340, y: 1180, angle: 0.1 }
         ];
 
         ctx.save();
-        ctx.font = 'bold 13px "Orbitron", "Hiragino Sans", "Meiryo", monospace, sans-serif';
+        ctx.font = 'bold 14px "Orbitron", "Hiragino Sans", "Meiryo", monospace, sans-serif';
         ctx.fillStyle = 'rgba(56, 189, 248, 0.25)';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
@@ -526,15 +627,13 @@ export class MapRenderer {
             const isTarget = this.highlightedTargetIds.includes(r.id);
 
             if (r.path2d) {
-                // Polygon Fill using authentic SVG curved landmass
+                // High-performance Path2D rendering
                 ctx.fillStyle = faction.color;
                 ctx.globalAlpha = isSelected ? 0.95 : (isHovered ? 0.90 : 0.78);
                 ctx.fill(r.path2d);
 
-                // Hardware-accelerated tactical border (no CPU shadowBlur lag)
                 ctx.globalAlpha = 1.0;
                 if (isSelected) {
-                    // Wide ambient glow stroke + crisp amber core
                     ctx.strokeStyle = 'rgba(245, 158, 11, 0.45)';
                     ctx.lineWidth = 7 + pulse * 2;
                     ctx.stroke(r.path2d);
@@ -543,7 +642,7 @@ export class MapRenderer {
                     ctx.lineWidth = 3.0;
                     ctx.stroke(r.path2d);
                 } else if (isTarget) {
-                    const isFriendly = selectedId && this.gameState.regions[selectedId].owner === r.owner;
+                    const isFriendly = selectedId && this.gameState.isAllied(this.gameState.regions[selectedId]?.owner, r.owner);
                     const glowCol = isFriendly ? 'rgba(56, 189, 248, 0.45)' : 'rgba(239, 68, 68, 0.45)';
                     const coreCol = isFriendly ? '#38bdf8' : '#ef4444';
 
@@ -563,7 +662,6 @@ export class MapRenderer {
                     ctx.lineWidth = 2.0;
                     ctx.stroke(r.path2d);
                 } else if (this.playerFactionId && r.owner === this.playerFactionId) {
-                    // Player's Homeland Highlight: Subtle golden/accent tactical border
                     ctx.strokeStyle = faction.accentColor || '#38bdf8';
                     ctx.lineWidth = 2.2 + pulse * 0.8;
                     ctx.stroke(r.path2d);
@@ -572,14 +670,19 @@ export class MapRenderer {
                     ctx.lineWidth = 1.2;
                     ctx.stroke(r.path2d);
                 }
-            } else if (r.polygon && r.polygon.length >= 3) {
-                // Fallback for polygon arrays
+            } else if (r.projectedPolygons && r.projectedPolygons.length > 0) {
+                // Direct Canvas path rendering for MultiPolygons
                 ctx.beginPath();
-                ctx.moveTo(r.polygon[0][0], r.polygon[0][1]);
-                for (let i = 1; i < r.polygon.length; i++) {
-                    ctx.lineTo(r.polygon[i][0], r.polygon[i][1]);
+                for (const poly of r.projectedPolygons) {
+                    for (const ring of poly) {
+                        if (!ring || ring.length < 3) continue;
+                        ctx.moveTo(ring[0][0], ring[0][1]);
+                        for (let i = 1; i < ring.length; i++) {
+                            ctx.lineTo(ring[i][0], ring[i][1]);
+                        }
+                        ctx.closePath();
+                    }
                 }
-                ctx.closePath();
 
                 ctx.fillStyle = faction.color;
                 ctx.globalAlpha = isSelected ? 0.95 : (isHovered ? 0.90 : 0.78);
@@ -595,7 +698,7 @@ export class MapRenderer {
                     ctx.lineWidth = 3.0;
                     ctx.stroke();
                 } else if (isTarget) {
-                    const isFriendly = selectedId && this.gameState.regions[selectedId].owner === r.owner;
+                    const isFriendly = selectedId && this.gameState.isAllied(this.gameState.regions[selectedId]?.owner, r.owner);
                     ctx.strokeStyle = isFriendly ? 'rgba(56, 189, 248, 0.45)' : 'rgba(239, 68, 68, 0.45)';
                     ctx.lineWidth = 6 + pulse * 2;
                     ctx.stroke();
@@ -611,6 +714,37 @@ export class MapRenderer {
                     ctx.strokeStyle = '#ffffff';
                     ctx.lineWidth = 2.0;
                     ctx.stroke();
+                } else if (this.playerFactionId && r.owner === this.playerFactionId) {
+                    ctx.strokeStyle = faction.accentColor || '#38bdf8';
+                    ctx.lineWidth = 2.2 + pulse * 0.8;
+                    ctx.stroke();
+                } else {
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.28)';
+                    ctx.lineWidth = 1.2;
+                    ctx.stroke();
+                }
+            } else if (r.polygon && r.polygon.length >= 3) {
+                // Fallback for simple polygon arrays
+                ctx.beginPath();
+                ctx.moveTo(r.polygon[0][0], r.polygon[0][1]);
+                for (let i = 1; i < r.polygon.length; i++) {
+                    ctx.lineTo(r.polygon[i][0], r.polygon[i][1]);
+                }
+                ctx.closePath();
+
+                ctx.fillStyle = faction.color;
+                ctx.globalAlpha = isSelected ? 0.95 : (isHovered ? 0.90 : 0.78);
+                ctx.fill();
+
+                ctx.globalAlpha = 1.0;
+                if (isSelected) {
+                    ctx.strokeStyle = '#f59e0b';
+                    ctx.lineWidth = 3.0;
+                    ctx.stroke();
+                } else if (isHovered) {
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 2.0;
+                    ctx.stroke();
                 } else {
                     ctx.strokeStyle = 'rgba(255, 255, 255, 0.28)';
                     ctx.lineWidth = 1.2;
@@ -621,119 +755,332 @@ export class MapRenderer {
     }
 
     _renderFrontlines(ctx) {
-        // Draw subtle dotted connection lines between adjacent regions
+        // Draw connection lines to active targets or subtle hostile frontlines
         const regions = Object.values(this.gameState.regions);
+        const selectedId = this.selectedRegionId;
+        const targetIds = this.highlightedTargetIds;
+
         ctx.save();
         ctx.setLineDash([4, 6]);
-        ctx.lineWidth = 1;
 
         for (const r of regions) {
             for (const nId of r.neighbors) {
                 const neighbor = this.gameState.regions[nId];
                 if (!neighbor) continue;
-                // Avoid drawing duplicates (draw when r.id < nId)
-                if (r.id < neighbor.id) {
-                    const isHostileFront = r.owner !== neighbor.owner;
-                    ctx.strokeStyle = isHostileFront ? 'rgba(239, 68, 68, 0.35)' : 'rgba(56, 189, 248, 0.15)';
+
+                // Priority: Draw active target lines from selected region
+                if (selectedId && r.id === selectedId && targetIds.includes(nId)) {
+                    const isFriendly = r.owner === neighbor.owner;
+                    ctx.strokeStyle = isFriendly ? '#38bdf8' : '#ef4444';
+                    ctx.lineWidth = 2.4;
+                    ctx.lineDashOffset = -this.pulseTime * 4;
                     ctx.beginPath();
                     ctx.moveTo(r.x, r.y);
                     ctx.lineTo(neighbor.x, neighbor.y);
                     ctx.stroke();
+                } else if (!selectedId && r.id < neighbor.id) {
+                    // Idle state: only very subtle hostile frontlines to prevent clutter
+                    if (r.owner !== neighbor.owner && r.owner !== 'neutral' && neighbor.owner !== 'neutral') {
+                        ctx.strokeStyle = 'rgba(239, 68, 68, 0.16)';
+                        ctx.lineWidth = 1;
+                        ctx.lineDashOffset = 0;
+                        ctx.beginPath();
+                        ctx.moveTo(r.x, r.y);
+                        ctx.lineTo(neighbor.x, neighbor.y);
+                        ctx.stroke();
+                    }
                 }
             }
         }
         ctx.restore();
     }
 
-    _renderRegionBadges(ctx) {
-        const regions = Object.values(this.gameState.regions);
+    /**
+     * Determines the optimal font size and string representation to ensure text stays
+     * 100% inside physical geographic province boundaries.
+     */
+    _getFittedRegionName(r, fullName, maxSafeW, ctx, baseFontSize) {
+        // 1. Try full name first at base font size
+        ctx.font = `bold ${baseFontSize}px "Rajdhani", "Hiragino Sans", "Meiryo", "Roboto", sans-serif`;
+        let measured = ctx.measureText(fullName).width;
+        if (measured <= maxSafeW) {
+            return { text: fullName, fontSize: baseFontSize, width: measured };
+        }
 
-        for (const r of regions) {
+        // 2. Extract primary city/district name if compound (e.g. "Dortmund & Ruhr" -> "Dortmund")
+        let primaryName = fullName;
+        if (fullName.includes(' & ')) {
+            primaryName = fullName.split(' & ')[0].trim();
+        } else if (fullName.includes(' / ')) {
+            primaryName = fullName.split(' / ')[0].trim();
+        }
+
+        measured = ctx.measureText(primaryName).width;
+        if (measured <= maxSafeW) {
+            return { text: primaryName, fontSize: baseFontSize, width: measured };
+        }
+
+        // 3. Smoothly scale font size down to fit within available safe bounds
+        const minFontSize = 7.5;
+        const scaledFont = Math.max(minFontSize, Math.floor(baseFontSize * (maxSafeW / measured)));
+        ctx.font = `bold ${scaledFont}px "Rajdhani", "Hiragino Sans", "Meiryo", "Roboto", sans-serif`;
+        measured = ctx.measureText(primaryName).width;
+
+        if (measured <= maxSafeW) {
+            return { text: primaryName, fontSize: scaledFont, width: measured };
+        }
+
+        // 4. If even at minFontSize it slightly exceeds safe boundaries, truncate with ellipsis
+        let truncated = primaryName;
+        while (truncated.length > 2 && ctx.measureText(truncated + '…').width > maxSafeW) {
+            truncated = truncated.slice(0, -1);
+        }
+        if (truncated.length < primaryName.length) {
+            truncated = truncated.trim() + '…';
+        }
+        measured = ctx.measureText(truncated).width;
+        return { text: truncated, fontSize: scaledFont, width: measured };
+    }
+
+    _renderRegionBadges(ctx) {
+        const allRegions = Object.values(this.gameState.regions);
+        const isFarOverview = this.scale < 0.48;
+        const selectedId = this.selectedRegionId;
+        const hoveredId = this.hoveredRegionId;
+
+        // Partition into standard pass and priority overlay pass (capitals, selected, hovered)
+        const standardPass = [];
+        const priorityPass = [];
+
+        for (const r of allRegions) {
+            if (r.id === hoveredId || r.id === selectedId || r.capital) {
+                priorityPass.push(r);
+            } else {
+                standardPass.push(r);
+            }
+        }
+
+        const renderQueue = standardPass.concat(priorityPass);
+
+        // Smooth zoom growth: scales smoothly as the camera zooms in, up to 15.5px
+        const zoomGrowth = Math.min(6.5, Math.max(0, (this.scale - 0.45) * 8.5));
+        const baseFontSize = Math.min(16, Math.max(9.5, 9.5 + zoomGrowth));
+
+        for (const r of renderQueue) {
             const faction = FACTIONS[r.owner.toUpperCase()] || FACTIONS.NEUTRAL;
             const cx = r.x;
             const cy = r.y;
+            const isSelected = r.id === selectedId;
+            const isHovered = r.id === hoveredId;
+            const isCapital = Boolean(r.capital);
+            const isHighIndustry = (r.industry || 1) >= 4;
 
-            ctx.save();
-
-            // 1. Regional Name Tag
-            ctx.font = 'bold 12px "Rajdhani", "Hiragino Sans", "Meiryo", "Roboto", sans-serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-
-            const localizedName = (i18n.getRegionName(r.id) || r.name).toUpperCase();
-            if (!r._cachedNameWidths) r._cachedNameWidths = {};
-            const lang = i18n.currentLang || 'tr';
-            if (r._cachedNameWidths[lang] === undefined) {
-                r._cachedNameWidths[lang] = ctx.measureText(localizedName).width;
-            }
-            const textWidth = r._cachedNameWidths[lang];
-
-            // Name Tag Badge Background
-            ctx.fillStyle = 'rgba(15, 23, 42, 0.88)';
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
-            ctx.lineWidth = 1;
-            ctx.fillRect(cx - textWidth / 2 - 8, cy - 26, textWidth + 16, 18);
-            ctx.strokeRect(cx - textWidth / 2 - 8, cy - 26, textWidth + 16, 18);
-
-            ctx.fillStyle = '#f8fafc';
-            ctx.fillText(localizedName, cx, cy - 17);
-
-            // Capital Star or Factory Icon
-            if (r.capital) {
-                this._drawVectorStar(ctx, cx - textWidth / 2 - 12, cy - 17, 5, 6, 3, '#fbbf24');
-            } else if (r.industry >= 4) {
-                this._drawVectorFactory(ctx, cx - textWidth / 2 - 12, cy - 17, '#38bdf8');
-            }
-
-            // 2. Unit Counters Badge (Military Stack Plate with Vector Silhouettes)
             const inf = r.units.infantry || 0;
             const arm = r.units.armor || 0;
             const air = r.units.air || 0;
+            const totalUnits = inf + arm + air;
 
-            const badgeW = 92;
-            const badgeH = 22;
-            const badgeX = cx - badgeW / 2;
-            const badgeY = cy + 2;
+            // Compute actual geographic safe boundaries from bounds
+            const b = r.bounds || { minX: cx - 35, maxX: cx + 35, minY: cy - 25, maxY: cy + 25 };
+            const regW = Math.max(26, b.maxX - b.minX);
+            const regH = Math.max(20, b.maxY - b.minY);
+            const maxSafeW = Math.max(26, regW * 0.78);
+            const maxSafeH = Math.max(20, regH * 0.80);
 
-            // Plate Backdrop with faction accent
-            ctx.fillStyle = 'rgba(10, 15, 26, 0.94)';
-            ctx.strokeStyle = faction.accentColor || '#38bdf8';
-            ctx.lineWidth = 1.4;
-            ctx.beginPath();
-            ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 4);
-            ctx.fill();
-            ctx.stroke();
+            // LOD Density Control:
+            // In far continental overview (scale < 0.48), avoid rendering 106 full overlapping boxes.
+            // Only draw full badge for capitals, major hubs, selected, or hovered.
+            if (isFarOverview && !isCapital && !isHighIndustry && !isSelected && !isHovered) {
+                // If units are present in a minor province at far zoom, show a sleek micro-marker
+                if (totalUnits > 0) {
+                    ctx.save();
+                    ctx.fillStyle = faction.color || '#38bdf8';
+                    ctx.strokeStyle = '#0f172a';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, 3.5, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+                    ctx.restore();
+                }
+                continue;
+            }
 
-            // Inner divider lines between unit types
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.moveTo(badgeX + 31, badgeY + 3);
-            ctx.lineTo(badgeX + 31, badgeY + badgeH - 3);
-            ctx.moveTo(badgeX + 62, badgeY + 3);
-            ctx.lineTo(badgeX + 62, badgeY + badgeH - 3);
-            ctx.stroke();
+            ctx.save();
 
-            ctx.font = 'bold 11px "Rajdhani", sans-serif';
-            ctx.textAlign = 'left';
-            ctx.textBaseline = 'middle';
+            const fullName = (i18n.getRegionName(r.id) || r.name).toUpperCase();
+            const fitted = this._getFittedRegionName(r, fullName, maxSafeW, ctx, baseFontSize);
 
-            // 1. Infantry Cell (Vector Soldier Helmet + Count)
-            this._drawVectorInfantry(ctx, badgeX + 7, badgeY + 11, '#93c5fd');
-            ctx.fillStyle = '#93c5fd';
-            ctx.fillText(`${inf}`, badgeX + 15, badgeY + 11.5);
+            // 1. Far Overview Mode (Capitals / Hubs / Hovered)
+            if (isFarOverview && !isSelected && !isHovered) {
+                ctx.font = `bold ${fitted.fontSize}px "Rajdhani", sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                const pillW = Math.min(maxSafeW, fitted.width + 10);
+                const pillH = 15;
 
-            // 2. Armor Cell (Vector WW2 Tank + Count)
-            const armCol = arm > 0 ? '#facc15' : '#64748b';
-            this._drawVectorArmor(ctx, badgeX + 38, badgeY + 11, armCol);
-            ctx.fillStyle = armCol;
-            ctx.fillText(`${arm}`, badgeX + 47, badgeY + 11.5);
+                ctx.fillStyle = isCapital ? 'rgba(30, 20, 10, 0.92)' : 'rgba(10, 15, 26, 0.88)';
+                ctx.strokeStyle = isCapital ? '#fbbf24' : (faction.accentColor || 'rgba(255, 255, 255, 0.3)');
+                ctx.lineWidth = isCapital ? 1.4 : 1;
+                ctx.beginPath();
+                ctx.roundRect(cx - pillW / 2, cy - pillH / 2, pillW, pillH, 3);
+                ctx.fill();
+                ctx.stroke();
 
-            // 3. Air Cell (Vector Warplane + Count)
-            const airCol = air > 0 ? '#f43f5e' : '#64748b';
-            this._drawVectorAir(ctx, badgeX + 69, badgeY + 11, airCol);
-            ctx.fillStyle = airCol;
-            ctx.fillText(`${air}`, badgeX + 77, badgeY + 11.5);
+                ctx.fillStyle = isCapital ? '#fef08a' : '#f8fafc';
+                ctx.fillText(fitted.text, cx, cy);
+
+                if (isCapital) {
+                    this._drawVectorStar(ctx, cx - pillW / 2 - 6, cy, 5, 4.5, 2.2, '#fbbf24');
+                }
+            } else {
+                // 2. Tactical Theater & Close Zoom Mode (All Regions visible, fully boundary-clamped)
+                ctx.font = `bold ${fitted.fontSize}px "Rajdhani", "Hiragino Sans", "Meiryo", "Roboto", sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+
+                const pillW = Math.min(maxSafeW, fitted.width + 12);
+                const pillH = Math.min(18, Math.max(14, fitted.fontSize + 5));
+
+                // Vertical layout calculation: name tag stacked above unit counter
+                const hasUnitBadge = (totalUnits > 0 || isSelected || isHovered || this.scale >= 0.72);
+                const nameY = hasUnitBadge ? (cy - pillH / 2 - 2) : cy;
+
+                // Name Tag Box (glows if selected/hovered)
+                ctx.fillStyle = isSelected 
+                    ? 'rgba(245, 158, 11, 0.94)' 
+                    : (isHovered ? 'rgba(30, 58, 138, 0.94)' : (isCapital ? 'rgba(25, 20, 12, 0.90)' : 'rgba(15, 23, 42, 0.88)'));
+                ctx.strokeStyle = isSelected 
+                    ? '#ffffff' 
+                    : (isHovered ? '#38bdf8' : (isCapital ? '#fbbf24' : 'rgba(255, 255, 255, 0.28)'));
+                ctx.lineWidth = (isSelected || isHovered || isCapital) ? 1.5 : 1;
+
+                ctx.beginPath();
+                ctx.roundRect(cx - pillW / 2, nameY - pillH / 2, pillW, pillH, 3);
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.fillStyle = isSelected ? '#0f172a' : (isCapital ? '#fef08a' : '#f8fafc');
+                ctx.fillText(fitted.text, cx, nameY);
+
+                // Capital Star / Factory Indicator
+                if (isCapital && pillW + 16 <= maxSafeW) {
+                    this._drawVectorStar(ctx, cx - pillW / 2 - 6, nameY, 5, 5, 2.5, '#fbbf24');
+                } else if (r.industry >= 4 && pillW + 16 <= maxSafeW) {
+                    this._drawVectorFactory(ctx, cx - pillW / 2 - 6, nameY, '#38bdf8');
+                }
+
+                // 3. Responsive Military Unit Counter
+                if (hasUnitBadge) {
+                    const badgeY = cy + (hasUnitBadge ? 3 : 0);
+
+                    // If province is wide enough and camera is zoomed in: draw full 3-column military plate
+                    if (maxSafeW >= 76 && this.scale >= 0.52) {
+                        const badgeW = Math.min(86, maxSafeW);
+                        const badgeH = 20;
+                        const badgeX = cx - badgeW / 2;
+                        const colW = badgeW / 3;
+
+                        ctx.fillStyle = 'rgba(10, 15, 26, 0.92)';
+                        ctx.strokeStyle = faction.accentColor || '#38bdf8';
+                        ctx.lineWidth = 1.2;
+                        ctx.beginPath();
+                        ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 3);
+                        ctx.fill();
+                        ctx.stroke();
+
+                        // Column dividers
+                        ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+                        ctx.lineWidth = 0.8;
+                        ctx.beginPath();
+                        ctx.moveTo(badgeX + colW, badgeY + 2);
+                        ctx.lineTo(badgeX + colW, badgeY + badgeH - 2);
+                        ctx.moveTo(badgeX + colW * 2, badgeY + 2);
+                        ctx.lineTo(badgeX + colW * 2, badgeY + badgeH - 2);
+                        ctx.stroke();
+
+                        ctx.font = 'bold 10px "Rajdhani", sans-serif';
+                        ctx.textAlign = 'left';
+                        ctx.textBaseline = 'middle';
+
+                        // 1. Infantry
+                        this._drawVectorInfantry(ctx, badgeX + 6, badgeY + badgeH / 2, '#93c5fd');
+                        ctx.fillStyle = '#93c5fd';
+                        ctx.fillText(`${inf}`, badgeX + 13, badgeY + badgeH / 2 + 0.5);
+
+                        // 2. Armor
+                        const armCol = arm > 0 ? '#facc15' : '#64748b';
+                        this._drawVectorArmor(ctx, badgeX + colW + 6, badgeY + badgeH / 2, armCol);
+                        ctx.fillStyle = armCol;
+                        ctx.fillText(`${arm}`, badgeX + colW + 13, badgeY + badgeH / 2 + 0.5);
+
+                        // 3. Air
+                        const airCol = air > 0 ? '#f43f5e' : '#64748b';
+                        this._drawVectorAir(ctx, badgeX + colW * 2 + 6, badgeY + badgeH / 2, airCol);
+                        ctx.fillStyle = airCol;
+                        ctx.fillText(`${air}`, badgeX + colW * 2 + 13, badgeY + badgeH / 2 + 0.5);
+                    } else {
+                        // Compact Military Stack Badge: fits seamlessly inside even the narrowest provinces
+                        const compactW = Math.min(46, maxSafeW);
+                        const compactH = 15;
+                        const badgeX = cx - compactW / 2;
+
+                        ctx.fillStyle = 'rgba(10, 15, 26, 0.94)';
+                        ctx.strokeStyle = faction.accentColor || '#38bdf8';
+                        ctx.lineWidth = 1;
+                        ctx.beginPath();
+                        ctx.roundRect(badgeX, badgeY, compactW, compactH, 3);
+                        ctx.fill();
+                        ctx.stroke();
+
+                        ctx.font = 'bold 10px "Rajdhani", sans-serif';
+                        ctx.textAlign = 'left';
+                        ctx.textBaseline = 'middle';
+
+                        // Show dominant unit silhouette + count
+                        if (arm > 0) {
+                            this._drawVectorArmor(ctx, badgeX + 7, badgeY + compactH / 2, '#facc15');
+                            ctx.fillStyle = '#facc15';
+                            ctx.fillText(`${totalUnits}`, badgeX + 17, badgeY + compactH / 2 + 0.5);
+                        } else if (air > 0) {
+                            this._drawVectorAir(ctx, badgeX + 7, badgeY + compactH / 2, '#f43f5e');
+                            ctx.fillStyle = '#f43f5e';
+                            ctx.fillText(`${totalUnits}`, badgeX + 17, badgeY + compactH / 2 + 0.5);
+                        } else {
+                            this._drawVectorInfantry(ctx, badgeX + 7, badgeY + compactH / 2, '#93c5fd');
+                            ctx.fillStyle = '#93c5fd';
+                            ctx.fillText(`${inf}`, badgeX + 17, badgeY + compactH / 2 + 0.5);
+                        }
+                    }
+                }
+
+                // 4. Elevated Tactical Hover Tooltip:
+                // When hovered, show complete full name, industry, and exact forces in an unclipped floating card
+                if (isHovered) {
+                    const tipText = `${fullName}  [${r.industry || 1} IP]`;
+                    ctx.font = 'bold 12px "Rajdhani", sans-serif';
+                    const tipW = ctx.measureText(tipText).width + 16;
+                    const tipH = 20;
+                    const tipY = cy - pillH - tipH / 2 - 8;
+
+                    ctx.fillStyle = 'rgba(15, 23, 42, 0.96)';
+                    ctx.strokeStyle = '#38bdf8';
+                    ctx.lineWidth = 1.5;
+                    ctx.shadowColor = 'rgba(56, 189, 248, 0.5)';
+                    ctx.shadowBlur = 10;
+
+                    ctx.beginPath();
+                    ctx.roundRect(cx - tipW / 2, tipY - tipH / 2, tipW, tipH, 4);
+                    ctx.fill();
+                    ctx.stroke();
+
+                    ctx.shadowBlur = 0;
+                    ctx.fillStyle = '#38bdf8';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(tipText, cx, tipY);
+                }
+            }
 
             ctx.restore();
         }

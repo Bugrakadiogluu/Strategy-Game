@@ -256,6 +256,31 @@ export const ICONS = {
         <rect x="6" y="11" width="12" height="2" fill="#dc2626"/>
     </svg>`,
 
+    insigniaFrance: `<svg viewBox="0 0 24 24" width="22" height="22" class="insignia-svg">
+        <!-- French Tricolor Cockade & Cross of Lorraine -->
+        <circle cx="12" cy="12" r="11" fill="#1e3a8a" stroke="#60a5fa" stroke-width="1.2"/>
+        <circle cx="12" cy="12" r="7.5" fill="#f8fafc"/>
+        <circle cx="12" cy="12" r="4.2" fill="#dc2626"/>
+        <rect x="11.2" y="4" width="1.6" height="16" fill="#ffffff" opacity="0.95"/>
+        <rect x="8.5" y="7" width="7" height="1.5" fill="#ffffff" opacity="0.95"/>
+        <rect x="7.5" y="10.5" width="9" height="1.5" fill="#ffffff" opacity="0.95"/>
+    </svg>`,
+
+    insigniaSpain: `<svg viewBox="0 0 24 24" width="22" height="22" class="insignia-svg">
+        <!-- Spanish Military Roundel with Cross of Burgundy -->
+        <circle cx="12" cy="12" r="11" fill="#9a3412" stroke="#f59e0b" stroke-width="1.2"/>
+        <circle cx="12" cy="12" r="7.5" fill="#f59e0b"/>
+        <circle cx="12" cy="12" r="4.5" fill="#dc2626"/>
+        <path d="M6.5 6.5 L17.5 17.5 M17.5 6.5 L6.5 17.5" stroke="#f8fafc" stroke-width="2" stroke-linecap="round"/>
+    </svg>`,
+
+    insigniaTurkey: `<svg viewBox="0 0 24 24" width="22" height="22" class="insignia-svg">
+        <!-- Turkish Crescent & Star on Crimson Roundel -->
+        <circle cx="12" cy="12" r="11" fill="#991b1b" stroke="#fca5a5" stroke-width="1.2"/>
+        <path d="M12.2 5.5 A 6.5 6.5 0 1 0 12.2 18.5 A 5.2 5.2 0 1 1 12.2 5.5 Z" fill="#ffffff"/>
+        <polygon points="15.8,10.2 16.6,11.8 18.3,12 17,13.2 17.4,14.9 15.8,14 14.2,14.9 14.6,13.2 13.3,12 15,11.8" fill="#ffffff"/>
+    </svg>`,
+
     insigniaNeutral: `<svg viewBox="0 0 24 24" width="22" height="22" class="insignia-svg">
         <circle cx="12" cy="12" r="10" fill="#716550" stroke="#d6c7a1" stroke-width="1.5"/>
         <path d="M12 6v12M6 12h12" stroke="#f5f5f4" stroke-width="2"/>
@@ -272,6 +297,9 @@ export function getFactionInsignia(factionId, size = 20) {
         uk: ICONS.insigniaUK,
         ussr: ICONS.insigniaUSSR,
         italy: ICONS.insigniaItaly,
+        france: ICONS.insigniaFrance,
+        spain: ICONS.insigniaSpain,
+        turkey: ICONS.insigniaTurkey,
         neutral: ICONS.insigniaNeutral
     };
     const svg = map[id] || ICONS.flag;

@@ -96,6 +96,10 @@
                 <span class="svg-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></span>
                 <span data-i18n="btn_developer">Yapan Kişi</span>
             </button>
+            <button class="btn-tactical" id="btn-exit-game" style="background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.6); color: #fca5a5;" title="Oyundan Çık ve Ana Menüye Dön" data-i18n-title="btn_exit_game_title">
+                <span class="svg-icon"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></span>
+                <span data-i18n="btn_exit_game">Oyundan Çık</span>
+            </button>
         </div>
     </header>
 
@@ -106,15 +110,19 @@
 
         <!-- Floating Map Controls -->
         <div style="position: absolute; bottom: 20px; left: 20px; display: flex; gap: 8px; z-index: 30;">
-            <button class="btn-tactical" id="btn-zoom-in" title="Yakınlaş">
+            <button class="btn-tactical" id="btn-zoom-in" title="Yakınlaş (Zoom In)">
                 <span class="svg-icon"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
             </button>
-            <button class="btn-tactical" id="btn-zoom-out" title="Uzaklaş">
+            <button class="btn-tactical" id="btn-zoom-out" title="Uzaklaş (Zoom Out)">
                 <span class="svg-icon"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
             </button>
-            <button class="btn-tactical" id="btn-zoom-reset" title="Haritayı Ortala & Görünümü Sıfırla" data-i18n-title="zoom_reset_title">
-                <span class="svg-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><circle cx="12" cy="12" r="3"/></svg></span>
-                <span data-i18n="zoom_reset">Haritayı Ortala</span>
+            <button class="btn-tactical" id="btn-zoom-homeland" title="Başkente Odaklan" data-i18n-title="zoom_homeland_title" style="border-color: rgba(56, 189, 248, 0.5); color: #38bdf8;">
+                <span class="svg-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="9"/></svg></span>
+                <span data-i18n="zoom_homeland">Ülkeme Odaklan</span>
+            </button>
+            <button class="btn-tactical" id="btn-zoom-reset" title="Tüm Kıta / Genel Bakış" data-i18n-title="zoom_reset_title">
+                <span class="svg-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></span>
+                <span data-i18n="zoom_reset">Tüm Harita</span>
             </button>
         </div>
 
@@ -275,6 +283,10 @@
                             <input type="range" class="combat-slider" id="combat-air-commit" min="0" max="5" value="0">
                         </div>
 
+                        <div class="odds-gauge" id="combat-morale-gauge" style="margin-bottom: 8px; border-color: rgba(56, 189, 248, 0.4); background: rgba(15, 23, 42, 0.7);">
+                            Ordu Morali: <strong id="combat-morale-val" style="color: #38bdf8;">%100 (Dinç Ordu / 1.0x Hasar)</strong>
+                        </div>
+
                         <div class="odds-gauge" id="combat-odds-ratio">
                             Kuvvet Oranı: <strong>Seçim Yapılmadı</strong>
                         </div>
@@ -363,9 +375,21 @@
 
                     <div class="panel-card">
                         <div class="panel-title">
-                            <span>STRATEJİK BAŞKENTLER</span>
+                            <span data-i18n="title_strategic_capitals">STRATEJİK BAŞKENTLER</span>
                         </div>
                         <div class="capitals-list" id="intel-capitals-list">
+                            <!-- Populated dynamically by HUD -->
+                        </div>
+                    </div>
+
+                    <div class="panel-card">
+                        <div class="panel-title">
+                            <span data-i18n="tab_diplomacy_title">DİPLOMASİ VE İTTİFAK MERKEZİ</span>
+                        </div>
+                        <p style="font-size: 0.76rem; color: var(--text-muted); margin-bottom: 8px;" data-i18n="hint_diplomacy_desc">
+                            Devletlerle olan ilişki düzeyinize göre ittifak teklif edin, saldırmazlık paktı yapın veya sanayi yardımı yollayarak ilişkileri geliştirin.
+                        </p>
+                        <div class="diplomacy-list" id="intel-diplomacy-list">
                             <!-- Populated dynamically by HUD -->
                         </div>
                     </div>
@@ -446,20 +470,101 @@
                 </div>
             </div>
 
-            <!-- FACTION SELECTION -->
+            <!-- FACTION SELECTION & INTERACTIVE MAP HINT -->
             <div class="lobby-form-group">
                 <label data-i18n="label_select_faction">KOMUTA EDİLECEK ÜLKE SEÇİMİ:</label>
+                <div class="lobby-map-select-banner" id="lobby-interactive-hint">
+                    <span class="svg-icon" style="color:var(--accent-cyan);"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="12 8 8 12 12 16 16 12 12 8"/></svg></span>
+                    <span><strong>HARİTADAN TIKLAYIN:</strong> Aşağıdaki ülke kartlarına veya arka plandaki haritada istediğiniz bir toprağa tıklayarak komutanızı belirleyin.</span>
+                </div>
+                <!-- Interactive Quick Faction Cards -->
+                <div class="lobby-faction-pills-grid" id="lobby-faction-pills">
+                    <div class="faction-pill-card selected" data-faction="germany">
+                        <span class="svg-icon"><svg viewBox="0 0 24 24" width="20" height="20" class="insignia-svg"><rect x="9" y="2" width="6" height="20" rx="0.5" fill="#f8fafc"/><rect x="2" y="9" width="20" height="6" rx="0.5" fill="#f8fafc"/><rect x="10" y="3" width="4" height="18" rx="0.3" fill="#0f172a"/><rect x="3" y="10" width="18" height="4" rx="0.3" fill="#0f172a"/><rect x="10.8" y="0" width="2.4" height="24" rx="0.3" fill="#fbbf24"/><rect x="0" y="10.8" width="24" height="2.4" rx="0.3" fill="#fbbf24"/></svg></span>
+                        <div class="faction-pill-meta">
+                            <span class="faction-pill-name" data-i18n="faction_germany_name">Almanya</span>
+                            <span class="faction-pill-sub" data-i18n="faction_germany_sub">20 Bölge (Mihver)</span>
+                        </div>
+                    </div>
+                    <div class="faction-pill-card" data-faction="uk">
+                        <span class="svg-icon"><svg viewBox="0 0 24 24" width="20" height="20" class="insignia-svg"><circle cx="12" cy="12" r="11" fill="#1d4ed8"/><circle cx="12" cy="12" r="7.5" fill="#f8fafc"/><circle cx="12" cy="12" r="4" fill="#dc2626"/></svg></span>
+                        <div class="faction-pill-meta">
+                            <span class="faction-pill-name" data-i18n="faction_uk_name">Birleşik Krallık</span>
+                            <span class="faction-pill-sub" data-i18n="faction_uk_sub">11 Bölge (Müttefik)</span>
+                        </div>
+                    </div>
+                    <div class="faction-pill-card" data-faction="ussr">
+                        <span class="svg-icon"><svg viewBox="0 0 24 24" width="20" height="20" class="insignia-svg"><circle cx="12" cy="12" r="11" fill="#7f1d1d" stroke="#fbbf24" stroke-width="1.5"/><polygon points="12,4 14.5,9.5 20.5,10.2 16,14.3 17.2,20.2 12,17.2 6.8,20.2 8,14.3 3.5,10.2 9.5,9.5" fill="#dc2626" stroke="#fbbf24" stroke-width="0.8"/></svg></span>
+                        <div class="faction-pill-meta">
+                            <span class="faction-pill-name" data-i18n="faction_ussr_name">Sovyetler B.</span>
+                            <span class="faction-pill-sub" data-i18n="faction_ussr_sub">28 Bölge (Müttefik)</span>
+                        </div>
+                    </div>
+                    <div class="faction-pill-card" data-faction="italy">
+                        <span class="svg-icon"><svg viewBox="0 0 24 24" width="20" height="20" class="insignia-svg"><path d="M12 2 L21 5 V12 C21 17.5 17 21.5 12 23 C7 21.5 3 17.5 3 12 V5 Z" fill="#15803d" stroke="#86efac" stroke-width="1.2"/><rect x="10" y="5" width="4" height="14" fill="#f8fafc"/><rect x="5" y="10" width="14" height="4" fill="#f8fafc"/><rect x="11" y="6" width="2" height="12" fill="#dc2626"/><rect x="6" y="11" width="12" height="2" fill="#dc2626"/></svg></span>
+                        <div class="faction-pill-meta">
+                            <span class="faction-pill-name" data-i18n="faction_italy_name">İtalya</span>
+                            <span class="faction-pill-sub" data-i18n="faction_italy_sub">11 Bölge (Mihver)</span>
+                        </div>
+                    </div>
+                    <div class="faction-pill-card" data-faction="france">
+                        <span class="svg-icon"><svg viewBox="0 0 24 24" width="20" height="20" class="insignia-svg"><circle cx="12" cy="12" r="11" fill="#1e3a8a"/><circle cx="12" cy="12" r="7.5" fill="#f8fafc"/><circle cx="12" cy="12" r="4" fill="#dc2626"/><rect x="11" y="4" width="2" height="16" fill="#fbbf24"/><rect x="8" y="7" width="8" height="2" fill="#fbbf24"/><rect x="7" y="11" width="10" height="2" fill="#fbbf24"/></svg></span>
+                        <div class="faction-pill-meta">
+                            <span class="faction-pill-name" data-i18n="faction_france_name">Fransa</span>
+                            <span class="faction-pill-sub" data-i18n="faction_france_sub">12 Bölge (Müttefik)</span>
+                        </div>
+                    </div>
+                    <div class="faction-pill-card" data-faction="spain">
+                        <span class="svg-icon"><svg viewBox="0 0 24 24" width="20" height="20" class="insignia-svg"><circle cx="12" cy="12" r="11" fill="#9a3412" stroke="#f59e0b" stroke-width="1.5"/><line x1="5" y1="5" x2="19" y2="19" stroke="#dc2626" stroke-width="3" stroke-linecap="round"/><line x1="19" y1="5" x2="5" y2="19" stroke="#dc2626" stroke-width="3" stroke-linecap="round"/><circle cx="12" cy="12" r="3" fill="#fbbf24"/></svg></span>
+                        <div class="faction-pill-meta">
+                            <span class="faction-pill-name" data-i18n="faction_spain_name">İspanya</span>
+                            <span class="faction-pill-sub" data-i18n="faction_spain_sub">9 Bölge (Mihver)</span>
+                        </div>
+                    </div>
+                    <div class="faction-pill-card" data-faction="turkey">
+                        <span class="svg-icon"><svg viewBox="0 0 24 24" width="20" height="20" class="insignia-svg"><circle cx="12" cy="12" r="11" fill="#991b1b" stroke="#ef4444" stroke-width="1.2"/><path d="M 12 5 A 7 7 0 1 0 17.5 15.5 A 5.5 5.5 0 1 1 12 5 Z" fill="#f8fafc"/><polygon points="17,10.5 18,12 19.5,12 18.2,13 18.7,14.5 17.5,13.5 16.3,14.5 16.8,13 15.5,12 17,12" fill="#f8fafc"/></svg></span>
+                        <div class="faction-pill-meta">
+                            <span class="faction-pill-name" data-i18n="faction_turkey_name">Türkiye</span>
+                            <span class="faction-pill-sub" data-i18n="faction_turkey_sub">10 Bölge (Bağımsız)</span>
+                        </div>
+                    </div>
+                </div>
+
                 <select class="lobby-input" id="lobby-faction-select">
-                    <option value="germany" id="opt-faction-germany">Almanya (Mihver - Yüksek Başlangıç Panzer Gücü)</option>
-                    <option value="uk" id="opt-faction-uk">Birleşik Krallık (Müttefikler - Atlantik & Kraliyet Donanması)</option>
-                    <option value="ussr" id="opt-faction-ussr">Sovyetler Birliği (Müttefikler - Muazzam İnsan Gücü & Sanayi)</option>
-                    <option value="italy" id="opt-faction-italy">İtalya (Mihver - Akdeniz & Kuzey Afrika Cephesi)</option>
+                    <option value="germany" id="opt-faction-germany">Almanya (Mihver - 20 Bölge & Ezici Panzer Gücü)</option>
+                    <option value="uk" id="opt-faction-uk">Birleşik Krallık (Müttefikler - 11 Bölge & Kraliyet Donanması/Akdeniz)</option>
+                    <option value="ussr" id="opt-faction-ussr">Sovyetler Birliği (Müttefikler - 28 Bölge & Muazzam Derinlik)</option>
+                    <option value="italy" id="opt-faction-italy">İtalya (Mihver - 11 Bölge & Akdeniz-Kuzey Afrika)</option>
+                    <option value="france" id="opt-faction-france">Fransa (Müttefikler - 12 Bölge & Batı Kalesi)</option>
+                    <option value="spain" id="opt-faction-spain">İspanya (Mihver Eğilimli - 9 İberya Bölgesi)</option>
+                    <option value="turkey" id="opt-faction-turkey">Türkiye (Müttefik / Bağımsız - 10 Anadolu Bölgesi & Boğazlar)</option>
                 </select>
             </div>
 
             <div class="lobby-form-group">
                 <label data-i18n="label_commander_name">KOMUTAN ADI:</label>
                 <input type="text" class="lobby-input" id="lobby-player-name" value="General">
+            </div>
+
+            <div class="lobby-form-group" id="lobby-difficulty-group">
+                <label data-i18n="label_bot_difficulty">YAPAY ZEKA (BOT) ZORLUK DERECESİ:</label>
+                <div class="difficulty-pills-row" id="lobby-difficulty-pills">
+                    <button type="button" class="btn-tactical diff-pill" data-difficulty="easy">
+                        <span class="svg-icon"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></span>
+                        <span data-i18n="diff_easy">KOLAY</span>
+                    </button>
+                    <button type="button" class="btn-tactical diff-pill active" data-difficulty="normal">
+                        <span class="svg-icon"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="8" y1="15" x2="16" y2="15"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></span>
+                        <span data-i18n="diff_normal">ORTA</span>
+                    </button>
+                    <button type="button" class="btn-tactical diff-pill" data-difficulty="hard">
+                        <span class="svg-icon"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26"/></svg></span>
+                        <span data-i18n="diff_hard">ZOR</span>
+                    </button>
+                </div>
+                <div class="difficulty-desc-hint" id="lobby-difficulty-desc" style="font-size:0.75rem; color:var(--text-muted); margin-top:5px;" data-i18n="diff_normal_desc">
+                    Tarihsel standart muharebe zarları ve dengeli bot taktikleri.
+                </div>
             </div>
 
             <div style="text-align: center; margin-top: 20px;">
@@ -606,6 +711,69 @@
                     </div>
                     <div class="slot-player-name text-muted" id="slot-name-italy" data-i18n="slot_bot_name">Yapay Zeka (Bot)</div>
                 </div>
+
+                <!-- Slot France -->
+                <div class="slot-card" id="slot-card-france">
+                    <div class="slot-header">
+                        <span class="slot-flag" id="slot-flag-france">
+                            <svg viewBox="0 0 24 24" width="22" height="22" class="insignia-svg"><circle cx="12" cy="12" r="11" fill="#1e3a8a"/><circle cx="12" cy="12" r="7.5" fill="#f8fafc"/><circle cx="12" cy="12" r="4" fill="#dc2626"/><rect x="11" y="4" width="2" height="16" fill="#fbbf24"/><rect x="8" y="7" width="8" height="2" fill="#fbbf24"/><rect x="7" y="11" width="10" height="2" fill="#fbbf24"/></svg>
+                        </span>
+                        <span class="slot-faction-name" id="slot-name-label-france" data-i18n="faction_france_name">Fransa</span>
+                        <span class="slot-badge badge-bot" id="slot-badge-france">
+                            <span class="svg-icon" style="margin-right:3px;"><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><rect x="4" y="8" width="16" height="12" rx="3"/><circle cx="9" cy="13" r="1.5" fill="#070b12"/><circle cx="15" cy="13" r="1.5" fill="#070b12"/><line x1="12" y1="2" x2="12" y2="8" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="2" r="1.5"/></svg></span>
+                            <span data-i18n="slot_bot_badge">BOT</span>
+                        </span>
+                    </div>
+                    <div class="slot-player-name text-muted" id="slot-name-france" data-i18n="slot_bot_name">Yapay Zeka (Bot)</div>
+                </div>
+
+                <!-- Slot Spain -->
+                <div class="slot-card" id="slot-card-spain">
+                    <div class="slot-header">
+                        <span class="slot-flag" id="slot-flag-spain">
+                            <svg viewBox="0 0 24 24" width="22" height="22" class="insignia-svg"><circle cx="12" cy="12" r="11" fill="#9a3412" stroke="#f59e0b" stroke-width="1.5"/><line x1="5" y1="5" x2="19" y2="19" stroke="#dc2626" stroke-width="3" stroke-linecap="round"/><line x1="19" y1="5" x2="5" y2="19" stroke="#dc2626" stroke-width="3" stroke-linecap="round"/><circle cx="12" cy="12" r="3" fill="#fbbf24"/></svg>
+                        </span>
+                        <span class="slot-faction-name" id="slot-name-label-spain" data-i18n="faction_spain_name">İspanya</span>
+                        <span class="slot-badge badge-bot" id="slot-badge-spain">
+                            <span class="svg-icon" style="margin-right:3px;"><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><rect x="4" y="8" width="16" height="12" rx="3"/><circle cx="9" cy="13" r="1.5" fill="#070b12"/><circle cx="15" cy="13" r="1.5" fill="#070b12"/><line x1="12" y1="2" x2="12" y2="8" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="2" r="1.5"/></svg></span>
+                            <span data-i18n="slot_bot_badge">BOT</span>
+                        </span>
+                    </div>
+                    <div class="slot-player-name text-muted" id="slot-name-spain" data-i18n="slot_bot_name">Yapay Zeka (Bot)</div>
+                </div>
+
+                <!-- Slot Turkey -->
+                <div class="slot-card" id="slot-card-turkey">
+                    <div class="slot-header">
+                        <span class="slot-flag" id="slot-flag-turkey">
+                            <svg viewBox="0 0 24 24" width="22" height="22" class="insignia-svg"><circle cx="12" cy="12" r="11" fill="#991b1b" stroke="#ef4444" stroke-width="1.2"/><path d="M 12 5 A 7 7 0 1 0 17.5 15.5 A 5.5 5.5 0 1 1 12 5 Z" fill="#f8fafc"/><polygon points="17,10.5 18,12 19.5,12 18.2,13 18.7,14.5 17.5,13.5 16.3,14.5 16.8,13 15.5,12 17,12" fill="#f8fafc"/></svg>
+                        </span>
+                        <span class="slot-faction-name" id="slot-name-label-turkey" data-i18n="faction_turkey_name">Türkiye</span>
+                        <span class="slot-badge badge-bot" id="slot-badge-turkey">
+                            <span class="svg-icon" style="margin-right:3px;"><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><rect x="4" y="8" width="16" height="12" rx="3"/><circle cx="9" cy="13" r="1.5" fill="#070b12"/><circle cx="15" cy="13" r="1.5" fill="#070b12"/><line x1="12" y1="2" x2="12" y2="8" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="2" r="1.5"/></svg></span>
+                            <span data-i18n="slot_bot_badge">BOT</span>
+                        </span>
+                    </div>
+                    <div class="slot-player-name text-muted" id="slot-name-turkey" data-i18n="slot_bot_name">Yapay Zeka (Bot)</div>
+                </div>
+            </div>
+
+            <!-- BOT DIFFICULTY IN MULTIPLAYER ROOM -->
+            <div style="margin-top: 14px; background: rgba(15, 23, 42, 0.55); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 6px; padding: 10px 14px;">
+                <div style="font-size: 0.8rem; color: var(--accent-amber); font-family: var(--font-heading); margin-bottom: 6px;" data-i18n="label_bot_difficulty">
+                    YAPAY ZEKA (BOT) ZORLUK DERECESİ:
+                </div>
+                <div class="difficulty-pills-row" id="waiting-room-difficulty-pills">
+                    <button type="button" class="btn-tactical diff-pill" data-difficulty="easy">
+                        <span data-i18n="diff_easy">KOLAY</span>
+                    </button>
+                    <button type="button" class="btn-tactical diff-pill active" data-difficulty="normal">
+                        <span data-i18n="diff_normal">ORTA</span>
+                    </button>
+                    <button type="button" class="btn-tactical diff-pill" data-difficulty="hard">
+                        <span data-i18n="diff_hard">ZOR</span>
+                    </button>
+                </div>
             </div>
 
             <!-- LOBBY ACTIONS FOOTER -->
@@ -731,13 +899,44 @@
 
             <!-- ACTIONS BAR -->
             <div class="briefing-actions-bar">
-                <label class="briefing-checkbox-label">
-                    <input type="checkbox" id="briefing-dont-show-checkbox">
-                    <span data-i18n="briefing_dont_show">Bu brifingi başlangıçta bir daha gösterme</span>
-                </label>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <button class="btn-tactical btn-secondary" id="btn-briefing-back" style="padding: 10px 16px; font-size: 0.88rem;">
+                        <span class="svg-icon" style="margin-right:6px;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></span>
+                        <span data-i18n="btn_briefing_back">Geri (Farklı Ülke Seç)</span>
+                    </button>
+                    <label class="briefing-checkbox-label">
+                        <input type="checkbox" id="briefing-dont-show-checkbox">
+                        <span data-i18n="briefing_dont_show">Bu brifingi başlangıçta bir daha gösterme</span>
+                    </label>
+                </div>
                 <button class="btn-tactical btn-primary" id="btn-briefing-start" style="padding: 10px 20px; font-size: 0.95rem;">
                     <span class="svg-icon" style="margin-right:6px;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
                     <span data-i18n="btn_briefing_enter">KOMUTAYI AL VE SAVAŞ ODASINA GİR</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: EXIT CONFIRMATION -->
+    <div class="modal-backdrop" id="modal-exit-confirm">
+        <div class="modal-dialog" style="max-width: 440px; text-align: center;">
+            <div style="margin-bottom: 8px;" class="svg-icon">
+                <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            </div>
+            <h2 class="modal-title" style="color: #f87171; font-size: 1.3rem;" data-i18n="btn_exit_confirm_title">
+                HAREKATTAN ÇIK / LOBİYE DÖN
+            </h2>
+            <p style="color: var(--text-muted); font-size: 0.88rem; line-height: 1.45; margin: 12px 0 20px 0;" data-i18n="btn_exit_confirm_desc">
+                Mevcut seferden çıkıp ana lobiye dönmek istediğinize emin misiniz? Kaydedilmemiş veriler ve harekat durumu kaybolacaktır.
+            </p>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button class="btn-tactical btn-secondary" id="btn-exit-cancel" style="padding: 10px 18px; flex: 1; justify-content: center;">
+                    <span class="svg-icon"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
+                    <span data-i18n="btn_exit_confirm_cancel">Oyunda Kal</span>
+                </button>
+                <button class="btn-tactical btn-danger" id="btn-exit-confirm" style="padding: 10px 22px; flex: 1; justify-content: center;">
+                    <span class="svg-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></span>
+                    <span data-i18n="btn_exit_confirm_yes">Evet, Çık</span>
                 </button>
             </div>
         </div>
