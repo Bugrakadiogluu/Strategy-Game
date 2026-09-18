@@ -1,993 +1,747 @@
-﻿/**
- * mapData.js - Authentic World-Map Scale WW2 European, Mediterranean & Near-East Theater
- * 67 Authentic Territories with Seamless Geographic Contours & Frontiers:
- * - Germany (15 territories - Central European Axis Power)
- * - Soviet Union (10 territories - Vast Eastern Front & Industrial Depth)
- * - United Kingdom (10 territories - Home Isles & Mediterranean/Near-East Bastions)
- * - Italy (8 territories - Mediterranean Axis: Boot, Alps, Sicily, Sardinia, Libya)
- * - France (6 territories - Hexagonal Homeland & North African Stronghold)
- * - Spain (5 territories - Iberian Peninsula: Madrid, Catalonia, Andalusia, Valencia, Galicia)
- * - Turkey (5 territories - Strategic Straits Guardian & Anatolian Stronghold)
- * - Neutral Buffer (Ireland, Atlantic, Sweden, Norway, Finland, Balkans, Switzerland, Benelux)
+/**
+ * mapData.js - Real-World European Theater WW2 Map Data Engine
+ * Powered by Authentic GeoJSON Geography & Spherical Mercator Projection.
+ * Completely replaces all handcoded/low-poly polygon approximations.
  */
+
+import { EUROPE_GEOJSON } from '../data/europeGeoJson.js';
+import { MercatorProjection, parseGeoGeometry } from './geoProjection.js';
 
 export const MAP_DIMENSIONS = {
     width: 2400,
     height: 1600
 };
 
-export const INITIAL_REGIONS = [
-    // =========================================================================
-    // 1. BRITISH ISLES & CONVOY LANES (UK & NEUTRAL IRELAND)
-    // =========================================================================
-    {
-        id: 'atlantic',
-        name: 'Atlantik Konvoy HattÄ±',
-        owner: 'neutral',
-        terrain: 'coastal',
-        industry: 2,
-        capital: false,
-        x: 180,
-        y: 560,
-        path: "M 40,40 L 320,40 C 310,220 290,440 330,680 C 270,720 230,900 240,1120 L 120,1200 L 40,1200 Z",
-        polygon: [[40,40], [320,40], [330,680], [240,1120], [120,1200], [40,1200]],
-        neighbors: ['scotland', 'ireland', 'midlands', 'galicia'],
-        initialUnits: { infantry: 2, armor: 0, air: 1 }
+export const GEO_PROJECTION_CONFIG = {
+    minLon: -14.0,
+    maxLon: 48.0,
+    minLat: 31.5,
+    maxLat: 71.5,
+    width: 2400,
+    height: 1600
+};
+
+/**
+ * Historical WW2 Country Configuration Table for all 51 GeoJSON Features
+ * Keyed by uppercase ISO2 code.
+ */
+export const COUNTRY_METADATA = {
+    // -------------------------------------------------------------------------
+    // 1. GERMANY & CENTRAL AXIS
+    // -------------------------------------------------------------------------
+    DE: {
+        id: 'de',
+        name: 'Almanya',
+        owner: 'germany',
+        capital: true,
+        capitalCity: 'Berlin',
+        industry: 14,
+        terrain: 'city',
+        initialUnits: { infantry: 10, armor: 5, air: 4 },
+        neighbors: ['pl', 'cz', 'at', 'ch', 'fr', 'be', 'nl', 'dk', 'gb', 'lu'],
+        aliases: ['germany', 'berlin']
     },
-    {
-        id: 'ireland',
-        name: 'Ä°rlanda AdasÄ±',
-        owner: 'neutral',
+    AT: {
+        id: 'at',
+        name: 'Avusturya',
+        owner: 'germany',
+        capital: false,
+        industry: 2,
+        terrain: 'mountains',
+        initialUnits: { infantry: 3, armor: 1, air: 0 },
+        neighbors: ['de', 'cz', 'sk', 'hu', 'si', 'it', 'ch', 'li'],
+        aliases: ['austria']
+    },
+    CZ: {
+        id: 'cz',
+        name: 'Çekya (Bohemya)',
+        owner: 'germany',
+        capital: false,
+        industry: 3,
         terrain: 'plains',
+        initialUnits: { infantry: 3, armor: 1, air: 0 },
+        neighbors: ['de', 'pl', 'sk', 'at'],
+        aliases: ['czechia', 'czech_republic']
+    },
+
+    // -------------------------------------------------------------------------
+    // 2. UNITED KINGDOM & ALLIED ISLES / BASES
+    // -------------------------------------------------------------------------
+    GB: {
+        id: 'gb',
+        name: 'Birleşik Krallık',
+        owner: 'uk',
+        capital: true,
+        capitalCity: 'Londra',
+        industry: 10,
+        terrain: 'city',
+        initialUnits: { infantry: 8, armor: 3, air: 3 },
+        neighbors: ['ie', 'fr', 'no', 'de', 'nl', 'is', 'mt', 'cy', 'fo'],
+        aliases: ['uk', 'london', 'britain', 'united_kingdom']
+    },
+    IE: {
+        id: 'ie',
+        name: 'İrlanda',
+        owner: 'neutral',
+        capital: false,
         industry: 1,
-        capital: false,
-        x: 410,
-        y: 500,
-        path: "M 410,380 C 440,380 470,410 475,460 C 480,510 470,570 455,610 C 430,630 385,620 360,580 C 340,540 345,510 365,490 C 340,460 350,420 380,390 Z",
-        polygon: [[410,380], [475,460], [455,610], [360,580], [365,490], [380,390]],
-        neighbors: ['atlantic', 'scotland', 'midlands'],
-        initialUnits: { infantry: 2, armor: 0, air: 0 }
-    },
-    {
-        id: 'scotland',
-        name: 'Ä°skoÃ§ya & Hebridler',
-        owner: 'uk',
-        terrain: 'mountains',
-        industry: 2,
-        capital: false,
-        x: 600,
-        y: 240,
-        path: "M 560,90 C 620,85 660,120 655,180 C 645,220 680,240 670,280 C 640,300 625,330 580,340 C 545,335 530,300 535,250 C 510,220 515,150 540,110 Z",
-        polygon: [[560,90], [655,180], [670,280], [580,340], [535,250], [540,110]],
-        neighbors: ['atlantic', 'ireland', 'midlands', 'norway'],
-        initialUnits: { infantry: 4, armor: 1, air: 1 }
-    },
-    {
-        id: 'midlands',
-        name: 'Ä°ngiltere Midlands & Galler',
-        owner: 'uk',
         terrain: 'plains',
-        industry: 3,
-        capital: false,
-        x: 600,
-        y: 440,
-        path: "M 580,340 C 625,330 640,300 670,280 C 690,320 710,380 705,440 C 685,470 655,490 630,505 C 570,515 520,510 495,470 C 490,420 520,390 545,390 C 540,360 555,345 580,340 Z",
-        polygon: [[580,340], [670,280], [705,440], [630,505], [495,470], [545,390]],
-        neighbors: ['scotland', 'ireland', 'london', 'atlantic'],
-        initialUnits: { infantry: 4, armor: 2, air: 1 }
+        initialUnits: { infantry: 2, armor: 0, air: 0 },
+        neighbors: ['gb'],
+        aliases: ['ireland']
     },
-    {
-        id: 'london',
-        name: 'Londra & GÃ¼ney Ä°ngiltere',
+    IS: {
+        id: 'is',
+        name: 'İzlanda',
         owner: 'uk',
-        terrain: 'city',
-        industry: 5,
-        capital: true,
-        x: 660,
-        y: 590,
-        path: "M 630,505 C 655,490 685,470 705,440 C 740,450 765,490 755,540 C 740,570 750,600 735,630 C 700,650 650,655 600,660 C 530,680 480,700 460,690 C 470,665 530,630 560,610 C 585,595 605,530 630,505 Z",
-        polygon: [[630,505], [705,440], [755,540], [735,630], [600,660], [460,690], [560,610]],
-        neighbors: ['midlands', 'normandy', 'paris', 'benelux'],
-        initialUnits: { infantry: 8, armor: 3, air: 3 }
-    },
-
-    // =========================================================================
-    // 2. FRANCE (6 TERRITORIES - SEPARATE PLAYABLE ALLIED NATION)
-    // =========================================================================
-    {
-        id: 'normandy',
-        name: 'Normandiya & Bretonya',
-        owner: 'france',
-        terrain: 'coastal',
-        industry: 3,
         capital: false,
-        x: 660,
-        y: 720,
-        path: "M 750,620 C 770,660 770,700 740,730 C 710,755 670,760 640,750 C 590,760 540,750 480,735 C 475,715 520,705 560,700 C 570,660 595,650 600,620 C 620,610 635,640 660,650 C 690,640 720,615 750,620 Z",
-        polygon: [[750,620], [740,730], [640,750], [480,735], [560,700], [600,620]],
-        neighbors: ['london', 'paris', 'aquitaine'],
-        initialUnits: { infantry: 5, armor: 2, air: 1 }
-    },
-    {
-        id: 'paris',
-        name: 'Paris & Ãle-de-France',
-        owner: 'france',
-        terrain: 'city',
-        industry: 6,
-        capital: true,
-        x: 830,
-        y: 690,
-        path: "M 750,620 C 780,610 830,600 880,610 C 915,640 910,700 890,740 C 850,760 810,765 770,760 C 740,730 740,690 750,620 Z",
-        polygon: [[750,620], [880,610], [890,740], [770,760], [740,690]],
-        neighbors: ['normandy', 'london', 'benelux', 'ruhr', 'lyon', 'aquitaine'],
-        initialUnits: { infantry: 8, armor: 3, air: 2 }
-    },
-    {
-        id: 'aquitaine',
-        name: 'Akitanya & Bordeaux',
-        owner: 'france',
-        terrain: 'plains',
-        industry: 3,
-        capital: false,
-        x: 680,
-        y: 840,
-        path: "M 640,750 C 670,760 710,755 740,760 C 760,800 755,850 735,900 C 700,925 645,930 590,930 C 585,890 605,840 615,800 C 625,770 630,755 640,750 Z",
-        polygon: [[640,750], [740,760], [735,900], [590,930], [615,800]],
-        neighbors: ['normandy', 'paris', 'lyon', 'marseille', 'galicia', 'catalonia'],
-        initialUnits: { infantry: 4, armor: 1, air: 1 }
-    },
-    {
-        id: 'lyon',
-        name: 'Lyon & RhÃ´ne Vadisi',
-        owner: 'france',
-        terrain: 'plains',
-        industry: 3,
-        capital: false,
-        x: 850,
-        y: 820,
-        path: "M 770,760 C 810,765 850,760 890,740 C 920,780 925,830 910,880 C 880,910 830,915 790,900 C 760,870 755,810 770,760 Z",
-        polygon: [[770,760], [890,740], [910,880], [790,900], [755,810]],
-        neighbors: ['paris', 'ruhr', 'switzerland', 'marseille', 'aquitaine'],
-        initialUnits: { infantry: 4, armor: 2, air: 1 }
-    },
-    {
-        id: 'marseille',
-        name: 'Marsilya & Provence',
-        owner: 'france',
-        terrain: 'coastal',
-        industry: 3,
-        capital: false,
-        x: 830,
-        y: 970,
-        path: "M 735,900 C 760,870 810,890 850,890 C 890,890 910,910 940,920 C 930,970 895,1000 850,1015 C 800,1020 760,990 735,950 Z",
-        polygon: [[735,900], [850,890], [940,920], [850,1015], [735,950]],
-        neighbors: ['aquitaine', 'lyon', 'n_italy', 'catalonia', 'algeria'],
-        initialUnits: { infantry: 4, armor: 1, air: 1 }
-    },
-    {
-        id: 'algeria',
-        name: 'Cezayir & FransÄ±z Kuzey Afrika',
-        owner: 'france',
-        terrain: 'coastal',
-        industry: 2,
-        capital: false,
-        x: 660,
-        y: 1350,
-        path: "M 460,1240 C 540,1230 650,1235 760,1245 C 840,1255 870,1290 855,1360 C 830,1420 760,1450 650,1450 C 540,1450 470,1420 450,1350 Z",
-        polygon: [[460,1240], [760,1245], [855,1360], [650,1450], [450,1350]],
-        neighbors: ['marseille', 'andalusia', 'tripoli'],
-        initialUnits: { infantry: 4, armor: 1, air: 0 }
-    },
-
-    // =========================================================================
-    // 3. SPAIN (5 TERRITORIES - SEPARATE PLAYABLE AXIS NATION)
-    // =========================================================================
-    {
-        id: 'madrid',
-        name: 'Madrid & Yeni Kastilya',
-        owner: 'spain',
-        terrain: 'city',
-        industry: 4,
-        capital: true,
-        x: 480,
-        y: 950,
-        path: "M 340,845 C 390,860 450,865 510,850 C 545,880 560,930 550,990 C 510,1020 450,1025 390,1010 C 350,980 335,910 340,845 Z",
-        polygon: [[340,845], [510,850], [550,990], [390,1010], [335,910]],
-        neighbors: ['galicia', 'catalonia', 'valencia', 'andalusia'],
-        initialUnits: { infantry: 6, armor: 2, air: 2 }
-    },
-    {
-        id: 'galicia',
-        name: 'GaliÃ§ya & Bask BÃ¶lgesi',
-        owner: 'spain',
-        terrain: 'mountains',
-        industry: 2,
-        capital: false,
-        x: 410,
-        y: 790,
-        path: "M 310,730 C 360,720 460,720 550,730 C 560,770 540,820 510,850 C 450,865 390,860 340,845 C 310,820 300,770 310,730 Z",
-        polygon: [[310,730], [550,730], [510,850], [340,845], [300,770]],
-        neighbors: ['atlantic', 'madrid', 'aquitaine'],
-        initialUnits: { infantry: 4, armor: 1, air: 0 }
-    },
-    {
-        id: 'catalonia',
-        name: 'Katalonya & Barselona',
-        owner: 'spain',
-        terrain: 'coastal',
-        industry: 3,
-        capital: false,
-        x: 660,
-        y: 860,
-        path: "M 550,730 C 600,735 660,740 715,750 C 730,790 720,850 690,900 C 650,920 600,925 565,900 C 555,850 550,790 550,730 Z",
-        polygon: [[550,730], [715,750], [690,900], [565,900], [550,790]],
-        neighbors: ['aquitaine', 'marseille', 'madrid', 'valencia'],
-        initialUnits: { infantry: 4, armor: 1, air: 1 }
-    },
-    {
-        id: 'valencia',
-        name: 'Valensiya & DoÄŸu Ä°spanya',
-        owner: 'spain',
-        terrain: 'coastal',
-        industry: 2,
-        capital: false,
-        x: 610,
-        y: 1020,
-        path: "M 565,900 C 600,925 650,920 690,900 C 700,950 690,1020 660,1070 C 615,1100 560,1090 535,1050 C 545,990 555,940 565,900 Z",
-        polygon: [[565,900], [690,900], [660,1070], [535,1050], [545,990]],
-        neighbors: ['madrid', 'catalonia', 'andalusia'],
-        initialUnits: { infantry: 3, armor: 1, air: 0 }
-    },
-    {
-        id: 'andalusia',
-        name: 'EndÃ¼lÃ¼s & Sevilla',
-        owner: 'spain',
-        terrain: 'coastal',
-        industry: 3,
-        capital: false,
-        x: 470,
-        y: 1120,
-        path: "M 390,1010 C 450,1025 510,1020 550,990 C 570,1040 560,1100 530,1150 C 490,1190 420,1200 360,1170 C 340,1120 355,1060 390,1010 Z",
-        polygon: [[390,1010], [550,990], [530,1150], [360,1170], [340,1120]],
-        neighbors: ['madrid', 'valencia', 'gibraltar', 'algeria'],
-        initialUnits: { infantry: 4, armor: 1, air: 1 }
-    },
-    {
-        id: 'gibraltar',
-        name: 'CebelitarÄ±k BoÄŸazÄ±',
-        owner: 'uk',
-        terrain: 'coastal',
         industry: 1,
-        capital: false,
-        x: 460,
-        y: 1205,
-        path: "M 445,1190 L 475,1190 L 470,1222 L 448,1222 Z",
-        polygon: [[445,1190], [475,1190], [470,1222], [448,1222]],
-        neighbors: ['andalusia'],
-        initialUnits: { infantry: 3, armor: 0, air: 1 }
-    },
-
-    // =========================================================================
-    // 4. GERMAN REICH (15 TERRITORIES - HEGEMONIC AXIS POWER)
-    // =========================================================================
-    {
-        id: 'berlin',
-        name: 'Berlin & Brandenburg',
-        owner: 'germany',
-        terrain: 'city',
-        industry: 6,
-        capital: true,
-        x: 1160,
-        y: 500,
-        path: "M 1080,450 C 1130,440 1200,445 1240,470 C 1255,510 1240,560 1210,585 C 1160,595 1110,585 1080,550 C 1070,510 1070,475 1080,450 Z",
-        polygon: [[1080,450], [1240,470], [1210,585], [1080,550]],
-        neighbors: ['hamburg', 'pomerania', 'silesia', 'saxony', 'ruhr'],
-        initialUnits: { infantry: 10, armor: 4, air: 3 }
-    },
-    {
-        id: 'ruhr',
-        name: 'Ruhr & Rhineland',
-        owner: 'germany',
-        terrain: 'city',
-        industry: 5,
-        capital: false,
-        x: 960,
-        y: 600,
-        path: "M 925,510 C 945,545 990,560 1040,555 C 1050,590 1035,640 1005,665 C 960,670 920,645 905,605 C 905,560 915,530 925,510 Z",
-        polygon: [[925,510], [1040,555], [1005,665], [905,605]],
-        neighbors: ['benelux', 'hamburg', 'berlin', 'saxony', 'bavaria', 'switzerland', 'paris', 'lyon'],
-        initialUnits: { infantry: 6, armor: 3, air: 2 }
-    },
-    {
-        id: 'hamburg',
-        name: 'Hamburg & AÅŸaÄŸÄ± Saksonya',
-        owner: 'germany',
-        terrain: 'coastal',
-        industry: 3,
-        capital: false,
-        x: 1010,
-        y: 470,
-        path: "M 930,440 C 980,420 1030,425 1070,445 C 1085,485 1070,530 1040,555 C 990,560 945,545 925,510 C 915,475 920,455 930,440 Z",
-        polygon: [[930,440], [1070,445], [1040,555], [925,510]],
-        neighbors: ['denmark', 'benelux', 'ruhr', 'berlin'],
-        initialUnits: { infantry: 4, armor: 2, air: 1 }
-    },
-    {
-        id: 'saxony',
-        name: 'Saksonya & Leipzig',
-        owner: 'germany',
-        terrain: 'plains',
-        industry: 3,
-        capital: false,
-        x: 1130,
-        y: 620,
-        path: "M 1040,555 C 1080,550 1130,550 1180,560 C 1200,600 1195,650 1170,680 C 1120,690 1075,675 1045,645 C 1035,610 1035,575 1040,555 Z",
-        polygon: [[1040,555], [1180,560], [1170,680], [1045,645]],
-        neighbors: ['berlin', 'ruhr', 'bavaria', 'bohemia', 'silesia'],
-        initialUnits: { infantry: 4, armor: 2, air: 1 }
-    },
-    {
-        id: 'bavaria',
-        name: 'Bavyera & MÃ¼nih',
-        owner: 'germany',
         terrain: 'mountains',
-        industry: 4,
+        initialUnits: { infantry: 2, armor: 0, air: 1 },
+        neighbors: ['gb'],
+        aliases: ['iceland']
+    },
+    FO: {
+        id: 'fo',
+        name: 'Faroe Adaları',
+        owner: 'neutral',
         capital: false,
-        x: 1050,
-        y: 740,
-        path: "M 980,665 C 1035,645 1075,675 1120,685 C 1135,725 1120,780 1090,810 C 1040,820 985,805 965,765 C 960,720 970,685 980,665 Z",
-        polygon: [[980,665], [1120,685], [1090,810], [965,765]],
-        neighbors: ['ruhr', 'saxony', 'bohemia', 'austria', 'switzerland'],
-        initialUnits: { infantry: 5, armor: 2, air: 1 }
-    },
-    {
-        id: 'austria',
-        name: 'Avusturya & Viyana',
-        owner: 'germany',
-        terrain: 'mountains',
-        industry: 3,
-        capital: false,
-        x: 1140,
-        y: 840,
-        path: "M 1070,805 C 1125,795 1180,795 1225,815 C 1235,855 1215,900 1185,925 C 1135,930 1085,915 1060,875 C 1055,840 1060,815 1070,805 Z",
-        polygon: [[1070,805], [1225,815], [1185,925], [1060,875]],
-        neighbors: ['bavaria', 'bohemia', 'sudeten', 'hungary', 'n_italy'],
-        initialUnits: { infantry: 4, armor: 1, air: 1 }
-    },
-    {
-        id: 'sudeten',
-        name: 'SÃ¼detler & SÄ±nÄ±r TahkimatÄ±',
-        owner: 'germany',
-        terrain: 'mountains',
-        industry: 2,
-        capital: false,
-        x: 1180,
-        y: 700,
-        path: "M 1140,665 C 1180,655 1230,655 1270,670 C 1280,700 1265,735 1240,750 C 1200,755 1160,745 1135,715 C 1130,690 1135,675 1140,665 Z",
-        polygon: [[1140,665], [1270,670], [1240,750], [1135,715]],
-        neighbors: ['silesia', 'bohemia', 'austria', 'warsaw'],
-        initialUnits: { infantry: 4, armor: 1, air: 0 }
-    },
-    {
-        id: 'bohemia',
-        name: 'Bohemya & Prag',
-        owner: 'germany',
-        terrain: 'city',
-        industry: 3,
-        capital: false,
-        x: 1220,
-        y: 740,
-        path: "M 1160,715 C 1205,710 1250,710 1285,725 C 1295,760 1280,800 1255,825 C 1210,830 1175,820 1150,790 C 1145,755 1150,730 1160,715 Z",
-        polygon: [[1160,715], [1285,725], [1255,825], [1150,790]],
-        neighbors: ['saxony', 'bavaria', 'austria', 'sudeten'],
-        initialUnits: { infantry: 4, armor: 1, air: 0 }
-    },
-    {
-        id: 'silesia',
-        name: 'Silezya & Breslau Sanayisi',
-        owner: 'germany',
-        terrain: 'plains',
-        industry: 3,
-        capital: false,
-        x: 1270,
-        y: 610,
-        path: "M 1180,560 C 1230,555 1290,555 1335,575 C 1350,615 1335,665 1305,695 C 1255,700 1210,685 1180,650 C 1170,610 1170,580 1180,560 Z",
-        polygon: [[1180,560], [1335,575], [1305,695], [1180,650]],
-        neighbors: ['berlin', 'pomerania', 'warsaw', 'sudeten', 'saxony'],
-        initialUnits: { infantry: 5, armor: 2, air: 1 }
-    },
-    {
-        id: 'pomerania',
-        name: 'Pomeranya & BaltÄ±k KÄ±yÄ±sÄ±',
-        owner: 'germany',
-        terrain: 'coastal',
-        industry: 2,
-        capital: false,
-        x: 1260,
-        y: 440,
-        path: "M 1200,400 C 1260,390 1330,395 1370,420 C 1380,460 1365,505 1335,530 C 1285,535 1240,520 1210,485 C 1195,445 1195,415 1200,400 Z",
-        polygon: [[1200,400], [1370,420], [1335,530], [1210,485]],
-        neighbors: ['berlin', 'e_prussia', 'warsaw', 'silesia'],
-        initialUnits: { infantry: 4, armor: 1, air: 1 }
-    },
-    {
-        id: 'e_prussia',
-        name: 'DoÄŸu Prusya & KÃ¶nigsberg',
-        owner: 'germany',
-        terrain: 'coastal',
-        industry: 3,
-        capital: false,
-        x: 1460,
-        y: 420,
-        path: "M 1390,370 C 1450,365 1520,370 1560,395 C 1575,435 1555,480 1525,505 C 1475,510 1425,495 1395,460 C 1385,420 1385,390 1390,370 Z",
-        polygon: [[1390,370], [1560,395], [1525,505], [1395,460]],
-        neighbors: ['pomerania', 'warsaw', 'minsk', 'leningrad'],
-        initialUnits: { infantry: 5, armor: 2, air: 1 }
-    },
-    {
-        id: 'warsaw',
-        name: 'VarÅŸova & VistÃ¼l HavzasÄ±',
-        owner: 'germany',
-        terrain: 'plains',
-        industry: 3,
-        capital: false,
-        x: 1420,
-        y: 560,
-        path: "M 1335,510 C 1395,505 1475,505 1525,525 C 1540,570 1520,625 1485,655 C 1435,660 1375,645 1340,610 C 1325,565 1325,530 1335,510 Z",
-        polygon: [[1335,510], [1525,525], [1485,655], [1340,610]],
-        neighbors: ['pomerania', 'e_prussia', 'minsk', 'kiev', 'silesia', 'sudeten', 'hungary'],
-        initialUnits: { infantry: 5, armor: 2, air: 1 }
-    },
-    {
-        id: 'denmark',
-        name: 'Danimarka (Jutland)',
-        owner: 'germany',
-        terrain: 'coastal',
-        industry: 2,
-        capital: false,
-        x: 1030,
-        y: 340,
-        path: "M 1000,270 C 1040,265 1065,290 1060,330 C 1075,360 1065,400 1045,420 C 1015,425 990,400 995,360 C 985,320 990,285 1000,270 Z",
-        polygon: [[1000,270], [1060,330], [1045,420], [995,360]],
-        neighbors: ['hamburg', 'norway', 'sweden'],
-        initialUnits: { infantry: 3, armor: 0, air: 0 }
-    },
-    {
-        id: 'hungary',
-        name: 'Macaristan & BudapeÅŸte',
-        owner: 'germany',
-        terrain: 'plains',
-        industry: 2,
-        capital: false,
-        x: 1330,
-        y: 820,
-        path: "M 1245,780 C 1310,775 1385,775 1435,800 C 1445,845 1425,895 1390,925 C 1335,930 1275,915 1240,875 C 1230,835 1235,800 1245,780 Z",
-        polygon: [[1245,780], [1435,800], [1390,925], [1240,875]],
-        neighbors: ['austria', 'warsaw', 'romania', 'balkans'],
-        initialUnits: { infantry: 3, armor: 1, air: 0 }
-    },
-    {
-        id: 'romania',
-        name: 'Romanya & PloieÈ™ti PetrolÃ¼',
-        owner: 'germany',
-        terrain: 'mountains',
-        industry: 3,
-        capital: false,
-        x: 1520,
-        y: 840,
-        path: "M 1435,795 C 1495,785 1580,790 1630,815 C 1650,860 1640,915 1600,950 C 1540,965 1470,950 1430,910 C 1420,860 1425,820 1435,795 Z",
-        polygon: [[1435,795], [1630,815], [1600,950], [1430,910]],
-        neighbors: ['hungary', 'kiev', 'crimea', 'balkans'],
-        initialUnits: { infantry: 4, armor: 1, air: 1 }
-    },
-
-    // =========================================================================
-    // 5. ITALY (8 TERRITORIES - MEDITERRANEAN AXIS POWER)
-    // =========================================================================
-    {
-        id: 'n_italy',
-        name: 'Kuzey Ä°talya & Milano',
-        owner: 'italy',
-        terrain: 'city',
-        industry: 4,
-        capital: false,
-        x: 1040,
-        y: 860,
-        path: "M 960,840 C 1010,825 1070,825 1130,845 C 1145,885 1120,930 1080,950 C 1020,955 970,930 950,895 C 945,870 950,855 960,840 Z",
-        polygon: [[960,840], [1130,845], [1080,950], [950,895]],
-        neighbors: ['marseille', 'switzerland', 'austria', 'balkans', 'tuscany'],
-        initialUnits: { infantry: 5, armor: 2, air: 1 }
-    },
-    {
-        id: 'tuscany',
-        name: 'Toskana & Floransa',
-        owner: 'italy',
-        terrain: 'plains',
-        industry: 2,
-        capital: false,
-        x: 1070,
-        y: 960,
-        path: "M 1010,920 C 1060,915 1110,915 1145,935 C 1155,975 1135,1015 1105,1040 C 1065,1045 1020,1025 1000,995 C 995,960 1000,935 1010,920 Z",
-        polygon: [[1010,920], [1145,935], [1105,1040], [1000,995]],
-        neighbors: ['n_italy', 'rome', 'sardinia'],
-        initialUnits: { infantry: 3, armor: 1, air: 0 }
-    },
-    {
-        id: 'rome',
-        name: 'Roma & Lazio',
-        owner: 'italy',
-        terrain: 'city',
-        industry: 5,
-        capital: true,
-        x: 1110,
-        y: 1050,
-        path: "M 1050,1010 C 1100,1005 1150,1005 1185,1025 C 1195,1065 1175,1110 1145,1135 C 1105,1140 1060,1120 1040,1090 C 1035,1050 1040,1025 1050,1010 Z",
-        polygon: [[1050,1010], [1185,1025], [1145,1135], [1040,1090]],
-        neighbors: ['tuscany', 's_italy', 'sardinia'],
-        initialUnits: { infantry: 8, armor: 2, air: 2 }
-    },
-    {
-        id: 's_italy',
-        name: 'GÃ¼ney Ä°talya & Napoli',
-        owner: 'italy',
-        terrain: 'mountains',
-        industry: 3,
-        capital: false,
-        x: 1200,
-        y: 1160,
-        path: "M 1125,1100 C 1170,1090 1220,1095 1270,1120 C 1300,1160 1280,1210 1230,1240 C 1185,1260 1150,1250 1135,1220 C 1120,1180 1110,1140 1125,1100 Z",
-        polygon: [[1125,1100], [1270,1120], [1230,1240], [1135,1220]],
-        neighbors: ['rome', 'sicily', 'balkans'],
-        initialUnits: { infantry: 4, armor: 1, air: 1 }
-    },
-    {
-        id: 'sicily',
-        name: 'Sicilya AdasÄ±',
-        owner: 'italy',
-        terrain: 'coastal',
-        industry: 2,
-        capital: false,
-        x: 1160,
-        y: 1290,
-        path: "M 1110,1260 C 1160,1250 1210,1255 1235,1280 C 1240,1315 1200,1345 1155,1345 C 1115,1335 1095,1305 1110,1260 Z",
-        polygon: [[1110,1260], [1235,1280], [1155,1345]],
-        neighbors: ['s_italy', 'malta', 'tripoli'],
-        initialUnits: { infantry: 3, armor: 1, air: 1 }
-    },
-    {
-        id: 'sardinia',
-        name: 'Sardinya & Korsika',
-        owner: 'italy',
-        terrain: 'coastal',
         industry: 1,
-        capital: false,
-        x: 955,
-        y: 1070,
-        path: "M 940,1000 C 965,995 980,1010 980,1050 C 980,1100 965,1140 945,1145 C 930,1140 925,1100 930,1050 C 930,1020 935,1005 940,1000 Z",
-        polygon: [[940,1000], [980,1050], [945,1145], [930,1050]],
-        neighbors: ['tuscany', 'rome'],
-        initialUnits: { infantry: 2, armor: 0, air: 1 }
-    },
-    {
-        id: 'tripoli',
-        name: 'Trablusgarp (BatÄ± Libya)',
-        owner: 'italy',
         terrain: 'coastal',
-        industry: 2,
-        capital: false,
-        x: 1090,
-        y: 1460,
-        path: "M 930,1380 C 1020,1370 1130,1375 1230,1390 C 1245,1440 1220,1500 1180,1530 C 1080,1545 980,1530 920,1480 C 910,1430 915,1400 930,1380 Z",
-        polygon: [[930,1380], [1230,1390], [1180,1530], [920,1480]],
-        neighbors: ['algeria', 'sicily', 'cyrenaica'],
-        initialUnits: { infantry: 4, armor: 1, air: 0 }
-    },
-    {
-        id: 'cyrenaica',
-        name: 'Sirenayka & Bingazi',
-        owner: 'italy',
-        terrain: 'coastal',
-        industry: 2,
-        capital: false,
-        x: 1430,
-        y: 1460,
-        path: "M 1250,1395 C 1330,1385 1440,1385 1550,1400 C 1570,1450 1540,1510 1490,1540 C 1400,1550 1310,1530 1260,1485 C 1240,1445 1240,1415 1250,1395 Z",
-        polygon: [[1250,1395], [1550,1400], [1490,1540], [1260,1485]],
-        neighbors: ['tripoli', 'alexandria'],
-        initialUnits: { infantry: 4, armor: 1, air: 1 }
+        initialUnits: { infantry: 1, armor: 0, air: 0 },
+        neighbors: ['gb', 'no'],
+        aliases: ['faroe']
     },
 
-    // =========================================================================
-    // 6. TURKEY (5 TERRITORIES - SEPARATE PLAYABLE ALLIED NATION)
-    // =========================================================================
-    {
-        id: 'ankara',
-        name: 'Ankara & Ä°Ã§ Anadolu',
-        owner: 'turkey',
-        terrain: 'mountains',
-        industry: 4,
+    // -------------------------------------------------------------------------
+    // 3. SOVIET UNION & EASTERN FRONT
+    // -------------------------------------------------------------------------
+    RU: {
+        id: 'ru',
+        name: 'Sovyet Rusya',
+        owner: 'ussr',
         capital: true,
-        x: 1830,
-        y: 980,
-        path: "M 1735,915 C 1805,905 1885,910 1935,935 C 1950,985 1930,1045 1895,1085 C 1835,1100 1765,1085 1730,1045 C 1715,995 1720,945 1735,915 Z",
-        polygon: [[1735,915], [1935,935], [1895,1085], [1730,1045]],
-        neighbors: ['istanbul_thrace', 'izmir_aegean', 'antalya_med', 'erzurum_east'],
-        initialUnits: { infantry: 7, armor: 2, air: 2 }
-    },
-    {
-        id: 'istanbul_thrace',
-        name: 'Ä°stanbul & BoÄŸazlar (Trakya)',
-        owner: 'turkey',
+        capitalCity: 'Moskova',
+        industry: 10,
         terrain: 'city',
+        initialUnits: { infantry: 10, armor: 4, air: 3 },
+        neighbors: ['ua', 'by', 'ee', 'lv', 'fi', 'no', 'ge', 'az', 'pl', 'lt'],
+        aliases: ['russia', 'moscow', 'ussr', 'soviet_union']
+    },
+    UA: {
+        id: 'ua',
+        name: 'Ukrayna',
+        owner: 'ussr',
+        capital: false,
         industry: 4,
-        capital: false,
-        x: 1640,
-        y: 950,
-        path: "M 1555,900 C 1615,890 1685,895 1725,920 C 1735,955 1720,995 1685,1020 C 1635,1030 1575,1015 1545,975 C 1540,940 1545,915 1555,900 Z",
-        polygon: [[1555,900], [1725,920], [1685,1020], [1545,975]],
-        neighbors: ['balkans', 'ankara', 'izmir_aegean'],
-        initialUnits: { infantry: 5, armor: 1, air: 1 }
+        terrain: 'plains',
+        initialUnits: { infantry: 5, armor: 2, air: 1 },
+        neighbors: ['ru', 'by', 'pl', 'sk', 'hu', 'ro', 'md'],
+        aliases: ['ukraine']
     },
-    {
-        id: 'izmir_aegean',
-        name: 'Ä°zmir & Ege BÃ¶lgesi',
-        owner: 'turkey',
-        terrain: 'coastal',
+    BY: {
+        id: 'by',
+        name: 'Belarus',
+        owner: 'ussr',
+        capital: false,
         industry: 3,
-        capital: false,
-        x: 1680,
-        y: 1080,
-        path: "M 1610,1010 C 1660,1005 1720,1010 1755,1035 C 1765,1085 1745,1140 1710,1170 C 1660,1180 1615,1160 1595,1120 C 1590,1070 1595,1035 1610,1010 Z",
-        polygon: [[1610,1010], [1755,1035], [1710,1170], [1595,1120]],
-        neighbors: ['istanbul_thrace', 'ankara', 'antalya_med'],
-        initialUnits: { infantry: 4, armor: 1, air: 1 }
+        terrain: 'plains',
+        initialUnits: { infantry: 4, armor: 1, air: 1 },
+        neighbors: ['ru', 'ua', 'pl', 'lt', 'lv'],
+        aliases: ['belarus']
     },
-    {
-        id: 'antalya_med',
-        name: 'Antalya & Akdeniz',
-        owner: 'turkey',
-        terrain: 'coastal',
-        industry: 2,
+    MD: {
+        id: 'md',
+        name: 'Moldova',
+        owner: 'ussr',
         capital: false,
-        x: 1840,
-        y: 1140,
-        path: "M 1750,1075 C 1815,1070 1890,1075 1945,1100 C 1960,1150 1935,1205 1890,1235 C 1830,1245 1765,1225 1735,1185 C 1730,1140 1735,1100 1750,1075 Z",
-        polygon: [[1750,1075], [1945,1100], [1890,1235], [1735,1185]],
-        neighbors: ['izmir_aegean', 'ankara', 'erzurum_east', 'cyprus', 'levant'],
-        initialUnits: { infantry: 4, armor: 1, air: 0 }
+        industry: 1,
+        terrain: 'plains',
+        initialUnits: { infantry: 2, armor: 0, air: 0 },
+        neighbors: ['ua', 'ro'],
+        aliases: ['moldova']
     },
-    {
-        id: 'erzurum_east',
-        name: 'Erzurum & DoÄŸu Anadolu',
-        owner: 'turkey',
-        terrain: 'mountains',
-        industry: 2,
+    EE: {
+        id: 'ee',
+        name: 'Estonya',
+        owner: 'neutral',
         capital: false,
-        x: 2040,
-        y: 1000,
-        path: "M 1940,925 C 2010,915 2100,920 2160,945 C 2175,1005 2155,1075 2110,1115 C 2045,1130 1970,1115 1935,1070 C 1920,1010 1925,955 1940,925 Z",
-        polygon: [[1940,925], [2160,945], [2110,1115], [1935,1070]],
-        neighbors: ['ankara', 'antalya_med', 'caucasus', 'iraq'],
-        initialUnits: { infantry: 5, armor: 1, air: 1 }
+        industry: 1,
+        terrain: 'plains',
+        initialUnits: { infantry: 2, armor: 0, air: 0 },
+        neighbors: ['ru', 'lv', 'fi'],
+        aliases: ['estonia']
+    },
+    LV: {
+        id: 'lv',
+        name: 'Letonya',
+        owner: 'neutral',
+        capital: false,
+        industry: 1,
+        terrain: 'plains',
+        initialUnits: { infantry: 2, armor: 0, air: 0 },
+        neighbors: ['ru', 'by', 'lt', 'ee'],
+        aliases: ['latvia']
+    },
+    LT: {
+        id: 'lt',
+        name: 'Litvanya',
+        owner: 'neutral',
+        capital: false,
+        industry: 1,
+        terrain: 'plains',
+        initialUnits: { infantry: 2, armor: 0, air: 0 },
+        neighbors: ['ru', 'by', 'pl', 'lv'],
+        aliases: ['lithuania']
     },
 
-    // =========================================================================
-    // 7. SOVIET UNION (10 TERRITORIES - VAST EASTERN POWER)
-    // =========================================================================
-    {
-        id: 'moscow',
-        name: 'Moskova & Kremlin',
-        owner: 'ussr',
-        terrain: 'city',
-        industry: 6,
+    // -------------------------------------------------------------------------
+    // 4. ITALY & MEDITERRANEAN AXIS
+    // -------------------------------------------------------------------------
+    IT: {
+        id: 'it',
+        name: 'İtalya',
+        owner: 'italy',
         capital: true,
-        x: 2020,
-        y: 390,
-        path: "M 1915,310 C 1995,300 2085,305 2145,335 C 2160,395 2140,465 2095,505 C 2035,525 1955,510 1915,465 C 1900,405 1900,350 1915,310 Z",
-        polygon: [[1915,310], [2145,335], [2095,505], [1915,465]],
-        neighbors: ['leningrad', 'smolensk', 'stalingrad', 'urals'],
-        initialUnits: { infantry: 10, armor: 4, air: 3 }
-    },
-    {
-        id: 'leningrad',
-        name: 'Leningrad & Ladoga',
-        owner: 'ussr',
+        capitalCity: 'Roma',
+        industry: 8,
         terrain: 'city',
-        industry: 4,
-        capital: false,
-        x: 1670,
-        y: 290,
-        path: "M 1555,200 C 1635,190 1720,195 1780,225 C 1795,285 1775,350 1735,395 C 1675,410 1600,395 1560,350 C 1545,290 1545,235 1555,200 Z",
-        polygon: [[1555,200], [1780,225], [1735,395], [1560,350]],
-        neighbors: ['finland', 'e_prussia', 'minsk', 'smolensk', 'moscow'],
-        initialUnits: { infantry: 6, armor: 2, air: 2 }
+        initialUnits: { infantry: 7, armor: 2, air: 2 },
+        neighbors: ['fr', 'ch', 'at', 'si', 'al', 'mt', 'gr', 'sm', 'va', 'mc'],
+        aliases: ['italy', 'rome']
     },
-    {
-        id: 'smolensk',
-        name: 'Smolensk & Merkez Rusya',
-        owner: 'ussr',
-        terrain: 'plains',
-        industry: 3,
+    AL: {
+        id: 'al',
+        name: 'Arnavutluk',
+        owner: 'italy',
         capital: false,
-        x: 1790,
-        y: 440,
-        path: "M 1700,390 C 1770,380 1850,385 1905,410 C 1920,465 1900,525 1865,565 C 1810,580 1740,565 1700,525 C 1685,475 1690,425 1700,390 Z",
-        polygon: [[1700,390], [1905,410], [1865,565], [1700,525]],
-        neighbors: ['minsk', 'leningrad', 'moscow', 'donbass', 'kiev'],
-        initialUnits: { infantry: 5, armor: 2, air: 1 }
+        industry: 1,
+        terrain: 'mountains',
+        initialUnits: { infantry: 2, armor: 0, air: 0 },
+        neighbors: ['it', 'gr', 'mk', 'me', 'rs'],
+        aliases: ['albania']
     },
-    {
-        id: 'minsk',
-        name: 'Minsk & Belarus',
-        owner: 'ussr',
-        terrain: 'plains',
-        industry: 3,
+    MT: {
+        id: 'mt',
+        name: 'Malta',
+        owner: 'uk',
         capital: false,
-        x: 1570,
-        y: 480,
-        path: "M 1485,410 C 1555,400 1635,405 1690,430 C 1705,485 1685,545 1650,585 C 1595,600 1525,585 1485,545 C 1470,495 1475,445 1485,410 Z",
-        polygon: [[1485,410], [1690,430], [1650,585], [1485,545]],
-        neighbors: ['e_prussia', 'warsaw', 'kiev', 'smolensk', 'leningrad'],
-        initialUnits: { infantry: 5, armor: 2, air: 1 }
-    },
-    {
-        id: 'kiev',
-        name: 'Kiev & Dnyeper HavzasÄ±',
-        owner: 'ussr',
-        terrain: 'plains',
-        industry: 3,
-        capital: false,
-        x: 1610,
-        y: 620,
-        path: "M 1525,550 C 1595,540 1675,545 1730,570 C 1745,625 1725,685 1685,725 C 1630,740 1560,725 1520,685 C 1510,630 1515,585 1525,550 Z",
-        polygon: [[1525,550], [1730,570], [1685,725], [1520,685]],
-        neighbors: ['warsaw', 'minsk', 'smolensk', 'donbass', 'crimea', 'romania'],
-        initialUnits: { infantry: 6, armor: 3, air: 2 }
-    },
-    {
-        id: 'donbass',
-        name: 'Donbass & Harkov',
-        owner: 'ussr',
-        terrain: 'plains',
-        industry: 4,
-        capital: false,
-        x: 1850,
-        y: 640,
-        path: "M 1740,570 C 1820,560 1910,565 1965,590 C 1980,645 1960,705 1920,745 C 1860,760 1780,745 1740,705 C 1725,655 1730,605 1740,570 Z",
-        polygon: [[1740,570], [1965,590], [1920,745], [1740,705]],
-        neighbors: ['kiev', 'smolensk', 'stalingrad', 'caucasus', 'crimea'],
-        initialUnits: { infantry: 6, armor: 3, air: 1 }
-    },
-    {
-        id: 'crimea',
-        name: 'KÄ±rÄ±m & Sivastopol',
-        owner: 'ussr',
+        industry: 1,
         terrain: 'coastal',
-        industry: 2,
-        capital: false,
-        x: 1720,
-        y: 790,
-        path: "M 1665,730 C 1705,725 1755,730 1785,750 C 1795,785 1780,825 1745,845 C 1705,850 1665,835 1650,800 C 1645,765 1655,740 1665,730 Z",
-        polygon: [[1665,730], [1785,750], [1745,845], [1650,800]],
-        neighbors: ['kiev', 'donbass', 'romania', 'caucasus'],
-        initialUnits: { infantry: 4, armor: 1, air: 1 }
+        initialUnits: { infantry: 2, armor: 0, air: 1 },
+        neighbors: ['it', 'gb'],
+        aliases: ['malta']
     },
-    {
-        id: 'stalingrad',
-        name: 'Stalingrad & Volga',
-        owner: 'ussr',
+    SM: {
+        id: 'sm',
+        name: 'San Marino',
+        owner: 'italy',
+        capital: false,
+        industry: 1,
+        terrain: 'mountains',
+        initialUnits: { infantry: 1, armor: 0, air: 0 },
+        neighbors: ['it'],
+        aliases: ['san_marino']
+    },
+    VA: {
+        id: 'va',
+        name: 'Vatikan',
+        owner: 'italy',
+        capital: false,
+        industry: 1,
         terrain: 'city',
-        industry: 5,
-        capital: false,
-        x: 2100,
-        y: 610,
-        path: "M 1985,530 C 2065,520 2165,525 2225,555 C 2240,615 2220,685 2175,725 C 2115,745 2025,730 1985,685 C 1970,625 1970,570 1985,530 Z",
-        polygon: [[1985,530], [2225,555], [2175,725], [1985,685]],
-        neighbors: ['moscow', 'donbass', 'caucasus', 'urals'],
-        initialUnits: { infantry: 8, armor: 3, air: 2 }
-    },
-    {
-        id: 'caucasus',
-        name: 'Kafkaslar & BakÃ¼ PetrolÃ¼',
-        owner: 'ussr',
-        terrain: 'mountains',
-        industry: 5,
-        capital: false,
-        x: 2050,
-        y: 830,
-        path: "M 1885,740 C 1985,730 2110,735 2210,765 C 2230,825 2200,895 2145,935 C 2055,955 1950,940 1885,890 C 1865,830 1870,780 1885,740 Z",
-        polygon: [[1885,740], [2210,765], [2145,935], [1885,890]],
-        neighbors: ['donbass', 'stalingrad', 'crimea', 'erzurum_east'],
-        initialUnits: { infantry: 6, armor: 2, air: 1 }
-    },
-    {
-        id: 'urals',
-        name: 'Urallar & AÄŸÄ±r Sanayi',
-        owner: 'ussr',
-        terrain: 'mountains',
-        industry: 5,
-        capital: false,
-        x: 2260,
-        y: 370,
-        path: "M 2165,240 C 2235,230 2325,235 2375,265 C 2390,340 2375,430 2335,495 C 2275,515 2205,500 2170,445 C 2150,370 2150,295 2165,240 Z",
-        polygon: [[2165,240], [2375,265], [2335,495], [2170,445]],
-        neighbors: ['moscow', 'stalingrad'],
-        initialUnits: { infantry: 6, armor: 3, air: 1 }
+        initialUnits: { infantry: 1, armor: 0, air: 0 },
+        neighbors: ['it'],
+        aliases: ['vatican']
     },
 
-    // =========================================================================
-    // 8. BRITISH MEDITERRANEAN & MIDDLE EAST BASES (UK)
-    // =========================================================================
-    {
-        id: 'malta',
-        name: 'Malta & Orta Akdeniz',
-        owner: 'uk',
-        terrain: 'coastal',
-        industry: 1,
-        capital: false,
-        x: 1215,
-        y: 1375,
-        path: "M 1205,1365 L 1228,1365 L 1225,1388 L 1202,1388 Z",
-        polygon: [[1205,1365], [1228,1365], [1225,1388], [1202,1388]],
-        neighbors: ['sicily', 'alexandria'],
-        initialUnits: { infantry: 3, armor: 0, air: 2 }
+    // -------------------------------------------------------------------------
+    // 5. FRANCE & WESTERN ALLIES
+    // -------------------------------------------------------------------------
+    FR: {
+        id: 'fr',
+        name: 'Fransa',
+        owner: 'france',
+        capital: true,
+        capitalCity: 'Paris',
+        industry: 7,
+        terrain: 'city',
+        initialUnits: { infantry: 7, armor: 3, air: 2 },
+        neighbors: ['gb', 'be', 'lu', 'de', 'ch', 'it', 'es', 'ad', 'mc'],
+        aliases: ['france', 'paris']
     },
-    {
-        id: 'cyprus',
-        name: 'KÄ±brÄ±s AdasÄ±',
-        owner: 'uk',
-        terrain: 'coastal',
-        industry: 1,
+    BE: {
+        id: 'be',
+        name: 'Belçika',
+        owner: 'france',
         capital: false,
-        x: 1820,
-        y: 1230,
-        path: "M 1780,1215 C 1815,1205 1855,1210 1880,1225 C 1875,1250 1845,1265 1810,1265 C 1785,1260 1775,1240 1780,1215 Z",
-        polygon: [[1780,1215], [1880,1225], [1810,1265]],
-        neighbors: ['antalya_med', 'levant', 'alexandria'],
-        initialUnits: { infantry: 2, armor: 0, air: 1 }
-    },
-    {
-        id: 'alexandria',
-        name: 'MÄ±sÄ±r & Ä°skenderiye',
-        owner: 'uk',
-        terrain: 'coastal',
-        industry: 3,
-        capital: false,
-        x: 1720,
-        y: 1430,
-        path: "M 1590,1360 C 1670,1350 1770,1355 1840,1375 C 1855,1425 1835,1495 1795,1535 C 1715,1550 1625,1535 1580,1485 C 1570,1435 1575,1385 1590,1360 Z",
-        polygon: [[1590,1360], [1840,1375], [1795,1535], [1580,1485]],
-        neighbors: ['cyrenaica', 'malta', 'cyprus', 'suez'],
-        initialUnits: { infantry: 5, armor: 2, air: 1 }
-    },
-    {
-        id: 'suez',
-        name: 'Kahire & SÃ¼veyÅŸ KanalÄ±',
-        owner: 'uk',
-        terrain: 'desert',
-        industry: 4,
-        capital: false,
-        x: 1940,
-        y: 1410,
-        path: "M 1845,1365 C 1905,1355 1985,1360 2045,1385 C 2060,1435 2040,1505 1995,1545 C 1935,1560 1865,1545 1830,1495 C 1820,1445 1830,1395 1845,1365 Z",
-        polygon: [[1845,1365], [2045,1385], [1995,1545], [1830,1495]],
-        neighbors: ['alexandria', 'levant'],
-        initialUnits: { infantry: 5, armor: 2, air: 2 }
-    },
-    {
-        id: 'levant',
-        name: 'Suriye & Levant',
-        owner: 'uk',
-        terrain: 'plains',
         industry: 2,
-        capital: false,
-        x: 1980,
-        y: 1200,
-        path: "M 1910,1130 C 1965,1120 2035,1125 2085,1150 C 2095,1200 2075,1265 2040,1305 C 1985,1320 1925,1305 1895,1260 C 1890,1210 1895,1160 1910,1130 Z",
-        polygon: [[1910,1130], [2085,1150], [2040,1305], [1895,1260]],
-        neighbors: ['antalya_med', 'cyprus', 'suez', 'iraq'],
-        initialUnits: { infantry: 3, armor: 1, air: 1 }
+        terrain: 'plains',
+        initialUnits: { infantry: 3, armor: 1, air: 0 },
+        neighbors: ['fr', 'nl', 'de', 'lu'],
+        aliases: ['belgium']
     },
-    {
-        id: 'iraq',
-        name: 'Irak & Basra PetrolÃ¼',
-        owner: 'uk',
-        terrain: 'desert',
-        industry: 3,
+    LU: {
+        id: 'lu',
+        name: 'Lüksemburg',
+        owner: 'france',
         capital: false,
-        x: 2190,
-        y: 1200,
-        path: "M 2095,1130 C 2165,1120 2265,1125 2335,1155 C 2350,1215 2330,1295 2285,1345 C 2215,1360 2135,1345 2095,1290 C 2080,1230 2080,1170 2095,1130 Z",
-        polygon: [[2095,1130], [2335,1155], [2285,1345], [2095,1290]],
-        neighbors: ['erzurum_east', 'levant'],
-        initialUnits: { infantry: 3, armor: 1, air: 0 }
+        industry: 1,
+        terrain: 'plains',
+        initialUnits: { infantry: 1, armor: 0, air: 0 },
+        neighbors: ['fr', 'be', 'de'],
+        aliases: ['luxembourg']
+    },
+    MC: {
+        id: 'mc',
+        name: 'Monako',
+        owner: 'france',
+        capital: false,
+        industry: 1,
+        terrain: 'coastal',
+        initialUnits: { infantry: 1, armor: 0, air: 0 },
+        neighbors: ['fr', 'it'],
+        aliases: ['monaco']
     },
 
-    // =========================================================================
-    // 9. NEUTRAL BUFFER ZONES (NON-PLAYABLE, LOCKED IMMUNE TERRITORIES)
-    // =========================================================================
-    {
-        id: 'benelux',
-        name: 'BenelÃ¼ks (Hollanda & BelÃ§ika)',
+    // -------------------------------------------------------------------------
+    // 6. SPAIN & IBERIAN PENINSULA
+    // -------------------------------------------------------------------------
+    ES: {
+        id: 'es',
+        name: 'İspanya',
+        owner: 'spain',
+        capital: true,
+        capitalCity: 'Madrid',
+        industry: 5,
+        terrain: 'city',
+        initialUnits: { infantry: 6, armor: 2, air: 1 },
+        neighbors: ['fr', 'pt', 'ad'],
+        aliases: ['spain', 'madrid']
+    },
+    PT: {
+        id: 'pt',
+        name: 'Portekiz',
+        owner: 'spain',
+        capital: false,
+        industry: 2,
+        terrain: 'coastal',
+        initialUnits: { infantry: 2, armor: 0, air: 0 },
+        neighbors: ['es'],
+        aliases: ['portugal']
+    },
+    AD: {
+        id: 'ad',
+        name: 'Andorra',
+        owner: 'spain',
+        capital: false,
+        industry: 1,
+        terrain: 'mountains',
+        initialUnits: { infantry: 1, armor: 0, air: 0 },
+        neighbors: ['es', 'fr'],
+        aliases: ['andorra']
+    },
+
+    // -------------------------------------------------------------------------
+    // 7. TURKEY & STRAITS GUARDIAN / CAUCASUS
+    // -------------------------------------------------------------------------
+    TR: {
+        id: 'tr',
+        name: 'Türkiye',
+        owner: 'turkey',
+        capital: true,
+        capitalCity: 'Ankara',
+        industry: 5,
+        terrain: 'city',
+        initialUnits: { infantry: 6, armor: 2, air: 1 },
+        neighbors: ['bg', 'gr', 'ge', 'am', 'az', 'cy', 'il'],
+        aliases: ['turkey', 'ankara']
+    },
+    GE: {
+        id: 'ge',
+        name: 'Gürcistan',
+        owner: 'turkey',
+        capital: false,
+        industry: 1,
+        terrain: 'mountains',
+        initialUnits: { infantry: 2, armor: 0, air: 0 },
+        neighbors: ['tr', 'ru', 'az', 'am'],
+        aliases: ['georgia']
+    },
+    AM: {
+        id: 'am',
+        name: 'Ermenistan',
         owner: 'neutral',
+        capital: false,
+        industry: 1,
+        terrain: 'mountains',
+        initialUnits: { infantry: 2, armor: 0, air: 0 },
+        neighbors: ['tr', 'ge', 'az'],
+        aliases: ['armenia']
+    },
+    AZ: {
+        id: 'az',
+        name: 'Azerbaycan',
+        owner: 'turkey',
+        capital: false,
+        industry: 2,
         terrain: 'plains',
+        initialUnits: { infantry: 2, armor: 0, air: 0 },
+        neighbors: ['tr', 'ru', 'ge', 'am'],
+        aliases: ['azerbaijan']
+    },
+    CY: {
+        id: 'cy',
+        name: 'Kıbrıs',
+        owner: 'uk',
+        capital: false,
+        industry: 1,
+        terrain: 'coastal',
+        initialUnits: { infantry: 2, armor: 0, air: 0 },
+        neighbors: ['tr', 'gb', 'gr', 'il'],
+        aliases: ['cyprus']
+    },
+    IL: {
+        id: 'il',
+        name: 'Levant & Orta Doğu',
+        owner: 'neutral',
+        capital: false,
+        industry: 1,
+        terrain: 'coastal',
+        initialUnits: { infantry: 2, armor: 0, air: 0 },
+        neighbors: ['tr', 'cy'],
+        aliases: ['israel', 'levant']
+    },
+
+    // -------------------------------------------------------------------------
+    // 8. NEUTRAL BUFFER STATES & BALKANS / SCANDINAVIA
+    // -------------------------------------------------------------------------
+    PL: {
+        id: 'pl',
+        name: 'Polonya',
+        owner: 'neutral',
+        capital: false,
         industry: 3,
-        capital: false,
-        x: 860,
-        y: 560,
-        path: "M 780,500 C 820,490 880,495 910,520 C 925,560 915,600 890,630 C 850,635 805,610 780,580 C 765,545 770,515 780,500 Z",
-        polygon: [[780,500], [910,520], [890,630], [780,580]],
-        neighbors: ['london', 'hamburg', 'ruhr', 'paris'],
-        initialUnits: { infantry: 3, armor: 0, air: 0 }
+        terrain: 'plains',
+        initialUnits: { infantry: 4, armor: 1, air: 0 },
+        neighbors: ['de', 'cz', 'sk', 'ua', 'by', 'lt', 'ru'],
+        aliases: ['poland']
     },
-    {
-        id: 'switzerland',
-        name: 'Ä°sviÃ§re Alpleri (TarafsÄ±z)',
+    RO: {
+        id: 'ro',
+        name: 'Romanya',
         owner: 'neutral',
-        terrain: 'mountains',
-        industry: 2,
         capital: false,
-        x: 960,
-        y: 810,
-        path: "M 890,770 C 930,760 980,760 1020,775 C 1030,810 1015,850 990,870 C 950,875 915,860 890,830 C 880,800 885,780 890,770 Z",
-        polygon: [[890,770], [1020,775], [990,870], [890,830]],
-        neighbors: ['lyon', 'ruhr', 'bavaria', 'n_italy'],
-        initialUnits: { infantry: 5, armor: 0, air: 0 }
-    },
-    {
-        id: 'norway',
-        name: 'NorveÃ§ FiyortlarÄ±',
-        owner: 'neutral',
-        terrain: 'mountains',
-        industry: 2,
-        capital: false,
-        x: 1060,
-        y: 200,
-        path: "M 990,80 C 1040,75 1090,80 1130,110 C 1140,160 1125,220 1095,270 C 1055,300 1010,290 985,240 C 970,190 975,130 990,80 Z",
-        polygon: [[990,80], [1130,110], [1095,270], [985,240]],
-        neighbors: ['scotland', 'denmark', 'sweden', 'finland'],
-        initialUnits: { infantry: 3, armor: 0, air: 0 }
-    },
-    {
-        id: 'sweden',
-        name: 'Ä°sveÃ§ & Demir YataklarÄ±',
-        owner: 'neutral',
-        terrain: 'mountains',
         industry: 3,
-        capital: false,
-        x: 1220,
-        y: 220,
-        path: "M 1145,100 C 1205,95 1270,100 1315,130 C 1325,190 1310,260 1275,320 C 1225,350 1175,335 1150,280 C 1135,220 1135,150 1145,100 Z",
-        polygon: [[1145,100], [1315,130], [1275,320], [1150,280]],
-        neighbors: ['norway', 'denmark', 'finland'],
-        initialUnits: { infantry: 4, armor: 1, air: 0 }
+        terrain: 'plains',
+        initialUnits: { infantry: 4, armor: 1, air: 0 },
+        neighbors: ['ua', 'md', 'hu', 'rs', 'bg'],
+        aliases: ['romania']
     },
-    {
-        id: 'finland',
-        name: 'Finlandiya & Karelya',
+    BG: {
+        id: 'bg',
+        name: 'Bulgaristan',
         owner: 'neutral',
-        terrain: 'mountains',
-        industry: 2,
         capital: false,
-        x: 1460,
-        y: 200,
-        path: "M 1335,90 C 1405,85 1480,90 1535,120 C 1550,180 1535,255 1495,315 C 1445,345 1385,330 1355,275 C 1340,215 1335,145 1335,90 Z",
-        polygon: [[1335,90], [1535,120], [1495,315], [1355,275]],
-        neighbors: ['norway', 'sweden', 'leningrad'],
-        initialUnits: { infantry: 4, armor: 0, air: 1 }
+        industry: 2,
+        terrain: 'mountains',
+        initialUnits: { infantry: 3, armor: 0, air: 0 },
+        neighbors: ['ro', 'rs', 'mk', 'gr', 'tr'],
+        aliases: ['bulgaria']
     },
-    {
-        id: 'balkans',
-        name: 'Balkanlar & Belgrad',
+    GR: {
+        id: 'gr',
+        name: 'Yunanistan',
         owner: 'neutral',
-        terrain: 'mountains',
-        industry: 2,
         capital: false,
-        x: 1380,
-        y: 960,
-        path: "M 1285,890 C 1350,880 1430,885 1495,905 C 1510,955 1490,1015 1450,1055 C 1390,1070 1320,1055 1275,1010 C 1265,960 1270,915 1285,890 Z",
-        polygon: [[1285,890], [1495,905], [1450,1055], [1275,1010]],
-        neighbors: ['n_italy', 'hungary', 'romania', 'istanbul_thrace', 's_italy'],
-        initialUnits: { infantry: 4, armor: 1, air: 0 }
+        industry: 2,
+        terrain: 'mountains',
+        initialUnits: { infantry: 3, armor: 0, air: 1 },
+        neighbors: ['al', 'mk', 'bg', 'tr', 'it', 'cy'],
+        aliases: ['greece']
+    },
+    HU: {
+        id: 'hu',
+        name: 'Macaristan',
+        owner: 'neutral',
+        capital: false,
+        industry: 2,
+        terrain: 'plains',
+        initialUnits: { infantry: 3, armor: 1, air: 0 },
+        neighbors: ['at', 'sk', 'ua', 'ro', 'rs', 'hr', 'si'],
+        aliases: ['hungary']
+    },
+    SK: {
+        id: 'sk',
+        name: 'Slovakya',
+        owner: 'neutral',
+        capital: false,
+        industry: 2,
+        terrain: 'mountains',
+        initialUnits: { infantry: 2, armor: 0, air: 0 },
+        neighbors: ['cz', 'pl', 'ua', 'hu', 'at'],
+        aliases: ['slovakia']
+    },
+    RS: {
+        id: 'rs',
+        name: 'Sırbistan (Yugoslavya)',
+        owner: 'neutral',
+        capital: false,
+        industry: 2,
+        terrain: 'mountains',
+        initialUnits: { infantry: 4, armor: 1, air: 0 },
+        neighbors: ['hu', 'ro', 'bg', 'mk', 'al', 'me', 'ba', 'hr'],
+        aliases: ['serbia', 'yugoslavia']
+    },
+    HR: {
+        id: 'hr',
+        name: 'Hırvatistan',
+        owner: 'neutral',
+        capital: false,
+        industry: 2,
+        terrain: 'coastal',
+        initialUnits: { infantry: 2, armor: 0, air: 0 },
+        neighbors: ['si', 'hu', 'rs', 'ba', 'me'],
+        aliases: ['croatia']
+    },
+    BA: {
+        id: 'ba',
+        name: 'Bosna-Hersek',
+        owner: 'neutral',
+        capital: false,
+        industry: 1,
+        terrain: 'mountains',
+        initialUnits: { infantry: 2, armor: 0, air: 0 },
+        neighbors: ['hr', 'rs', 'me'],
+        aliases: ['bosnia']
+    },
+    ME: {
+        id: 'me',
+        name: 'Karadağ',
+        owner: 'neutral',
+        capital: false,
+        industry: 1,
+        terrain: 'mountains',
+        initialUnits: { infantry: 1, armor: 0, air: 0 },
+        neighbors: ['ba', 'rs', 'al', 'hr'],
+        aliases: ['montenegro']
+    },
+    MK: {
+        id: 'mk',
+        name: 'Makedonya',
+        owner: 'neutral',
+        capital: false,
+        industry: 1,
+        terrain: 'mountains',
+        initialUnits: { infantry: 2, armor: 0, air: 0 },
+        neighbors: ['rs', 'bg', 'gr', 'al'],
+        aliases: ['macedonia']
+    },
+    SI: {
+        id: 'si',
+        name: 'Slovenya',
+        owner: 'neutral',
+        capital: false,
+        industry: 1,
+        terrain: 'mountains',
+        initialUnits: { infantry: 2, armor: 0, air: 0 },
+        neighbors: ['it', 'at', 'hu', 'hr'],
+        aliases: ['slovenia']
+    },
+    SE: {
+        id: 'se',
+        name: 'İsveç',
+        owner: 'neutral',
+        capital: false,
+        industry: 3,
+        terrain: 'plains',
+        initialUnits: { infantry: 4, armor: 1, air: 1 },
+        neighbors: ['no', 'fi', 'dk'],
+        aliases: ['sweden']
+    },
+    NO: {
+        id: 'no',
+        name: 'Norveç',
+        owner: 'neutral',
+        capital: false,
+        industry: 2,
+        terrain: 'mountains',
+        initialUnits: { infantry: 3, armor: 0, air: 0 },
+        neighbors: ['se', 'fi', 'ru', 'gb', 'fo', 'dk'],
+        aliases: ['norway']
+    },
+    FI: {
+        id: 'fi',
+        name: 'Finlandiya',
+        owner: 'neutral',
+        capital: false,
+        industry: 2,
+        terrain: 'plains',
+        initialUnits: { infantry: 4, armor: 0, air: 1 },
+        neighbors: ['no', 'se', 'ru', 'ee'],
+        aliases: ['finland']
+    },
+    DK: {
+        id: 'dk',
+        name: 'Danimarka',
+        owner: 'neutral',
+        capital: false,
+        industry: 2,
+        terrain: 'coastal',
+        initialUnits: { infantry: 2, armor: 0, air: 0 },
+        neighbors: ['de', 'se', 'no'],
+        aliases: ['denmark']
+    },
+    NL: {
+        id: 'nl',
+        name: 'Hollanda',
+        owner: 'neutral',
+        capital: false,
+        industry: 2,
+        terrain: 'coastal',
+        initialUnits: { infantry: 3, armor: 0, air: 0 },
+        neighbors: ['de', 'be', 'gb'],
+        aliases: ['netherlands']
+    },
+    CH: {
+        id: 'ch',
+        name: 'İsviçre',
+        owner: 'neutral',
+        capital: false,
+        industry: 2,
+        terrain: 'mountains',
+        initialUnits: { infantry: 5, armor: 0, air: 0 },
+        neighbors: ['fr', 'de', 'at', 'it', 'li'],
+        aliases: ['switzerland']
+    },
+    LI: {
+        id: 'li',
+        name: 'Lihtenştayn',
+        owner: 'neutral',
+        capital: false,
+        industry: 1,
+        terrain: 'mountains',
+        initialUnits: { infantry: 1, armor: 0, air: 0 },
+        neighbors: ['ch', 'at'],
+        aliases: ['liechtenstein']
     }
-];
+};
+
+/**
+ * Builds the complete European Theater game map from GeoJSON features.
+ * Computes projected Path2D paths, visual centroids, and links gameplay metadata.
+ * 
+ * @param {Object} geoJsonData - GeoJSON FeatureCollection
+ * @param {Object} [projectionConfig]
+ * @returns {{ regions: Object, regionList: Array, dimensions: Object, projection: MercatorProjection }}
+ */
+export function buildGeoJsonMap(geoJsonData = EUROPE_GEOJSON, projectionConfig = GEO_PROJECTION_CONFIG) {
+    const projection = new MercatorProjection(projectionConfig);
+    const regions = {};
+    const regionList = [];
+
+    const features = geoJsonData?.features || [];
+
+    for (const f of features) {
+        const iso2 = (f.properties?.ISO2 || '').toUpperCase();
+        const fips = (f.properties?.FIPS || '').toUpperCase();
+        const name = f.properties?.NAME || '';
+
+        // Match metadata by ISO2, FIPS, or NAME
+        let meta = COUNTRY_METADATA[iso2];
+        if (!meta) {
+            meta = Object.values(COUNTRY_METADATA).find(m => 
+                m.fips === fips || m.id === iso2.toLowerCase() || m.name.toLowerCase() === name.toLowerCase()
+            );
+        }
+
+        if (!meta) {
+            // Fallback default for unexpected feature
+            meta = {
+                id: iso2.toLowerCase() || `region_${regionList.length}`,
+                name: name || iso2,
+                owner: 'neutral',
+                capital: false,
+                industry: 1,
+                terrain: 'plains',
+                initialUnits: { infantry: 2, armor: 0, air: 0 },
+                neighbors: []
+            };
+        }
+
+        // Parse geometry with Mercator projection
+        const parsed = parseGeoGeometry(f.geometry, projection);
+
+        const regionObj = {
+            id: meta.id,
+            code: iso2,
+            fips: fips,
+            name: meta.name,
+            geoName: name,
+            owner: meta.owner,
+            capital: meta.capital || false,
+            capitalCity: meta.capitalCity || null,
+            industry: meta.industry || 1,
+            terrain: meta.terrain || 'plains',
+            initialUnits: { ...meta.initialUnits },
+            neighbors: [...meta.neighbors],
+            aliases: meta.aliases ? [...meta.aliases] : [],
+
+            // Spatial coordinates
+            x: parsed.centroid[0],
+            y: parsed.centroid[1],
+            bounds: parsed.bounds,
+
+            // Canvas Vector Geometry
+            path2d: parsed.path2d,
+            svgPath: parsed.svgPath,
+            projectedPolygons: parsed.projectedPolygons,
+            // Fallback polygon (primary outer ring)
+            polygon: parsed.projectedPolygons[0]?.[0] || []
+        };
+
+        regions[regionObj.id] = regionObj;
+        regionList.push(regionObj);
+
+        // Register aliases (e.g. 'berlin' -> 'de', 'london' -> 'gb', etc.)
+        if (meta.aliases) {
+            for (const alias of meta.aliases) {
+                if (!regions[alias]) {
+                    regions[alias] = regionObj;
+                }
+            }
+        }
+    }
+
+    return {
+        regions,
+        regionList,
+        dimensions: MAP_DIMENSIONS,
+        projection
+    };
+}
+
+/**
+ * Pre-build INITIAL_REGIONS for immediate, synchronous consumer availability
+ */
+export const MAP_BUILD_RESULT = buildGeoJsonMap(EUROPE_GEOJSON, GEO_PROJECTION_CONFIG);
+export const INITIAL_REGIONS = MAP_BUILD_RESULT.regionList;
+
+/**
+ * Asynchronously loads europe.geojson via fetch with fallback to embedded dataset
+ * @returns {Promise<Object>}
+ */
+export async function loadEuropeGeoJson() {
+    try {
+        if (typeof window !== 'undefined' && window.location && window.location.protocol !== 'file:') {
+            const resp = await fetch('europe.geojson');
+            if (resp.ok) {
+                const data = await resp.json();
+                return buildGeoJsonMap(data, GEO_PROJECTION_CONFIG);
+            }
+        }
+    } catch (e) {
+        console.warn('HTTP fetch failed, falling back to embedded GeoJSON dataset:', e);
+    }
+    return MAP_BUILD_RESULT;
+}

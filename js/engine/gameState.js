@@ -46,29 +46,49 @@ export class GameState {
 
     initRegions() {
         for (const r of INITIAL_REGIONS) {
-            let path2d = null;
-            if (typeof Path2D !== 'undefined' && r.path) {
-                try { path2d = new Path2D(r.path); } catch (_) {}
+            let path2d = r.path2d || null;
+            if (!path2d && typeof Path2D !== 'undefined' && (r.svgPath || r.path)) {
+                try { path2d = new Path2D(r.svgPath || r.path); } catch (_) {}
             }
-            this.regions[r.id] = {
+            const regionData = {
                 id: r.id,
+                code: r.code || r.id.toUpperCase(),
                 name: r.name,
+                geoName: r.geoName || r.name,
                 owner: r.owner,
                 terrain: r.terrain,
                 industry: r.industry,
                 capital: r.capital,
+                capitalCity: r.capitalCity || null,
                 x: r.x,
                 y: r.y,
-                path: r.path,
+                bounds: r.bounds || null,
+                path: r.svgPath || r.path,
                 path2d,
                 polygon: r.polygon ? JSON.parse(JSON.stringify(r.polygon)) : null,
+                projectedPolygons: r.projectedPolygons || null,
                 neighbors: [...r.neighbors],
                 units: {
-                    infantry: r.initialUnits.infantry || 0,
-                    armor: r.initialUnits.armor || 0,
-                    air: r.initialUnits.air || 0
+                    infantry: r.initialUnits ? (r.initialUnits.infantry || 0) : 0,
+                    armor: r.initialUnits ? (r.initialUnits.armor || 0) : 0,
+                    air: r.initialUnits ? (r.initialUnits.air || 0) : 0
                 }
             };
+            this.regions[r.id] = regionData;
+
+            // Non-enumerable aliases so Object.values() won't duplicate territories
+            if (r.aliases && Array.isArray(r.aliases)) {
+                for (const alias of r.aliases) {
+                    if (alias !== r.id && !(alias in this.regions)) {
+                        Object.defineProperty(this.regions, alias, {
+                            value: regionData,
+                            enumerable: false,
+                            writable: true,
+                            configurable: true
+                        });
+                    }
+                }
+            }
         }
         this.updateFactionStats();
     }

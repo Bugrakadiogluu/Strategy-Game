@@ -1068,10 +1068,13 @@ class I18nManager {
 
     getRegionName(regionId) {
         const dict = TRANSLATIONS[this.currentLang] || TRANSLATIONS.tr;
-        if (dict.regions && dict.regions[regionId]) {
+        if (dict?.regions && dict.regions[regionId]) {
             return dict.regions[regionId];
         }
-        return TRANSLATIONS.tr.regions[regionId] || regionId;
+        if (TRANSLATIONS.tr?.regions && TRANSLATIONS.tr.regions[regionId]) {
+            return TRANSLATIONS.tr.regions[regionId];
+        }
+        return regionId;
     }
 
     getFactionName(factionId) {

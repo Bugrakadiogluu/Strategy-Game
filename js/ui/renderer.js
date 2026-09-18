@@ -58,6 +58,8 @@ export class MapRenderer {
         const displayW = Math.round(rect.width) > 50 ? Math.round(rect.width) : Math.max(800, window.innerWidth - 420);
         const displayH = Math.round(rect.height) > 50 ? Math.round(rect.height) : Math.max(600, window.innerHeight - 60);
 
+        const oldW = this.canvas.width;
+        const oldH = this.canvas.height;
         this.canvas.width = displayW;
         this.canvas.height = displayH;
 
@@ -70,6 +72,9 @@ export class MapRenderer {
             this.offsetX = (displayW - mapW * this.scale) / 2;
             this.offsetY = (displayH - mapH * this.scale) / 2;
             this._hasUserView = true;
+        } else if (oldW > 0 && oldH > 0 && (oldW !== displayW || oldH !== displayH)) {
+            this.offsetX += (displayW - oldW) / 2;
+            this.offsetY += (displayH - oldH) / 2;
         }
     }
 
@@ -77,8 +82,15 @@ export class MapRenderer {
         this.isCinematicActive = false;
         const r = this.gameState.regions[regionId];
         if (!r || !this.canvas) return;
-        const displayW = this.canvas.width;
-        const displayH = this.canvas.height;
+
+        const rect = this.canvas.getBoundingClientRect();
+        if (rect.width > 50 && rect.height > 50) {
+            this.canvas.width = Math.round(rect.width);
+            this.canvas.height = Math.round(rect.height);
+        }
+        const displayW = this.canvas.width || 1200;
+        const displayH = this.canvas.height || 800;
+
         const desiredScale = targetScale !== null ? targetScale : 0.82;
         this.scale = Math.max(this.minScale, Math.min(desiredScale, this.maxScale));
         this.offsetX = (displayW / 2) - r.x * this.scale;
@@ -89,15 +101,15 @@ export class MapRenderer {
     focusOnFaction(factionId, targetScale = null) {
         this.isCinematicActive = false;
         const capitalMap = {
-            germany: 'berlin',
-            uk: 'london',
-            ussr: 'moscow',
-            italy: 'rome',
-            france: 'paris',
-            spain: 'madrid',
-            turkey: 'ankara'
+            germany: 'de',
+            uk: 'gb',
+            ussr: 'ru',
+            italy: 'it',
+            france: 'fr',
+            spain: 'es',
+            turkey: 'tr'
         };
-        const capId = capitalMap[factionId?.toLowerCase()] || 'berlin';
+        const capId = capitalMap[factionId?.toLowerCase()] || 'de';
         this.focusOnRegion(capId, targetScale !== null ? targetScale : 0.82);
     }
 
@@ -139,7 +151,10 @@ export class MapRenderer {
      * Starts focused closely on player's capital, then smoothly decelerates to tactical operational view.
      */
     playCinematicIntro(capitalRegionId, onComplete) {
-        const capital = this.gameState.regions[capitalRegionId] || this.gameState.regions['berlin'] || Object.values(this.gameState.regions)[0];
+        const capital = this.gameState.regions[capitalRegionId] || 
+                        this.gameState.regions['de'] || 
+                        this.gameState.regions['berlin'] || 
+                        Object.values(this.gameState.regions)[0];
         if (!capital || !this.canvas) {
             if (onComplete) onComplete();
             return;
@@ -332,14 +347,32 @@ export class MapRenderer {
 
         const regions = Object.values(this.gameState.regions);
 
-        // 1. Native Path2D point-in-path test (accurate curves, bays, natural peninsulas)
+        // 1. Native Path2D point-in-path test (accurate curves, bays, natural peninsulas & islands)
         for (let i = regions.length - 1; i >= 0; i--) {
             const r = regions[i];
-            if (!r.path2d && r.path) {
-                try { r.path2d = new Path2D(r.path); } catch (e) { /* ignore */ }
+            if (!r.path2d && (r.svgPath || r.path)) {
+                try { r.path2d = new Path2D(r.svgPath || r.path); } catch (e) { /* ignore */ }
             }
             if (r.path2d && this._scratchCtx.isPointInPath(r.path2d, worldX, worldY)) {
                 return r.id;
+            }
+        }
+
+        // 1b. Fallback: Ray-casting point-in-polygon for projectedPolygons
+        for (let i = regions.length - 1; i >= 0; i--) {
+            const r = regions[i];
+            if (r.projectedPolygons) {
+                for (const poly of r.projectedPolygons) {
+                    for (const ring of poly) {
+                        if (ring && ring.length >= 3 && this._isPointInPolygon(worldX, worldY, ring)) {
+                            return r.id;
+                        }
+                    }
+                }
+            } else if (r.polygon && r.polygon.length >= 3) {
+                if (this._isPointInPolygon(worldX, worldY, r.polygon)) {
+                    return r.id;
+                }
             }
         }
 
@@ -440,8 +473,19 @@ export class MapRenderer {
         this.lastFrameTime = timestamp;
         this.pulseTime += dt * 3.5;
 
-        this._render();
-        this._updateAnimations(timestamp);
+        try {
+            this._render();
+            this._updateAnimations(timestamp);
+        } catch (err) {
+            console.error('MapRenderer render error:', err);
+            try {
+                fetch('/api/test-result', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ context: 'MapRenderer._render', message: err.message, stack: err.stack })
+                });
+            } catch (_) {}
+        }
 
         requestAnimationFrame(this._renderLoop);
     }
@@ -487,13 +531,13 @@ export class MapRenderer {
 
     _renderSeaNames(ctx) {
         const seas = [
-            { id: 'atlantic_ocean', x: 260, y: 700, angle: -0.15 },
-            { id: 'north_sea', x: 800, y: 400, angle: 0 },
-            { id: 'baltic_sea', x: 1260, y: 360, angle: 0.2 },
-            { id: 'west_med', x: 780, y: 1160, angle: 0 },
-            { id: 'east_med', x: 1460, y: 1360, angle: 0 },
-            { id: 'black_sea', x: 1760, y: 860, angle: 0 },
-            { id: 'caspian_sea', x: 2320, y: 860, angle: 0.1 }
+            { id: 'atlantic_ocean', x: 120, y: 920, angle: -0.15 },
+            { id: 'north_sea', x: 700, y: 760, angle: 0 },
+            { id: 'baltic_sea', x: 1240, y: 680, angle: 0.2 },
+            { id: 'west_med', x: 720, y: 1360, angle: 0 },
+            { id: 'east_med', x: 1480, y: 1520, angle: 0 },
+            { id: 'black_sea', x: 1720, y: 1260, angle: 0 },
+            { id: 'caspian_sea', x: 2340, y: 1180, angle: 0.1 }
         ];
 
         ctx.save();
@@ -583,15 +627,13 @@ export class MapRenderer {
             const isTarget = this.highlightedTargetIds.includes(r.id);
 
             if (r.path2d) {
-                // Polygon Fill using authentic SVG curved landmass
+                // High-performance Path2D rendering
                 ctx.fillStyle = faction.color;
                 ctx.globalAlpha = isSelected ? 0.95 : (isHovered ? 0.90 : 0.78);
                 ctx.fill(r.path2d);
 
-                // Hardware-accelerated tactical border (no CPU shadowBlur lag)
                 ctx.globalAlpha = 1.0;
                 if (isSelected) {
-                    // Wide ambient glow stroke + crisp amber core
                     ctx.strokeStyle = 'rgba(245, 158, 11, 0.45)';
                     ctx.lineWidth = 7 + pulse * 2;
                     ctx.stroke(r.path2d);
@@ -600,7 +642,7 @@ export class MapRenderer {
                     ctx.lineWidth = 3.0;
                     ctx.stroke(r.path2d);
                 } else if (isTarget) {
-                    const isFriendly = selectedId && this.gameState.regions[selectedId].owner === r.owner;
+                    const isFriendly = selectedId && this.gameState.regions[selectedId]?.owner === r.owner;
                     const glowCol = isFriendly ? 'rgba(56, 189, 248, 0.45)' : 'rgba(239, 68, 68, 0.45)';
                     const coreCol = isFriendly ? '#38bdf8' : '#ef4444';
 
@@ -620,7 +662,6 @@ export class MapRenderer {
                     ctx.lineWidth = 2.0;
                     ctx.stroke(r.path2d);
                 } else if (this.playerFactionId && r.owner === this.playerFactionId) {
-                    // Player's Homeland Highlight: Subtle golden/accent tactical border
                     ctx.strokeStyle = faction.accentColor || '#38bdf8';
                     ctx.lineWidth = 2.2 + pulse * 0.8;
                     ctx.stroke(r.path2d);
@@ -629,14 +670,19 @@ export class MapRenderer {
                     ctx.lineWidth = 1.2;
                     ctx.stroke(r.path2d);
                 }
-            } else if (r.polygon && r.polygon.length >= 3) {
-                // Fallback for polygon arrays
+            } else if (r.projectedPolygons && r.projectedPolygons.length > 0) {
+                // Direct Canvas path rendering for MultiPolygons
                 ctx.beginPath();
-                ctx.moveTo(r.polygon[0][0], r.polygon[0][1]);
-                for (let i = 1; i < r.polygon.length; i++) {
-                    ctx.lineTo(r.polygon[i][0], r.polygon[i][1]);
+                for (const poly of r.projectedPolygons) {
+                    for (const ring of poly) {
+                        if (!ring || ring.length < 3) continue;
+                        ctx.moveTo(ring[0][0], ring[0][1]);
+                        for (let i = 1; i < ring.length; i++) {
+                            ctx.lineTo(ring[i][0], ring[i][1]);
+                        }
+                        ctx.closePath();
+                    }
                 }
-                ctx.closePath();
 
                 ctx.fillStyle = faction.color;
                 ctx.globalAlpha = isSelected ? 0.95 : (isHovered ? 0.90 : 0.78);
@@ -652,7 +698,7 @@ export class MapRenderer {
                     ctx.lineWidth = 3.0;
                     ctx.stroke();
                 } else if (isTarget) {
-                    const isFriendly = selectedId && this.gameState.regions[selectedId].owner === r.owner;
+                    const isFriendly = selectedId && this.gameState.regions[selectedId]?.owner === r.owner;
                     ctx.strokeStyle = isFriendly ? 'rgba(56, 189, 248, 0.45)' : 'rgba(239, 68, 68, 0.45)';
                     ctx.lineWidth = 6 + pulse * 2;
                     ctx.stroke();
@@ -665,6 +711,37 @@ export class MapRenderer {
                     ctx.lineWidth = 4.5;
                     ctx.stroke();
 
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 2.0;
+                    ctx.stroke();
+                } else if (this.playerFactionId && r.owner === this.playerFactionId) {
+                    ctx.strokeStyle = faction.accentColor || '#38bdf8';
+                    ctx.lineWidth = 2.2 + pulse * 0.8;
+                    ctx.stroke();
+                } else {
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.28)';
+                    ctx.lineWidth = 1.2;
+                    ctx.stroke();
+                }
+            } else if (r.polygon && r.polygon.length >= 3) {
+                // Fallback for simple polygon arrays
+                ctx.beginPath();
+                ctx.moveTo(r.polygon[0][0], r.polygon[0][1]);
+                for (let i = 1; i < r.polygon.length; i++) {
+                    ctx.lineTo(r.polygon[i][0], r.polygon[i][1]);
+                }
+                ctx.closePath();
+
+                ctx.fillStyle = faction.color;
+                ctx.globalAlpha = isSelected ? 0.95 : (isHovered ? 0.90 : 0.78);
+                ctx.fill();
+
+                ctx.globalAlpha = 1.0;
+                if (isSelected) {
+                    ctx.strokeStyle = '#f59e0b';
+                    ctx.lineWidth = 3.0;
+                    ctx.stroke();
+                } else if (isHovered) {
                     ctx.strokeStyle = '#ffffff';
                     ctx.lineWidth = 2.0;
                     ctx.stroke();

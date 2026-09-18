@@ -1282,11 +1282,11 @@ class WW2GameApp {
                 if (fac && factionSelect) factionSelect.value = fac;
                 launchSingleplayer();
                 if (urlParams.get('overview') === '1') {
-                    setTimeout(() => this.renderer.resetOverview(), 200);
+                    this.renderer.resetOverview();
                 }
                 const sel = urlParams.get('select');
                 if (sel) {
-                    setTimeout(() => this.handleRegionClick(sel), 700);
+                    this.handleRegionClick(sel);
                 }
             }, 150);
         } else if (urlParams.get('autostart') === 'host') {
@@ -1397,15 +1397,15 @@ class WW2GameApp {
     _showStrategicBriefing() {
         const modal = document.getElementById('modal-briefing');
         const capitalMap = {
-            germany: 'berlin',
-            uk: 'london',
-            ussr: 'moscow',
-            italy: 'rome',
-            france: 'paris',
-            spain: 'madrid',
-            turkey: 'ankara'
+            germany: 'de',
+            uk: 'gb',
+            ussr: 'ru',
+            italy: 'it',
+            france: 'fr',
+            spain: 'es',
+            turkey: 'tr'
         };
-        const capitalId = capitalMap[this.userFactionId] || 'berlin';
+        const capitalId = capitalMap[this.userFactionId] || 'de';
 
         // Audio announcement with Web Speech API
         this._announcePlayerFactionVoice();
