@@ -703,11 +703,16 @@ export function buildGeoJsonMap(geoJsonData = EUROPE_GEOJSON, projectionConfig =
         regions[regionObj.id] = regionObj;
         regionList.push(regionObj);
 
-        // Register aliases (e.g. 'berlin' -> 'de', 'london' -> 'gb', etc.)
+        // Register non-enumerable aliases (e.g. 'berlin' -> 'de', 'london' -> 'gb', etc.)
         if (meta.aliases) {
             for (const alias of meta.aliases) {
-                if (!regions[alias]) {
-                    regions[alias] = regionObj;
+                if (alias !== regionObj.id && !(alias in regions)) {
+                    Object.defineProperty(regions, alias, {
+                        value: regionObj,
+                        enumerable: false,
+                        writable: true,
+                        configurable: true
+                    });
                 }
             }
         }
