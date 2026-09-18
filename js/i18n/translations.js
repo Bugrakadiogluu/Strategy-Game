@@ -183,6 +183,13 @@ export const TRANSLATIONS = {
         faction_france_name: "Fransa",
         faction_spain_name: "İspanya",
         faction_turkey_name: "Türkiye",
+        faction_germany_sub: "20 Bölge (Mihver)",
+        faction_uk_sub: "11 Bölge (Müttefik)",
+        faction_ussr_sub: "28 Bölge (Müttefik)",
+        faction_italy_sub: "11 Bölge (Mihver)",
+        faction_france_sub: "12 Bölge (Müttefik)",
+        faction_spain_sub: "9 Bölge (Mihver)",
+        faction_turkey_sub: "10 Bölge (Bağımsız)",
         slot_bot_name: "Yapay Zeka (Bot)",
         slot_host_badge: "HOST",
         slot_player_badge: "OYUNCU",
@@ -197,7 +204,7 @@ export const TRANSLATIONS = {
             germany: { 
                 name: "Almanya", 
                 fullName: "German Reich", 
-                desc: "Almanya (Mihver - 15 Bölge & Ezici Panzer Gücü)",
+                desc: "Almanya (Mihver - 20 Bölge & Ezici Panzer Gücü)",
                 directiveTitle: "Yıldırım Taarruzu (Blitzkrieg) & Sanayi Üstünlüğü",
                 directiveDesc: "Ruhr, Berlin ve Viyana'daki devasa panzer ve sanayi gücünüzle Batı ve Doğu cephelerinde hızlı yarmalar yapın. Müttefikler mobilize olmadan önce Fransa ve Doğu Avrupa'yı kontrol altına alın.",
                 allianceName: "MİHVER İTTİFAKI (AXIS)"
@@ -205,7 +212,7 @@ export const TRANSLATIONS = {
             uk: { 
                 name: "Birleşik Krallık", 
                 fullName: "United Kingdom", 
-                desc: "Birleşik Krallık (Müttefikler - 10 Bölge & Kraliyet Donanması/Akdeniz)",
+                desc: "Birleşik Krallık (Müttefikler - 11 Bölge & Kraliyet Donanması/Akdeniz)",
                 directiveTitle: "Ada Savunması & Kraliyet Hava/Deniz Üstünlüğü",
                 directiveDesc: "İngiltere Adası, Cebelitarık ve Süveyş hattını koruyun. Stratejik hava bombardımanları ile Mihver sanayisini yıpratıp Akdeniz ve kıta çıkarması hazırlayın.",
                 allianceName: "MÜTTEFİK GÜÇLER (ALLIES)"
@@ -213,7 +220,7 @@ export const TRANSLATIONS = {
             ussr: { 
                 name: "Sovyetler Birliği", 
                 fullName: "Soviet Union", 
-                desc: "Sovyetler Birliği (Müttefikler - 10 Bölge & Muazzam Derinlik)",
+                desc: "Sovyetler Birliği (Müttefikler - 28 Bölge & Muazzam Derinlik)",
                 directiveTitle: "Muazzam İnsan Gücü & Derin Savunma Hatları",
                 directiveDesc: "Geniş coğrafyanızı ve zengin insan gücünüzü kullanarak ilk taarruzları göğüsleyin. Moskova, Stalingrad ve Leningrad tahkimatlarını koruyup Ural ağır sanayisiyle karşı taarruza geçin.",
                 allianceName: "MÜTTEFİK GÜÇLER (ALLIES)"
@@ -221,7 +228,7 @@ export const TRANSLATIONS = {
             italy: { 
                 name: "İtalya", 
                 fullName: "Kingdom of Italy", 
-                desc: "İtalya (Mihver - 8 Bölge & Akdeniz-Kuzey Afrika)",
+                desc: "İtalya (Mihver - 11 Bölge & Akdeniz-Kuzey Afrika)",
                 directiveTitle: "Akdeniz Hakimiyeti & Çöl Lojistiği",
                 directiveDesc: "Roma, Po Ovası ve Kuzey Afrika çöl cephesini kontrol altında tutun. Süveyş ve Mısır yönünde ilerleyerek Mihver ittifakının güney kanadını güvenceye alın.",
                 allianceName: "MİHVER İTTİFAKI (AXIS)"
@@ -229,7 +236,7 @@ export const TRANSLATIONS = {
             france: { 
                 name: "Fransa", 
                 fullName: "République Française", 
-                desc: "Fransa (Müttefikler - 6 Bölge & Batı Kalesi)",
+                desc: "Fransa (Müttefikler - 12 Bölge & Batı Kalesi)",
                 directiveTitle: "Kıta Savunması & Maginot Direnişi",
                 directiveDesc: "Paris ve Normandiya'dan Cezayir'e uzanan Fransız topraklarını Mihver saldırılarına karşı savunun, müttefiklerle ortak taarruz organize edin.",
                 allianceName: "MÜTTEFİK GÜÇLER (ALLIES)"
@@ -237,7 +244,7 @@ export const TRANSLATIONS = {
             spain: { 
                 name: "İspanya", 
                 fullName: "Estado Español", 
-                desc: "İspanya (Mihver Eğilimli / Bağımsız - 5 İberya Bölgesi)",
+                desc: "İspanya (Mihver Eğilimli / Bağımsız - 9 İberya Bölgesi)",
                 directiveTitle: "İberya Yarımadası & Cebelitarık Kontrolü",
                 directiveDesc: "Madrid, Katalonya ve Endülüs'ü tahkim edin. Cebelitarık Boğazı ve Akdeniz batı kapısını denetleyerek stratejik üstünlük sağlayın.",
                 allianceName: "MİHVER İTTİFAKI (AXIS)"
@@ -245,7 +252,7 @@ export const TRANSLATIONS = {
             turkey: { 
                 name: "Türkiye", 
                 fullName: "Türkiye Cumhuriyeti", 
-                desc: "Türkiye (Müttefik / Bağımsız - 5 Anadolu Bölgesi & Boğazlar)",
+                desc: "Türkiye (Müttefik / Bağımsız - 10 Anadolu Bölgesi & Boğazlar)",
                 directiveTitle: "Boğazlar Hakimiyeti & Millî Savunma",
                 directiveDesc: "Ankara ve İstanbul Boğazı tahkimatlarını koruyun. Balkanlar ve Kafkasya dengesinde Anadolu'yu aşılmaz bir kale haline getirin.",
                 allianceName: "MÜTTEFİK GÜÇLER (ALLIES)"
@@ -681,6 +688,13 @@ export const TRANSLATIONS = {
         faction_france_name: "France",
         faction_spain_name: "Spain",
         faction_turkey_name: "Turkey",
+        faction_germany_sub: "20 Territories (Axis)",
+        faction_uk_sub: "11 Territories (Allies)",
+        faction_ussr_sub: "28 Territories (Allies)",
+        faction_italy_sub: "11 Territories (Axis)",
+        faction_france_sub: "12 Territories (Allies)",
+        faction_spain_sub: "9 Territories (Axis)",
+        faction_turkey_sub: "10 Territories (Independent)",
         slot_bot_name: "Artificial Intelligence (Bot)",
         slot_host_badge: "HOST",
         slot_player_badge: "PLAYER",
@@ -695,7 +709,7 @@ export const TRANSLATIONS = {
             germany: { 
                 name: "Germany", 
                 fullName: "German Reich", 
-                desc: "Germany (Axis - 15 Territories & High Panzer Strength)",
+                desc: "Germany (Axis - 20 Territories & High Panzer Strength)",
                 directiveTitle: "Blitzkrieg & Industrial Supremacy",
                 directiveDesc: "Leverage formidable Panzer divisions in Ruhr, Berlin, and Vienna to strike swiftly across Europe before Allied mobilization.",
                 allianceName: "AXIS POWERS"
@@ -703,7 +717,7 @@ export const TRANSLATIONS = {
             uk: { 
                 name: "United Kingdom", 
                 fullName: "United Kingdom", 
-                desc: "United Kingdom (Allies - 10 Territories & Royal Navy/Mediterranean)",
+                desc: "United Kingdom (Allies - 11 Territories & Royal Navy/Mediterranean)",
                 directiveTitle: "Island Fortress & Royal Navy",
                 directiveDesc: "Defend the British Isles, Gibraltar, and the Suez Canal. Soften enemy industrial hubs with strategic air strikes before launching mainland invasions.",
                 allianceName: "ALLIED POWERS"
@@ -711,7 +725,7 @@ export const TRANSLATIONS = {
             ussr: { 
                 name: "Soviet Union", 
                 fullName: "Soviet Union", 
-                desc: "Soviet Union (Allies - 10 Territories & Strategic Depth)",
+                desc: "Soviet Union (Allies - 28 Territories & Strategic Depth)",
                 directiveTitle: "Immense Manpower & Strategic Depth",
                 directiveDesc: "Absorb initial Axis pushes across vast territories. Fortify Moscow, Stalingrad, and Leningrad while mobilizing Ural heavy industry for massive counter-offensives.",
                 allianceName: "ALLIED POWERS"
@@ -719,7 +733,7 @@ export const TRANSLATIONS = {
             italy: { 
                 name: "Italy", 
                 fullName: "Kingdom of Italy", 
-                desc: "Italy (Axis - 8 Territories & Mediterranean-North Africa)",
+                desc: "Italy (Axis - 11 Territories & Mediterranean-North Africa)",
                 directiveTitle: "Mediterranean Dominance & North Africa",
                 directiveDesc: "Dominate the Mediterranean sea lanes and advance through North Africa towards Egypt and Suez, securing the Axis southern flank.",
                 allianceName: "AXIS POWERS"
@@ -727,7 +741,7 @@ export const TRANSLATIONS = {
             france: { 
                 name: "France", 
                 fullName: "French Republic", 
-                desc: "France (Allies - 6 Territories & Western Bastion)",
+                desc: "France (Allies - 12 Territories & Western Bastion)",
                 directiveTitle: "Continental Defense & Resistance",
                 directiveDesc: "Defend Paris, Normandy, and French North Africa against Axis incursions, coordinating joint offensives with British and Allied forces.",
                 allianceName: "ALLIED POWERS"
@@ -735,7 +749,7 @@ export const TRANSLATIONS = {
             spain: { 
                 name: "Spain", 
                 fullName: "Spanish State", 
-                desc: "Spain (Axis-leaning / Independent - 5 Iberian Territories)",
+                desc: "Spain (Axis-leaning / Independent - 9 Iberian Territories)",
                 directiveTitle: "Iberian Peninsula & Straits Control",
                 directiveDesc: "Fortify Madrid, Catalonia, and Andalusia. Seize control of the Strait of Gibraltar to dictate naval passage into the Mediterranean.",
                 allianceName: "AXIS POWERS"
@@ -743,7 +757,7 @@ export const TRANSLATIONS = {
             turkey: { 
                 name: "Turkey", 
                 fullName: "Republic of Turkey", 
-                desc: "Turkey (Allies-leaning / Independent - 5 Anatolian Territories & Straits)",
+                desc: "Turkey (Allies-leaning / Independent - 10 Anatolian Territories & Straits)",
                 directiveTitle: "Turkish Straits & Anatolian Redoubt",
                 directiveDesc: "Fortify the Bosporus Straits and Ankara. Maintain a fortified neutral redoubt while projecting force into the Balkans and Caucasus.",
                 allianceName: "ALLIED POWERS"
@@ -1169,6 +1183,13 @@ export const TRANSLATIONS = {
         faction_france_name: "フランス",
         faction_spain_name: "スペイン",
         faction_turkey_name: "トルコ",
+        faction_germany_sub: "20領土 (枢軸国)",
+        faction_uk_sub: "11領土 (連合国)",
+        faction_ussr_sub: "28領土 (連合国)",
+        faction_italy_sub: "11領土 (枢軸国)",
+        faction_france_sub: "12領土 (連合国)",
+        faction_spain_sub: "9領土 (枢軸国)",
+        faction_turkey_sub: "10領土 (独立国)",
         slot_bot_name: "人工知能 (AI Bot)",
         slot_host_badge: "ホスト",
         slot_player_badge: "プレイヤー",
@@ -1183,7 +1204,7 @@ export const TRANSLATIONS = {
             germany: { 
                 name: "ドイツ国", 
                 fullName: "German Reich", 
-                desc: "ドイツ国 (枢軸国 - 15領土＆強力な機甲戦力)",
+                desc: "ドイツ国 (枢軸国 - 20領土＆強力な機甲戦力)",
                 directiveTitle: "電撃戦と圧倒的工業力",
                 directiveDesc: "ルール、ベルリン、ウィーンの強力な機甲戦力を集中運用し、欧州全域を制圧せよ。",
                 allianceName: "枢軸国陣営 (AXIS)"
@@ -1191,7 +1212,7 @@ export const TRANSLATIONS = {
             uk: { 
                 name: "イギリス", 
                 fullName: "United Kingdom", 
-                desc: "イギリス (連合国 - 10領土＆大西洋航路と海空軍)",
+                desc: "イギリス (連合国 - 11領土＆大西洋航路と海空軍)",
                 directiveTitle: "要塞島と海空軍の誇り",
                 directiveDesc: "英本土、ジブラルタル、スエズ運河を防衛し、地中海と大陸反攻の主導権を握れ。",
                 allianceName: "連合国陣営 (ALLIES)"
@@ -1199,7 +1220,7 @@ export const TRANSLATIONS = {
             ussr: { 
                 name: "ソビエト連邦", 
                 fullName: "Soviet Union", 
-                desc: "ソビエト連邦 (連合国 - 10領土＆膨大な縦深防御)",
+                desc: "ソビエト連邦 (連合国 - 28領土＆膨大な縦深防御)",
                 directiveTitle: "膨大な人的資源と縦深防御",
                 directiveDesc: "モスクワ、スターリングラード、レニングラードを死守し、ウラル重工業で反攻せよ。",
                 allianceName: "連合国陣営 (ALLIES)"
@@ -1207,7 +1228,7 @@ export const TRANSLATIONS = {
             italy: { 
                 name: "イタリア王国", 
                 fullName: "Kingdom of Italy", 
-                desc: "イタリア王国 (枢軸国 - 8領土＆地中海・北アフリカ)",
+                desc: "イタリア王国 (枢軸国 - 11領土＆地中海・北アフリカ)",
                 directiveTitle: "地中海制圧と砂漠戦線",
                 directiveDesc: "地中海の制海権を確保し、北アフリカからエジプト・スエズ方面へ進出せよ。",
                 allianceName: "枢軸国陣営 (AXIS)"
@@ -1215,7 +1236,7 @@ export const TRANSLATIONS = {
             france: { 
                 name: "フランス", 
                 fullName: "République Française", 
-                desc: "フランス (連合国 - 6領土＆西欧の要塞)",
+                desc: "フランス (連合国 - 12領土＆西欧の要塞)",
                 directiveTitle: "本土防衛とレジスタンス",
                 directiveDesc: "パリと北アフリカ植民地を枢軸国の進撃から守り、連合国軍と呼応して戦線を維持せよ。",
                 allianceName: "連合国陣営 (ALLIES)"
@@ -1223,7 +1244,7 @@ export const TRANSLATIONS = {
             spain: { 
                 name: "スペイン", 
                 fullName: "Estado Español", 
-                desc: "スペイン (枢軸寄り独立国 - 5領土＆イベリア半島)",
+                desc: "スペイン (枢軸寄り独立国 - 9領土＆イベリア半島)",
                 directiveTitle: "イベリア防衛とジブラルタル掌握",
                 directiveDesc: "マドリードとカタルーニャを要塞化し、ジブラルタル海峡を押さえて地中海西口を統制せよ。",
                 allianceName: "枢軸国陣営 (AXIS)"
@@ -1231,7 +1252,7 @@ export const TRANSLATIONS = {
             turkey: { 
                 name: "トルコ", 
                 fullName: "Türkiye Cumhuriyeti", 
-                desc: "トルコ (連合寄り独立国 - 5領土＆海峡の守護者)",
+                desc: "トルコ (連合寄り独立国 - 10領土＆海峡の守護者)",
                 directiveTitle: "海峡防衛とアナトリアの砦",
                 directiveDesc: "アンカラとボスポラス海峡を死守し、バルカン・コーカサス情勢の中で不抜の拠点を築け。",
                 allianceName: "連合国陣営 (ALLIES)"

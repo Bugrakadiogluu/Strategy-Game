@@ -1415,6 +1415,14 @@ class WW2GameApp {
             const fId = pill.getAttribute('data-faction');
             const nameEl = pill.querySelector('.faction-pill-name');
             if (nameEl) nameEl.textContent = i18n.getFactionName(fId);
+            const subEl = pill.querySelector('.faction-pill-sub');
+            if (subEl) {
+                const subKey = `faction_${fId}_sub`;
+                const subText = i18n.t(subKey);
+                if (subText && subText !== subKey) {
+                    subEl.textContent = subText;
+                }
+            }
         });
     }
 

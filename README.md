@@ -70,6 +70,16 @@ Bir turda oluşan efektif isabetler birliklere şu öncelik sırasına göre tah
 2. Zırhlı Birlikler: Piyadeler tamamen tükendiğinde zırh zayiatı başlar.
 3. Hava Filoları: Yalnızca kara birliklerinin tamamı imha edildiğinde üste konuşlu hava araçları vurulur.
 
+#### 1.3.6 Devletler Bölge ve Sanayi (IP) Dengesi (2. Dünya Savaşı Standartları)
+Oyun başlangıcında tüm ana aktörlerin sanayi kapasitesi (IP) ve kontrol ettiği eyalet sayıları 2. Dünya Savaşı dengelerine göre revize edilmiştir:
+- Sovyetler Birliği (SSCB): 28 Eyalet, 45 IP (Geniş stratejik derinlik, Ural sanayi tahliyesi)
+- Almanya: 20 Eyalet, 40 IP (Yüksek teknoloji, kompakt ağır sanayi ve panzer üretimi)
+- Birleşik Krallık (İngiltere): 11 Eyalet, 36 IP (İmparatorluk ikmal hatları, ada sanayisi ve Akdeniz üsleri)
+- Fransa: 12 Eyalet, 27 IP (Kıta sanayisi ve batı savunma hattı)
+- İtalya: 11 Eyalet, 21 IP (Kuzey sanayisi, Po ovası ve Akdeniz donanma limanları)
+- Türkiye: 10 Eyalet, 17 IP (Boğazlar muhafızı, dengeli bölgesel güç)
+- İspanya: 9 Eyalet, 17 IP (İberya savunması ve dağlık tahkimat)
+
 ---
 
 ## 2. ENGLISH (TECHNICAL DOCUMENTATION)
@@ -139,6 +149,16 @@ Formulas:
 1. Infantry: Absorbs incoming damage first.
 2. Armor: Takes hits once all infantry casualties are exhausted.
 3. Air Fleets: Sustains damage only if all ground defense forces are destroyed.
+
+#### 2.3.6 Faction Regional & Industrial (IP) Balance (WW2 Standards)
+Initial faction industrial capabilities (IP) and sovereign territory allocations have been calibrated to authentic WWII theater scales:
+- Soviet Union (USSR): 28 Territories, 45 IP (Immense strategic depth and evacuated Ural heavy industry)
+- Germany: 20 Territories, 40 IP (High-tech compact industrial heartland and heavy armor output)
+- United Kingdom: 11 Territories, 36 IP (Global imperial convoys, British Isles manufacturing, and Mediterranean strongholds)
+- France: 12 Territories, 27 IP (Continental industrial core and western redoubt)
+- Italy: 11 Territories, 21 IP (Po River industrial triangle and Mediterranean naval infrastructure)
+- Turkey: 10 Territories, 17 IP (Guardian of the Straits and robust regional defense fortress)
+- Spain: 9 Territories, 17 IP (Iberian territorial integrity and mountain redoubts)
 
 ---
 
