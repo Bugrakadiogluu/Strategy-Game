@@ -96,6 +96,10 @@
                 <span class="svg-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></span>
                 <span data-i18n="btn_developer">Yapan Kişi</span>
             </button>
+            <button class="btn-tactical" id="btn-exit-game" style="background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.6); color: #fca5a5;" title="Oyundan Çık ve Ana Menüye Dön" data-i18n-title="btn_exit_game_title">
+                <span class="svg-icon"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></span>
+                <span data-i18n="btn_exit_game">Oyundan Çık</span>
+            </button>
         </div>
     </header>
 
@@ -367,9 +371,21 @@
 
                     <div class="panel-card">
                         <div class="panel-title">
-                            <span>STRATEJİK BAŞKENTLER</span>
+                            <span data-i18n="title_strategic_capitals">STRATEJİK BAŞKENTLER</span>
                         </div>
                         <div class="capitals-list" id="intel-capitals-list">
+                            <!-- Populated dynamically by HUD -->
+                        </div>
+                    </div>
+
+                    <div class="panel-card">
+                        <div class="panel-title">
+                            <span data-i18n="tab_diplomacy_title">DİPLOMASİ VE İTTİFAK MERKEZİ</span>
+                        </div>
+                        <p style="font-size: 0.76rem; color: var(--text-muted); margin-bottom: 8px;" data-i18n="hint_diplomacy_desc">
+                            Devletlerle olan ilişki düzeyinize göre ittifak teklif edin, saldırmazlık paktı yapın veya sanayi yardımı yollayarak ilişkileri geliştirin.
+                        </p>
+                        <div class="diplomacy-list" id="intel-diplomacy-list">
                             <!-- Populated dynamically by HUD -->
                         </div>
                     </div>
@@ -524,6 +540,27 @@
             <div class="lobby-form-group">
                 <label data-i18n="label_commander_name">KOMUTAN ADI:</label>
                 <input type="text" class="lobby-input" id="lobby-player-name" value="General">
+            </div>
+
+            <div class="lobby-form-group" id="lobby-difficulty-group">
+                <label data-i18n="label_bot_difficulty">YAPAY ZEKA (BOT) ZORLUK DERECESİ:</label>
+                <div class="difficulty-pills-row" id="lobby-difficulty-pills">
+                    <button type="button" class="btn-tactical diff-pill" data-difficulty="easy">
+                        <span class="svg-icon"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></span>
+                        <span data-i18n="diff_easy">KOLAY</span>
+                    </button>
+                    <button type="button" class="btn-tactical diff-pill active" data-difficulty="normal">
+                        <span class="svg-icon"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="8" y1="15" x2="16" y2="15"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></span>
+                        <span data-i18n="diff_normal">ORTA</span>
+                    </button>
+                    <button type="button" class="btn-tactical diff-pill" data-difficulty="hard">
+                        <span class="svg-icon"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26"/></svg></span>
+                        <span data-i18n="diff_hard">ZOR</span>
+                    </button>
+                </div>
+                <div class="difficulty-desc-hint" id="lobby-difficulty-desc" style="font-size:0.75rem; color:var(--text-muted); margin-top:5px;" data-i18n="diff_normal_desc">
+                    Tarihsel standart muharebe zarları ve dengeli bot taktikleri.
+                </div>
             </div>
 
             <div style="text-align: center; margin-top: 20px;">
@@ -717,6 +754,24 @@
                 </div>
             </div>
 
+            <!-- BOT DIFFICULTY IN MULTIPLAYER ROOM -->
+            <div style="margin-top: 14px; background: rgba(15, 23, 42, 0.55); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 6px; padding: 10px 14px;">
+                <div style="font-size: 0.8rem; color: var(--accent-amber); font-family: var(--font-heading); margin-bottom: 6px;" data-i18n="label_bot_difficulty">
+                    YAPAY ZEKA (BOT) ZORLUK DERECESİ:
+                </div>
+                <div class="difficulty-pills-row" id="waiting-room-difficulty-pills">
+                    <button type="button" class="btn-tactical diff-pill" data-difficulty="easy">
+                        <span data-i18n="diff_easy">KOLAY</span>
+                    </button>
+                    <button type="button" class="btn-tactical diff-pill active" data-difficulty="normal">
+                        <span data-i18n="diff_normal">ORTA</span>
+                    </button>
+                    <button type="button" class="btn-tactical diff-pill" data-difficulty="hard">
+                        <span data-i18n="diff_hard">ZOR</span>
+                    </button>
+                </div>
+            </div>
+
             <!-- LOBBY ACTIONS FOOTER -->
             <div class="waiting-room-footer" style="display: flex; gap: 10px; margin-top: 20px;">
                 <button class="btn-tactical btn-secondary" id="btn-waiting-room-leave" style="padding: 10px 16px;">
@@ -840,13 +895,44 @@
 
             <!-- ACTIONS BAR -->
             <div class="briefing-actions-bar">
-                <label class="briefing-checkbox-label">
-                    <input type="checkbox" id="briefing-dont-show-checkbox">
-                    <span data-i18n="briefing_dont_show">Bu brifingi başlangıçta bir daha gösterme</span>
-                </label>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <button class="btn-tactical btn-secondary" id="btn-briefing-back" style="padding: 10px 16px; font-size: 0.88rem;">
+                        <span class="svg-icon" style="margin-right:6px;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></span>
+                        <span data-i18n="btn_briefing_back">Geri (Farklı Ülke Seç)</span>
+                    </button>
+                    <label class="briefing-checkbox-label">
+                        <input type="checkbox" id="briefing-dont-show-checkbox">
+                        <span data-i18n="briefing_dont_show">Bu brifingi başlangıçta bir daha gösterme</span>
+                    </label>
+                </div>
                 <button class="btn-tactical btn-primary" id="btn-briefing-start" style="padding: 10px 20px; font-size: 0.95rem;">
                     <span class="svg-icon" style="margin-right:6px;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
                     <span data-i18n="btn_briefing_enter">KOMUTAYI AL VE SAVAŞ ODASINA GİR</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: EXIT CONFIRMATION -->
+    <div class="modal-backdrop" id="modal-exit-confirm">
+        <div class="modal-dialog" style="max-width: 440px; text-align: center;">
+            <div style="margin-bottom: 8px;" class="svg-icon">
+                <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            </div>
+            <h2 class="modal-title" style="color: #f87171; font-size: 1.3rem;" data-i18n="btn_exit_confirm_title">
+                HAREKATTAN ÇIK / LOBİYE DÖN
+            </h2>
+            <p style="color: var(--text-muted); font-size: 0.88rem; line-height: 1.45; margin: 12px 0 20px 0;" data-i18n="btn_exit_confirm_desc">
+                Mevcut seferden çıkıp ana lobiye dönmek istediğinize emin misiniz? Kaydedilmemiş veriler ve harekat durumu kaybolacaktır.
+            </p>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button class="btn-tactical btn-secondary" id="btn-exit-cancel" style="padding: 10px 18px; flex: 1; justify-content: center;">
+                    <span class="svg-icon"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
+                    <span data-i18n="btn_exit_confirm_cancel">Oyunda Kal</span>
+                </button>
+                <button class="btn-tactical btn-danger" id="btn-exit-confirm" style="padding: 10px 22px; flex: 1; justify-content: center;">
+                    <span class="svg-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></span>
+                    <span data-i18n="btn_exit_confirm_yes">Evet, Çık</span>
                 </button>
             </div>
         </div>

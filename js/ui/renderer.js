@@ -100,16 +100,16 @@ export class MapRenderer {
 
     focusOnFaction(factionId, targetScale = null) {
         this.isCinematicActive = false;
-        const capitalMap = {
-            germany: 'de',
-            uk: 'gb',
-            ussr: 'ru',
-            italy: 'it',
-            france: 'fr',
-            spain: 'es',
-            turkey: 'tr'
-        };
-        const capId = capitalMap[factionId?.toLowerCase()] || 'de';
+        const fac = this.gameState.factions[factionId?.toLowerCase()];
+        const capId = fac?.capitalRegionId || {
+            germany: 'de_berlin',
+            uk: 'gb_london',
+            ussr: 'ru_moscow',
+            italy: 'it_rome',
+            france: 'fr_paris',
+            spain: 'es_madrid',
+            turkey: 'tr_ankara'
+        }[factionId?.toLowerCase()] || 'de_berlin';
         this.focusOnRegion(capId, targetScale !== null ? targetScale : 0.82);
     }
 
@@ -642,7 +642,7 @@ export class MapRenderer {
                     ctx.lineWidth = 3.0;
                     ctx.stroke(r.path2d);
                 } else if (isTarget) {
-                    const isFriendly = selectedId && this.gameState.regions[selectedId]?.owner === r.owner;
+                    const isFriendly = selectedId && this.gameState.isAllied(this.gameState.regions[selectedId]?.owner, r.owner);
                     const glowCol = isFriendly ? 'rgba(56, 189, 248, 0.45)' : 'rgba(239, 68, 68, 0.45)';
                     const coreCol = isFriendly ? '#38bdf8' : '#ef4444';
 
@@ -698,7 +698,7 @@ export class MapRenderer {
                     ctx.lineWidth = 3.0;
                     ctx.stroke();
                 } else if (isTarget) {
-                    const isFriendly = selectedId && this.gameState.regions[selectedId]?.owner === r.owner;
+                    const isFriendly = selectedId && this.gameState.isAllied(this.gameState.regions[selectedId]?.owner, r.owner);
                     ctx.strokeStyle = isFriendly ? 'rgba(56, 189, 248, 0.45)' : 'rgba(239, 68, 68, 0.45)';
                     ctx.lineWidth = 6 + pulse * 2;
                     ctx.stroke();

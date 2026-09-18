@@ -22,27 +22,39 @@ export class StrategicAI {
 
         const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
+        // Ultra-fast turn pass for neutral buffer states so players don't wait
+        if (currentFaction.id === 'neutral') {
+            await wait(40);
+            gameState.endTurn();
+            notifyStep({ type: 'TURN_ENDED', faction: currentFaction });
+            return;
+        }
+
+        // Adjust timing based on difficulty
+        const speedMultiplier = gameState.aiDifficulty === 'hard' ? 0.8 : 1.0;
+        const effectiveDelay = Math.round(stepDelayMs * speedMultiplier);
+
         // ----------------------------------------------------
         // 1. REINFORCEMENT & PRODUCTION PHASE
         // ----------------------------------------------------
-        await wait(stepDelayMs);
+        await wait(effectiveDelay);
         this._executeAIProduction(gameState, currentFaction, notifyStep);
 
         // Transition from Production to Combat Phase
-        await wait(stepDelayMs);
+        await wait(effectiveDelay);
         gameState.nextPhase();
         notifyStep({ type: 'PHASE_CHANGE', phase: gameState.currentPhase });
 
         // ----------------------------------------------------
         // 2. TACTICAL COMBAT & ATTACK PHASE
         // ----------------------------------------------------
-        await wait(stepDelayMs);
-        await this._executeAICombat(gameState, currentFaction, notifyStep, wait, stepDelayMs);
+        await wait(effectiveDelay);
+        await this._executeAICombat(gameState, currentFaction, notifyStep, wait, effectiveDelay);
 
         // ----------------------------------------------------
         // 3. END TURN PHASE
         // ----------------------------------------------------
-        await wait(stepDelayMs);
+        await wait(effectiveDelay);
         gameState.endTurn();
         notifyStep({ type: 'TURN_ENDED', faction: currentFaction });
     }
@@ -116,7 +128,7 @@ export class StrategicAI {
      * Evaluates enemy neighbors and launches attacks where victory odds are high.
      */
     static async _executeAICombat(gameState, faction, notifyStep, wait, stepDelayMs) {
-        let maxAttacks = 3; // AI limits attacks per turn to prevent overextension
+        let maxAttacks = gameState.aiDifficulty === 'easy' ? 1 : (gameState.aiDifficulty === 'hard' ? 5 : 3);
         let attackCount = 0;
 
         while (attackCount < maxAttacks) {
@@ -179,14 +191,11 @@ export class StrategicAI {
 
             for (const neighborId of from.neighbors) {
                 const to = gameState.regions[neighborId];
-                if (!to || to.owner === faction.id || to.owner === 'neutral') continue; // skip friendly & neutral buffer
+                if (!to || to.owner === faction.id) continue;
 
-                // Skip attacking allies in the same coalition
-                const axisFactions = ['germany', 'italy', 'spain'];
-                const alliedFactions = ['uk', 'ussr', 'france', 'turkey'];
-                const isSameAlliance = (axisFactions.includes(faction.id) && axisFactions.includes(to.owner)) ||
-                                       (alliedFactions.includes(faction.id) && alliedFactions.includes(to.owner));
-                if (isSameAlliance) continue;
+                // Skip attacking allies in the same alliance or with active treaties
+                if (gameState.isAllied(faction.id, to.owner)) continue;
+                if (gameState.hasNonAggressionPact(faction.id, to.owner)) continue;
 
                 // Calculate Attacking Power
                 // Reserve 1 infantry or 1 armor for home garrison
@@ -210,11 +219,16 @@ export class StrategicAI {
                 // Odds Ratio
                 const oddsRatio = defPower === 0 ? 99 : (attPower / defPower);
 
-                // We only attack if odds ratio is favorable (> 1.25)
-                if (oddsRatio >= 1.25) {
+                // Thresholds based on difficulty
+                let minOddsThreshold = 1.25;
+                if (gameState.aiDifficulty === 'easy') minOddsThreshold = 1.70;
+                else if (gameState.aiDifficulty === 'hard') minOddsThreshold = 1.05;
+
+                if (oddsRatio >= minOddsThreshold) {
                     // Strategic bonus score for capitals or high industry
-                    let strategicWeight = to.industry * 2;
+                    let strategicWeight = (to.industry || 1) * 2;
                     if (to.capital) strategicWeight += 15;
+                    if (gameState.aiDifficulty === 'hard' && to.owner === gameState.playerFactionId) strategicWeight += 10;
 
                     const totalScore = oddsRatio * 5 + strategicWeight;
                     if (totalScore > highestScore) {
@@ -233,7 +247,6 @@ export class StrategicAI {
                 }
             }
         }
-
         return bestTarget;
     }
 }

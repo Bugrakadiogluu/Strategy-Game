@@ -49,6 +49,7 @@ class WW2GameApp {
         this._initDeveloperModalListeners();
         this._initZoomButtons();
         this._initBriefingModalListeners();
+        this._initExitGameListeners();
         this._updateFactionOptionsI18n();
 
         // Initial HUD render & viewport fit
@@ -360,6 +361,62 @@ class WW2GameApp {
             } else {
                 this.network.sendToHost(MSG_TYPES.CHAT_MESSAGE, { text: logEntry });
             }
+        };
+
+        // Dynamic Diplomacy Actions
+        this.hud.onProposeAlliance = (fromFId, toFId) => {
+            const res = this.gameState.proposeAlliance(fromFId, toFId);
+            if (res.success) {
+                this.sound.playDeploy();
+                this.hud.showToast(res.message, 'success');
+            } else {
+                this.sound.playClick();
+                this.hud.showToast(res.reason, 'warning');
+            }
+            this.hud.update(this.selectedOriginId, this.selectedTargetId);
+            this.syncNetworkState();
+        };
+
+        this.hud.onLeaveAlliance = (fId) => {
+            const res = this.gameState.leaveAlliance(fId);
+            if (res.success) {
+                this.sound.playClick();
+                this.hud.showToast(res.message, 'info');
+            }
+            this.hud.update(this.selectedOriginId, this.selectedTargetId);
+            this.syncNetworkState();
+        };
+
+        this.hud.onSignPact = (fromFId, toFId) => {
+            const f = this.gameState.factions[fromFId];
+            if (!f || f.industryPoints < 5) {
+                this.hud.showToast(i18n.t('toast_not_enough_ip'), 'warning');
+                return;
+            }
+            f.industryPoints -= 5;
+            const res = this.gameState.signNonAggressionPact(fromFId, toFId, 5);
+            if (res.success) {
+                this.sound.playDeploy();
+                this.hud.showToast(res.message, 'success');
+            } else {
+                this.sound.playClick();
+                this.hud.showToast(res.reason, 'warning');
+            }
+            this.hud.update(this.selectedOriginId, this.selectedTargetId);
+            this.syncNetworkState();
+        };
+
+        this.hud.onSendAid = (fromFId, toFId) => {
+            const res = this.gameState.sendDiplomaticAid(fromFId, toFId, 10);
+            if (res.success) {
+                this.sound.playDeploy();
+                this.hud.showToast(res.message, 'success');
+            } else {
+                this.sound.playClick();
+                this.hud.showToast(res.reason, 'warning');
+            }
+            this.hud.update(this.selectedOriginId, this.selectedTargetId);
+            this.syncNetworkState();
         };
     }
 
@@ -1270,6 +1327,32 @@ class WW2GameApp {
             });
         }
 
+        // AI Bot Difficulty Selection (Sync between Lobby and Waiting Room)
+        const bindDiffPills = (containerId) => {
+            const cont = document.getElementById(containerId);
+            if (!cont) return;
+            cont.querySelectorAll('.diff-pill').forEach(pill => {
+                pill.addEventListener('click', () => {
+                    this.sound.playClick();
+                    const diff = pill.getAttribute('data-difficulty');
+                    this.gameState.aiDifficulty = diff;
+                    cont.querySelectorAll('.diff-pill').forEach(p => {
+                        p.classList.toggle('active', p.getAttribute('data-difficulty') === diff);
+                    });
+                    const descElem = document.getElementById('lobby-difficulty-desc');
+                    if (descElem) {
+                        descElem.textContent = i18n.t(`diff_${diff}_desc`);
+                    }
+                    const otherId = containerId === 'lobby-difficulty-pills' ? 'waiting-room-difficulty-pills' : 'lobby-difficulty-pills';
+                    document.querySelectorAll(`#${otherId} .diff-pill`).forEach(p => {
+                        p.classList.toggle('active', p.getAttribute('data-difficulty') === diff);
+                    });
+                });
+            });
+        };
+        bindDiffPills('lobby-difficulty-pills');
+        bindDiffPills('waiting-room-difficulty-pills');
+
         // Prefill room code from URL parameters (?room=W2XXXX or ?join=W2XXXX)
         const urlParams = new URLSearchParams(window.location.search);
         const prefillRoom = urlParams.get('room') || urlParams.get('join');
@@ -1392,6 +1475,91 @@ class WW2GameApp {
                 this.renderer.setPlayerFaction(this.userFactionId);
             });
         }
+
+        // Back button to choose another country
+        const btnBack = document.getElementById('btn-briefing-back');
+        if (btnBack) {
+            btnBack.addEventListener('click', () => {
+                this.sound.playClick();
+                if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                }
+                const modal = document.getElementById('modal-briefing');
+                if (modal) modal.classList.remove('visible');
+                const lobbyModal = document.getElementById('modal-lobby');
+                if (lobbyModal) lobbyModal.classList.add('visible');
+                this.isGameStarted = false;
+            });
+        }
+    }
+
+    /* ======================================================================
+       EXIT GAME AND LOBBY RESET
+       ====================================================================== */
+    _initExitGameListeners() {
+        const btnExit = document.getElementById('btn-exit-game');
+        const modalExit = document.getElementById('modal-exit-confirm');
+        const btnCancel = document.getElementById('btn-exit-cancel');
+        const btnConfirm = document.getElementById('btn-exit-confirm');
+
+        if (btnExit) {
+            btnExit.addEventListener('click', () => {
+                this.sound.playClick();
+                if (modalExit) modalExit.classList.add('visible');
+            });
+        }
+
+        if (btnCancel) {
+            btnCancel.addEventListener('click', () => {
+                this.sound.playClick();
+                if (modalExit) modalExit.classList.remove('visible');
+            });
+        }
+
+        if (btnConfirm) {
+            btnConfirm.addEventListener('click', () => {
+                this.sound.playDeploy();
+                if (modalExit) modalExit.classList.remove('visible');
+                this._exitToLobby();
+            });
+        }
+    }
+
+    _exitToLobby() {
+        if (this.network) {
+            try { this.network.leave(); } catch (e) {}
+        }
+
+        if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+        }
+
+        // Close active modals
+        document.getElementById('modal-briefing')?.classList.remove('visible');
+        document.getElementById('modal-combat-report')?.classList.remove('visible');
+        document.getElementById('modal-game-over')?.classList.remove('visible');
+        document.getElementById('modal-waiting-room')?.classList.remove('visible');
+        document.getElementById('modal-hotjoin-select')?.classList.remove('visible');
+
+        // Re-initialize GameState
+        this.gameState = new GameState();
+        this.renderer.gameState = this.gameState;
+        this.hud.gameState = this.gameState;
+        this.selectedOriginId = null;
+        this.selectedTargetId = null;
+        this.isGameStarted = false;
+        this.isAiRunning = false;
+
+        this.renderer.clearSelection();
+        this.renderer.resetOverview();
+        this.hud.update(null, null);
+
+        const roomEl = document.getElementById('hud-room-code');
+        if (roomEl) roomEl.textContent = 'LOCAL';
+
+        const lobbyModal = document.getElementById('modal-lobby');
+        if (lobbyModal) lobbyModal.classList.add('visible');
+        this.hud.showToast('Sefer sonlandırıldı. Komuta merkezine dönüldü.', 'info');
     }
 
     _showStrategicBriefing() {

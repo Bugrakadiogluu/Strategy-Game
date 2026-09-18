@@ -77,9 +77,9 @@ export function computeRingCentroid(ring) {
     const n = ring.length;
     if (n < 3) return { area: 0, cx: ring[0]?.[0] || 0, cy: ring[0]?.[1] || 0 };
 
-    for (let i = 0; i < n - 1; i++) {
+    for (let i = 0; i < n; i++) {
         const p1 = ring[i];
-        const p2 = ring[i + 1];
+        const p2 = ring[(i + 1) % n];
         const cross = (p1[0] * p2[1]) - (p2[0] * p1[1]);
         a += cross;
         cx += (p1[0] + p2[0]) * cross;
@@ -179,4 +179,167 @@ export function parseGeoGeometry(geometry, projection) {
         centroid,
         bounds: { minX, maxX, minY, maxY }
     };
+}
+
+/**
+ * Clips a 2D closed polygon ring against a half-plane defined by:
+ * (P - M) · N >= 0
+ * using the Sutherland-Hodgman polygon clipping algorithm.
+ *
+ * @param {Array<[number, number]>} ring - Polygon ring [[x,y], [x,y], ...]
+ * @param {[number, number]} M - Midpoint / line point
+ * @param {[number, number]} N - Normal vector pointing into the interior
+ * @returns {Array<[number, number]>} Clipped polygon ring
+ */
+export function clipRingWithHalfPlane(ring, M, N) {
+    if (!ring || ring.length < 3) return [];
+
+    const isInside = (p) => (p[0] - M[0]) * N[0] + (p[1] - M[1]) * N[1] >= -0.001;
+
+    const intersection = (p1, p2) => {
+        const d1 = (p1[0] - M[0]) * N[0] + (p1[1] - M[1]) * N[1];
+        const d2 = (p2[0] - M[0]) * N[0] + (p2[1] - M[1]) * N[1];
+        const diff = d1 - d2;
+        if (Math.abs(diff) < 1e-9) return [p1[0], p1[1]];
+        const t = d1 / diff;
+        return [
+            Math.round((p1[0] + t * (p2[0] - p1[0])) * 10) / 10,
+            Math.round((p1[1] + t * (p2[1] - p1[1])) * 10) / 10
+        ];
+    };
+
+    const output = [];
+    const len = ring.length;
+    for (let i = 0; i < len; i++) {
+        const curr = ring[i];
+        const prev = ring[(i + len - 1) % len];
+        const currIn = isInside(curr);
+        const prevIn = isInside(prev);
+
+        if (currIn) {
+            if (!prevIn) {
+                output.push(intersection(prev, curr));
+            }
+            output.push(curr);
+        } else if (prevIn) {
+            output.push(intersection(prev, curr));
+        }
+    }
+    return output;
+}
+
+/**
+ * Subdivides a country's projected multi-polygons into discrete, seamless provinces
+ * based on geographic seed points using iterative half-plane Voronoi clipping.
+ * Guarantees that the outer boundary matches the GeoJSON country borders 100%.
+ *
+ * @param {Array} projectedPolygons - Country's projected rings
+ * @param {Array<Object>} seeds - Array of { id, lon, lat, pos }
+ * @param {MercatorProjection} projection
+ * @returns {Object} Dictionary of province geometry results keyed by seed ID
+ */
+export function subdivideGeometryWithSeeds(projectedPolygons, seeds, projection) {
+    const projectedSeeds = seeds.map(s => {
+        let pt = s.pos || s.seed;
+        if (s.lon !== undefined && s.lat !== undefined) {
+            pt = projection.project(s.lon, s.lat);
+        }
+        return {
+            ...s,
+            pt
+        };
+    });
+
+    const results = {};
+
+    for (let i = 0; i < projectedSeeds.length; i++) {
+        const seedI = projectedSeeds[i];
+        const subPolys = [];
+        let totalArea = 0;
+        let bestRingArea = 0;
+        let subCentroid = [seedI.pt[0], seedI.pt[1]];
+        let minX = Infinity, maxX = -Infinity;
+        let minY = Infinity, maxY = -Infinity;
+        let svgPath = '';
+
+        for (const poly of projectedPolygons) {
+            const clippedPoly = [];
+            for (let rIdx = 0; rIdx < poly.length; rIdx++) {
+                let currentRing = poly[rIdx];
+
+                for (let j = 0; j < projectedSeeds.length; j++) {
+                    if (i === j) continue;
+                    const seedJ = projectedSeeds[j];
+                    const M = [
+                        (seedI.pt[0] + seedJ.pt[0]) / 2,
+                        (seedI.pt[1] + seedJ.pt[1]) / 2
+                    ];
+                    const N = [
+                        seedI.pt[0] - seedJ.pt[0],
+                        seedI.pt[1] - seedJ.pt[1]
+                    ];
+                    currentRing = clipRingWithHalfPlane(currentRing, M, N);
+                    if (currentRing.length < 3) break;
+                }
+
+                if (currentRing.length >= 3) {
+                    const { area, cx, cy } = computeRingCentroid(currentRing);
+                    if (area > 30) {
+                        clippedPoly.push(currentRing);
+                        totalArea += area;
+
+                        let ringSvg = '';
+                        for (let k = 0; k < currentRing.length; k++) {
+                            const [px, py] = currentRing[k];
+                            if (k === 0) ringSvg += `M ${px},${py} `;
+                            else ringSvg += `L ${px},${py} `;
+
+                            if (px < minX) minX = px;
+                            if (px > maxX) maxX = px;
+                            if (py < minY) minY = py;
+                            if (py > maxY) maxY = py;
+                        }
+                        ringSvg += 'Z ';
+                        svgPath += ringSvg;
+
+                        if (rIdx === 0 && area > bestRingArea) {
+                            bestRingArea = area;
+                            subCentroid = [Math.round(cx), Math.round(cy)];
+                        }
+                    }
+                }
+            }
+            if (clippedPoly.length > 0) {
+                subPolys.push(clippedPoly);
+            }
+        }
+
+        let path2d = null;
+        try {
+            if (typeof Path2D !== 'undefined' && svgPath) {
+                path2d = new Path2D(svgPath);
+            }
+        } catch (e) {
+            /* ignore */
+        }
+
+        if (minX === Infinity) {
+            minX = seedI.pt[0] - 20;
+            maxX = seedI.pt[0] + 20;
+            minY = seedI.pt[1] - 20;
+            maxY = seedI.pt[1] + 20;
+        }
+
+        results[seedI.id] = {
+            id: seedI.id,
+            centroid: subCentroid,
+            bounds: { minX, maxX, minY, maxY },
+            path2d,
+            svgPath,
+            projectedPolygons: subPolys,
+            polygon: subPolys[0]?.[0] || []
+        };
+    }
+
+    return results;
 }

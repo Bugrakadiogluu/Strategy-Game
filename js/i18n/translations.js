@@ -332,6 +332,41 @@ export const TRANSLATIONS = {
             urban: "Şehir & Tahkimat"
         },
 
+        // Bot Difficulty
+        label_bot_difficulty: "YAPAY ZEKA (BOT) ZORLUK DERECESİ:",
+        diff_easy: "KOLAY",
+        diff_normal: "ORTA",
+        diff_hard: "ZOR",
+        diff_easy_desc: "Düşman birimleri daha zayıf zar atar (-25% hasar), taarruzda daha temkinlidir.",
+        diff_normal_desc: "Tarihsel standart muharebe zarları ve dengeli bot taktikleri.",
+        diff_hard_desc: "Düşman birimleri +25% daha ölümcül zarlar atar, agresif taarruz yapar.",
+
+        // Exit Game
+        btn_exit_game: "Oyundan Çık",
+        btn_exit_game_title: "Oyundan Çık ve Ana Menüye Dön",
+        btn_exit_confirm_title: "HAREKATTAN ÇIK / LOBİYE DÖN",
+        btn_exit_confirm_desc: "Mevcut seferden çıkıp ana lobiye dönmek istediğinize emin misiniz? Kaydedilmemiş veriler ve harekat durumu kaybolacaktır.",
+        btn_exit_confirm_yes: "Evet, Çık",
+        btn_exit_confirm_cancel: "Oyunda Kal",
+
+        // Briefing Modal
+        btn_briefing_back: "Geri (Farklı Ülke Seç)",
+
+        // Diplomacy & Alliances
+        tab_diplomacy_title: "DİPLOMASİ VE İTTİFAK MERKEZİ",
+        hint_diplomacy_desc: "Devletlerle olan ilişki düzeyinize göre ittifak teklif edin, saldırmazlık paktı yapın veya sanayi yardımı yollayarak ilişkileri geliştirin.",
+        dip_status_independent: "Bağımsız (Tek Tabanca)",
+        dip_status_allied: "İttifak Üyesi",
+        dip_status_pact: "Saldırmazlık Paktı ({turns} Tur)",
+        dip_relation: "İlişki",
+        dip_acceptance_chance: "Kabul Şansı",
+        btn_propose_alliance: "İttifak Teklif Et",
+        btn_leave_alliance: "İttifaktan Ayrıl",
+        btn_sign_pact: "Pakt İmzala (5 IP)",
+        btn_send_aid: "Yardım Gönder (10 IP)",
+        toast_capital_debuff_warning: "DİKKAT! Başkentimiz işgal altında! Birliklerimiz 2x hasar alıyor!",
+        toast_capital_relocated: "HÜKÜMET TAHLİYESİ: Başkent işgalde kaldığı için yeni başkent {region} ilan edildi!",
+
         // Seas & Oceans
         seas: {
             atlantic_ocean: "KUZEY ATLANTİK OKYANUSU",
@@ -341,6 +376,110 @@ export const TRANSLATIONS = {
             east_med: "ORTA VE DOĞU AKDENİZ",
             black_sea: "KARADENİZ",
             caspian_sea: "HAZAR DENİZİ"
+        },
+
+        // Regions & Provinces (Subdivided Authentic Territories)
+        regions: {
+            // Turkey (10 Provinces)
+            tr_istanbul: "İstanbul & Boğazlar",
+            tr_ankara: "Ankara (Başkent)",
+            tr_izmir: "İzmir & Ege",
+            tr_bursa: "Bursa & Marmara",
+            tr_antalya: "Antalya & Akdeniz",
+            tr_adana: "Adana & Çukurova",
+            tr_samsun: "Samsun & Orta Karadeniz",
+            tr_trabzon: "Trabzon & Doğu Karadeniz",
+            tr_erzurum: "Erzurum & Doğu Anadolu",
+            tr_diyarbakir: "Diyarbakır & Güneydoğu",
+
+            // Germany (16 Territories)
+            de_berlin: "Berlin (Başkent)",
+            de_ruhr: "Ruhr Sanayi Havzası",
+            de_bavaria: "Bavyera & Münih",
+            de_saxony: "Saksonya & Dresden",
+            de_prussia: "Doğu Prusya & Königsberg",
+            de_hamburg: "Hamburg & Elbe",
+            de_rhineland: "Rheinland & Köln",
+            de_silesia: "Silezya Ağır Sanayi",
+            de_hanover: "Hannover",
+            de_stuttgart: "Stuttgart & Baden",
+            de_frankfurt: "Frankfurt",
+            de_nuremberg: "Nürnberg",
+            at_vienna: "Viyana (Avusturya)",
+            at_tirol: "Tirol Alpleri",
+            cz_bohemia: "Bohemya & Prag",
+            cz_moravia: "Moravya",
+
+            // USSR (14 Territories)
+            ru_moscow: "Moskova (Kremlin)",
+            ru_leningrad: "Leningrad & Baltık",
+            ru_stalingrad: "Stalingrad & Volga",
+            ru_kursk: "Kursk Yaylası",
+            ru_rostov: "Rostov & Don",
+            ru_kiev: "Kiev & Dinyeper",
+            ru_minsk: "Minsk & Belarus",
+            ru_arkhangelsk: "Arhangelsk Limanı",
+            ru_perm: "Perm & Urallar",
+            ru_kazan: "Kazan & Tataristan",
+            ru_samara: "Kuybışev (Samara)",
+            ru_saratov: "Saratov",
+            ru_voronezh: "Voronej",
+            ru_crimea: "Kırım & Sivastopol",
+
+            // United Kingdom (11 Territories)
+            gb_london: "Londra (Başkent)",
+            gb_manchester: "Manchester & Midlands",
+            gb_scotland: "İskoçya & Scapa Flow",
+            gb_wales: "Galler & Bristol",
+            gb_newcastle: "Newcastle",
+            gb_plymouth: "Plymouth & Kanal",
+            gb_belfast: "Kuzey İrlanda",
+            gb_yorkshire: "Yorkshire",
+            is_iceland: "İzlanda (Atlantik Üssü)",
+            mt_malta: "Malta Adası",
+            cy_cyprus: "Kıbrıs",
+
+            // France (10 Territories)
+            fr_paris: "Paris (Başkent)",
+            fr_normandy: "Normandiya Kıyıları",
+            fr_bordeaux: "Akitanya & Bordeaux",
+            fr_lyon: "Lyon & Rhône",
+            fr_marseille: "Marsilya & Akdeniz",
+            fr_brest: "Bretanya & Brest",
+            fr_alsace: "Alsace & Strasbourg",
+            fr_lille: "Flandre & Lille",
+            fr_toulouse: "Toulouse",
+            be_brussels: "Brüksel & Belçika",
+
+            // Italy (9 Territories)
+            it_rome: "Roma (Başkent)",
+            it_milan: "Milano & Lombardiya",
+            it_turin: "Torino & Piyemonte",
+            it_venice: "Venedik & Veneto",
+            it_naples: "Napoli & Campania",
+            it_sicily: "Sicilya Adası",
+            it_sardinia: "Sardinya",
+            it_calabria: "Calabria",
+            al_tirana: "Arnavutluk",
+
+            // Spain (8 Territories)
+            es_madrid: "Madrid (Başkent)",
+            es_barcelona: "Barselona & Katalonya",
+            es_sevilla: "Sevilla & Endülüs",
+            es_valencia: "Valensiya Levant",
+            es_bilbao: "Bask Ülkesi & Bilbao",
+            es_galicia: "Galiçya & Coruña",
+            es_zaragoza: "Aragon & Zaragoza",
+            pt_lisbon: "Lizbon (Portekiz)",
+
+            // Capital Aliases
+            berlin: "Berlin",
+            london: "Londra",
+            moscow: "Moskova",
+            rome: "Roma",
+            paris: "Paris",
+            madrid: "Madrid",
+            ankara: "Ankara"
         }
     },
 
@@ -672,6 +811,41 @@ export const TRANSLATIONS = {
             urban: "Urban & Fortifications"
         },
 
+        // Bot Difficulty
+        label_bot_difficulty: "AI BOT DIFFICULTY:",
+        diff_easy: "EASY",
+        diff_normal: "NORMAL",
+        diff_hard: "HARD",
+        diff_easy_desc: "Enemy units suffer -25% combat roll penalty, more cautious in assault.",
+        diff_normal_desc: "Standard historical combat dice and balanced AI tactics.",
+        diff_hard_desc: "Enemy units gain +25% combat lethality, highly aggressive assaults.",
+
+        // Exit Game
+        btn_exit_game: "Exit Game",
+        btn_exit_game_title: "Exit Game & Return to Lobby",
+        btn_exit_confirm_title: "ABANDON CAMPAIGN / RETURN TO LOBBY",
+        btn_exit_confirm_desc: "Are you sure you want to abandon the current campaign and return to lobby? Unsaved operational progress will be lost.",
+        btn_exit_confirm_yes: "Yes, Exit",
+        btn_exit_confirm_cancel: "Stay in Game",
+
+        // Briefing Modal
+        btn_briefing_back: "Back (Choose Another Country)",
+
+        // Diplomacy & Alliances
+        tab_diplomacy_title: "DIPLOMACY & ALLIANCE HEADQUARTERS",
+        hint_diplomacy_desc: "Manage diplomatic relations, propose military alliances, sign non-aggression pacts, or send industrial aid to win over foreign powers.",
+        dip_status_independent: "Independent (Non-Aligned)",
+        dip_status_allied: "Allied Member",
+        dip_status_pact: "Non-Aggression ({turns} Turns)",
+        dip_relation: "Relations",
+        dip_acceptance_chance: "Acceptance",
+        btn_propose_alliance: "Propose Alliance",
+        btn_leave_alliance: "Leave Alliance",
+        btn_sign_pact: "Sign Pact (5 IP)",
+        btn_send_aid: "Send Aid (10 IP)",
+        toast_capital_debuff_warning: "WARNING! Capital occupied! Our defending units suffer 2x damage!",
+        toast_capital_relocated: "GOVERNMENT EVACUATION: Prolonged occupation forced relocation of our capital to {region}!",
+
         // Seas & Oceans
         seas: {
             atlantic_ocean: "NORTH ATLANTIC OCEAN",
@@ -681,6 +855,102 @@ export const TRANSLATIONS = {
             east_med: "CENTRAL & EASTERN MEDITERRANEAN",
             black_sea: "BLACK SEA",
             caspian_sea: "CASPIAN SEA"
+        },
+
+        // Regions & Provinces
+        regions: {
+            tr_istanbul: "Istanbul & Straits",
+            tr_ankara: "Ankara (Capital)",
+            tr_izmir: "Izmir & Aegean",
+            tr_bursa: "Bursa & Marmara",
+            tr_antalya: "Antalya & Mediterranean",
+            tr_adana: "Adana & Cilicia",
+            tr_samsun: "Samsun & Black Sea Coast",
+            tr_trabzon: "Trabzon & Pontus",
+            tr_erzurum: "Erzurum & East Anatolia",
+            tr_diyarbakir: "Diyarbakir & Southeast",
+
+            de_berlin: "Berlin (Capital)",
+            de_ruhr: "Ruhr Industrial Basin",
+            de_bavaria: "Bavaria & Munich",
+            de_saxony: "Saxony & Dresden",
+            de_prussia: "East Prussia & Königsberg",
+            de_hamburg: "Hamburg & Elbe",
+            de_rhineland: "Rhineland & Cologne",
+            de_silesia: "Silesian Heavy Industry",
+            de_hanover: "Hanover",
+            de_stuttgart: "Stuttgart & Baden",
+            de_frankfurt: "Frankfurt",
+            de_nuremberg: "Nuremberg",
+            at_vienna: "Vienna (Austria)",
+            at_tirol: "Tyrolean Alps",
+            cz_bohemia: "Bohemia & Prague",
+            cz_moravia: "Moravia",
+
+            ru_moscow: "Moscow (Kremlin)",
+            ru_leningrad: "Leningrad & Baltic",
+            ru_stalingrad: "Stalingrad & Volga",
+            ru_kursk: "Kursk Salient",
+            ru_rostov: "Rostov & Don",
+            ru_kiev: "Kiev & Dnieper",
+            ru_minsk: "Minsk & Belarus",
+            ru_arkhangelsk: "Arkhangelsk Port",
+            ru_perm: "Perm & Urals",
+            ru_kazan: "Kazan & Tatarstan",
+            ru_samara: "Kuybyshev (Samara)",
+            ru_saratov: "Saratov",
+            ru_voronezh: "Voronezh",
+            ru_crimea: "Crimea & Sevastopol",
+
+            gb_london: "London (Capital)",
+            gb_manchester: "Manchester & Midlands",
+            gb_scotland: "Scotland & Scapa Flow",
+            gb_wales: "Wales & Bristol",
+            gb_newcastle: "Newcastle",
+            gb_plymouth: "Plymouth & Channel",
+            gb_belfast: "Northern Ireland",
+            gb_yorkshire: "Yorkshire",
+            is_iceland: "Iceland (Atlantic Base)",
+            mt_malta: "Malta Island",
+            cy_cyprus: "Cyprus",
+
+            fr_paris: "Paris (Capital)",
+            fr_normandy: "Normandy Coast",
+            fr_bordeaux: "Aquitaine & Bordeaux",
+            fr_lyon: "Lyon & Rhône",
+            fr_marseille: "Marseille & Med",
+            fr_brest: "Brittany & Brest",
+            fr_alsace: "Alsace & Strasbourg",
+            fr_lille: "Flanders & Lille",
+            fr_toulouse: "Toulouse",
+            be_brussels: "Brussels & Belgium",
+
+            it_rome: "Rome (Capital)",
+            it_milan: "Milan & Lombardy",
+            it_turin: "Turin & Piedmont",
+            it_venice: "Venice & Veneto",
+            it_naples: "Naples & Campania",
+            it_sicily: "Sicily Island",
+            it_sardinia: "Sardinia",
+            it_calabria: "Calabria",
+            al_tirana: "Albania",
+
+            es_madrid: "Madrid (Capital)",
+            es_barcelona: "Barcelona & Catalonia",
+            es_sevilla: "Seville & Andalusia",
+            es_valencia: "Valencia Levant",
+            es_bilbao: "Basque Country & Bilbao",
+            es_galicia: "Galicia & Corunna",
+            es_zaragoza: "Aragon & Zaragoza",
+            pt_lisbon: "Lisbon (Portugal)",
+
+            berlin: "Berlin",
+            london: "London",
+            moscow: "Moscow",
+            rome: "Rome",
+            paris: "Paris",
+            madrid: "Madrid",
+            ankara: "Ankara"
         }
     },
 
@@ -1012,6 +1282,41 @@ export const TRANSLATIONS = {
             urban: "都市・要塞拠点"
         },
 
+        // Bot Difficulty
+        label_bot_difficulty: "AIボット難易度:",
+        diff_easy: "イージー",
+        diff_normal: "ノーマル",
+        diff_hard: "ハード",
+        diff_easy_desc: "敵ユニットの攻撃効果が25%低下、より慎重に攻撃します。",
+        diff_normal_desc: "標準的な歴史的戦闘ダイスと均衡のとれたAI戦術。",
+        diff_hard_desc: "敵ユニットの戦闘力が25%向上、非常に攻撃的な作戦を展開します。",
+
+        // Exit Game
+        btn_exit_game: "ゲーム終了",
+        btn_exit_game_title: "ゲームを終了してロビーに戻る",
+        btn_exit_confirm_title: "作戦放棄 / ロビーへ戻る",
+        btn_exit_confirm_desc: "現在の作戦を放棄してロビーに戻りますか？未保存の進行状況は失われます。",
+        btn_exit_confirm_yes: "はい、終了",
+        btn_exit_confirm_cancel: "作戦続行",
+
+        // Briefing Modal
+        btn_briefing_back: "戻る (別の国を選択)",
+
+        // Diplomacy & Alliances
+        tab_diplomacy_title: "外交・同盟本部",
+        hint_diplomacy_desc: "友好度に応じて同盟締結を提案、不可侵条約を締結、または工業支援物資を送って関係を改善します。",
+        dip_status_independent: "独立 (中立・単独)",
+        dip_status_allied: "同盟国",
+        dip_status_pact: "不可侵条約 ({turns} ターン)",
+        dip_relation: "友好度",
+        dip_acceptance_chance: "受諾確率",
+        btn_propose_alliance: "同盟を提案",
+        btn_leave_alliance: "同盟を離脱",
+        btn_sign_pact: "条約締結 (5 IP)",
+        btn_send_aid: "外交援助 (10 IP)",
+        toast_capital_debuff_warning: "警告！首都が占領下です！防衛部隊の被ダメージが2倍になります！",
+        toast_capital_relocated: "政府退避：長期占領のため、首都を{region}に移転しました！",
+
         // Seas & Oceans
         seas: {
             atlantic_ocean: "北大西洋",
@@ -1021,6 +1326,102 @@ export const TRANSLATIONS = {
             east_med: "中・東部地中海",
             black_sea: "黒海",
             caspian_sea: "カスピ海"
+        },
+
+        // Regions & Provinces
+        regions: {
+            tr_istanbul: "イスタンブール＆海峡",
+            tr_ankara: "アンカラ (首都)",
+            tr_izmir: "イズミル＆エーゲ海",
+            tr_bursa: "ブルサ＆マルマラ",
+            tr_antalya: "アンタルヤ＆地中海",
+            tr_adana: "アダナ＆キリキア",
+            tr_samsun: "サムスン＆黒海沿岸",
+            tr_trabzon: "トラブゾン＆東黒海",
+            tr_erzurum: "エルズルム＆東アナトリア",
+            tr_diyarbakir: "ディヤルバクル＆南東部",
+
+            de_berlin: "ベルリン (首都)",
+            de_ruhr: "ルール工業地帯",
+            de_bavaria: "バイエルン＆ミュンヘン",
+            de_saxony: "ザクセン＆ドレスデン",
+            de_prussia: "東プロイセン＆ケーニヒスベルク",
+            de_hamburg: "ハンブルク＆エルベ",
+            de_rhineland: "ラインラント＆ケルン",
+            de_silesia: "シレジア重工業地帯",
+            de_hanover: "ハノーファー",
+            de_stuttgart: "シュトゥットガルト",
+            de_frankfurt: "フランクフルト",
+            de_nuremberg: "ニュルンベルク",
+            at_vienna: "ウィーン (オーストリア)",
+            at_tirol: "チロル・アルプス",
+            cz_bohemia: "ボヘミア＆プラハ",
+            cz_moravia: "モラヴィア",
+
+            ru_moscow: "モスクワ (クレムリン)",
+            ru_leningrad: "レニングラード＆バルト",
+            ru_stalingrad: "スターリングラード＆ヴォルガ",
+            ru_kursk: "クルスク突出部",
+            ru_rostov: "ロストフ＆ドン",
+            ru_kiev: "キエフ＆ドニエプル",
+            ru_minsk: "ミンスク＆ベラルーシ",
+            ru_arkhangelsk: "アルハンゲリスク港",
+            ru_perm: "ペルミ＆ウラル",
+            ru_kazan: "カザン＆タタールスタン",
+            ru_samara: "クイビシェフ (サマーラ)",
+            ru_saratov: "サラトフ",
+            ru_voronezh: "ヴォロネジ",
+            ru_crimea: "クリミア＆セヴァストポリ",
+
+            gb_london: "ロンドン (首都)",
+            gb_manchester: "マンチェスター＆ミッドランズ",
+            gb_scotland: "スコットランド＆スカパ・フロー",
+            gb_wales: "ウェールズ＆ブリストル",
+            gb_newcastle: "ニューカッスル",
+            gb_plymouth: "プリマス＆海峡",
+            gb_belfast: "北アイルランド",
+            gb_yorkshire: "ヨークシャー",
+            is_iceland: "アイスランド",
+            mt_malta: "マルタ島",
+            cy_cyprus: "キプロス",
+
+            fr_paris: "パリ (首都)",
+            fr_normandy: "ノルマンディー沿岸",
+            fr_bordeaux: "アキテーヌ＆ボルドー",
+            fr_lyon: "リヨン＆ローヌ",
+            fr_marseille: "マルセイユ＆地中海",
+            fr_brest: "ブルターニュ＆ブレスト",
+            fr_alsace: "アルザス＆ストラスブール",
+            fr_lille: "フランドル＆リール",
+            fr_toulouse: "トゥールーズ",
+            be_brussels: "ブリュッセル＆ベルギー",
+
+            it_rome: "ローマ (首都)",
+            it_milan: "ミラノ＆ロンバルディア",
+            it_turin: "トリノ＆ピエモンテ",
+            it_venice: "ヴェネツィア＆ヴェネト",
+            it_naples: "ナポリ＆カンパニア",
+            it_sicily: "シチリア島",
+            it_sardinia: "サルデーニャ島",
+            it_calabria: "カラブリア",
+            al_tirana: "アルバニア",
+
+            es_madrid: "マドリード (首都)",
+            es_barcelona: "バルセロナ＆カタルーニャ",
+            es_sevilla: "セビリア＆アンダルシア",
+            es_valencia: "バレンシア",
+            es_bilbao: "バスク地方＆ビルバオ",
+            es_galicia: "ガリシア＆コルーニャ",
+            es_zaragoza: "アラゴン＆サラゴサ",
+            pt_lisbon: "リスボン (ポルトガル)",
+
+            berlin: "ベルリン",
+            london: "ロンドン",
+            moscow: "モスクワ",
+            rome: "ローマ",
+            paris: "パリ",
+            madrid: "マドリード",
+            ankara: "アンカラ"
         }
     }
 };

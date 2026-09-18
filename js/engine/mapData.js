@@ -5,7 +5,7 @@
  */
 
 import { EUROPE_GEOJSON } from '../data/europeGeoJson.js';
-import { MercatorProjection, parseGeoGeometry } from './geoProjection.js';
+import { MercatorProjection, parseGeoGeometry, subdivideGeometryWithSeeds } from './geoProjection.js';
 
 export const MAP_DIMENSIONS = {
     width: 2400,
@@ -632,6 +632,107 @@ export const COUNTRY_METADATA = {
  * Computes projected Path2D paths, visual centroids, and links gameplay metadata.
  * 
  * @param {Object} geoJsonData - GeoJSON FeatureCollection
+/**
+ * Historical WW2 Province Definitions for Major Powers
+ * Seeds partition each country's GeoJSON geometry into seamless provinces
+ * while strictly preserving the authentic outer country border.
+ */
+export const PROVINCE_DEFINITIONS = {
+    TR: [
+        { id: 'tr_istanbul', name: 'İstanbul & Marmara', owner: 'turkey', capital: false, industry: 3, terrain: 'city', lon: 28.97, lat: 41.01, initialUnits: { infantry: 4, armor: 1, air: 1 }, neighbors: ['tr_bursa', 'tr_ankara', 'bg', 'gr'], aliases: ['istanbul'] },
+        { id: 'tr_bursa', name: 'Bursa & Güney Marmara', owner: 'turkey', capital: false, industry: 2, terrain: 'plains', lon: 29.06, lat: 40.18, initialUnits: { infantry: 2, armor: 0, air: 0 }, neighbors: ['tr_istanbul', 'tr_izmir', 'tr_ankara', 'tr_antalya'], aliases: ['bursa'] },
+        { id: 'tr_izmir', name: 'İzmir & Ege', owner: 'turkey', capital: false, industry: 3, terrain: 'coastal', lon: 27.14, lat: 38.42, initialUnits: { infantry: 3, armor: 1, air: 1 }, neighbors: ['tr_bursa', 'tr_antalya', 'gr'], aliases: ['izmir'] },
+        { id: 'tr_ankara', name: 'Ankara & İç Anadolu', owner: 'turkey', capital: true, capitalCity: 'Ankara', industry: 5, terrain: 'city', lon: 32.85, lat: 39.93, initialUnits: { infantry: 5, armor: 2, air: 1 }, neighbors: ['tr_istanbul', 'tr_bursa', 'tr_samsun', 'tr_adana', 'tr_antalya'], aliases: ['tr', 'turkey', 'ankara'] },
+        { id: 'tr_antalya', name: 'Antalya & Akdeniz', owner: 'turkey', capital: false, industry: 1, terrain: 'coastal', lon: 30.71, lat: 36.89, initialUnits: { infantry: 2, armor: 0, air: 0 }, neighbors: ['tr_izmir', 'tr_bursa', 'tr_ankara', 'tr_adana', 'cy'], aliases: ['antalya'] },
+        { id: 'tr_adana', name: 'Adana & Çukurova', owner: 'turkey', capital: false, industry: 2, terrain: 'plains', lon: 35.32, lat: 37.00, initialUnits: { infantry: 3, armor: 1, air: 0 }, neighbors: ['tr_antalya', 'tr_ankara', 'tr_samsun', 'tr_diyarbakir', 'cy'], aliases: ['adana'] },
+        { id: 'tr_samsun', name: 'Samsun & Orta Karadeniz', owner: 'turkey', capital: false, industry: 2, terrain: 'coastal', lon: 36.33, lat: 41.29, initialUnits: { infantry: 2, armor: 0, air: 0 }, neighbors: ['tr_ankara', 'tr_adana', 'tr_trabzon', 'tr_erzurum'], aliases: ['samsun'] },
+        { id: 'tr_trabzon', name: 'Trabzon & Doğu Karadeniz', owner: 'turkey', capital: false, industry: 2, terrain: 'mountains', lon: 39.72, lat: 41.00, initialUnits: { infantry: 2, armor: 0, air: 0 }, neighbors: ['tr_samsun', 'tr_erzurum', 'ge'], aliases: ['trabzon'] },
+        { id: 'tr_erzurum', name: 'Erzurum & Doğu Anadolu', owner: 'turkey', capital: false, industry: 1, terrain: 'mountains', lon: 41.27, lat: 39.90, initialUnits: { infantry: 3, armor: 1, air: 0 }, neighbors: ['tr_trabzon', 'tr_samsun', 'tr_adana', 'tr_diyarbakir', 'ge', 'am', 'az'], aliases: ['erzurum'] },
+        { id: 'tr_diyarbakir', name: 'Diyarbakır & Güneydoğu', owner: 'turkey', capital: false, industry: 1, terrain: 'plains', lon: 40.23, lat: 37.91, initialUnits: { infantry: 2, armor: 0, air: 0 }, neighbors: ['tr_adana', 'tr_erzurum', 'am'], aliases: ['diyarbakir'] }
+    ],
+    DE: [
+        { id: 'de_berlin', name: 'Berlin & Brandenburg', owner: 'germany', capital: true, capitalCity: 'Berlin', industry: 6, terrain: 'city', lon: 13.40, lat: 52.52, initialUnits: { infantry: 8, armor: 4, air: 3 }, neighbors: ['de_magdeburg', 'de_saxony', 'de_hanover', 'de_silesia'], aliases: ['de', 'germany', 'berlin'] },
+        { id: 'de_ruhr', name: 'Ruhr & Rhineland', owner: 'germany', capital: false, industry: 5, terrain: 'city', lon: 6.95, lat: 51.35, initialUnits: { infantry: 5, armor: 3, air: 1 }, neighbors: ['de_frankfurt', 'de_hanover', 'nl', 'be', 'fr_alsace'], aliases: ['ruhr', 'koln'] },
+        { id: 'de_bavaria', name: 'Münih & Bavyera', owner: 'germany', capital: false, industry: 4, terrain: 'mountains', lon: 11.58, lat: 48.14, initialUnits: { infantry: 4, armor: 2, air: 1 }, neighbors: ['de_nuremberg', 'de_stuttgart', 'at_vienna', 'at_tyrol', 'ch'], aliases: ['bavaria', 'munich'] },
+        { id: 'de_hamburg', name: 'Hamburg & Schleswig', owner: 'germany', capital: false, industry: 3, terrain: 'coastal', lon: 9.99, lat: 53.55, initialUnits: { infantry: 3, armor: 1, air: 1 }, neighbors: ['de_hanover', 'dk'], aliases: ['hamburg'] },
+        { id: 'de_frankfurt', name: 'Frankfurt & Hessen', owner: 'germany', capital: false, industry: 3, terrain: 'plains', lon: 8.68, lat: 50.11, initialUnits: { infantry: 3, armor: 1, air: 0 }, neighbors: ['de_ruhr', 'de_stuttgart', 'de_hanover', 'de_nuremberg', 'fr_alsace'], aliases: ['frankfurt'] },
+        { id: 'de_stuttgart', name: 'Stuttgart & Baden-Württemberg', owner: 'germany', capital: false, industry: 3, terrain: 'plains', lon: 9.18, lat: 48.78, initialUnits: { infantry: 3, armor: 1, air: 0 }, neighbors: ['de_frankfurt', 'de_bavaria', 'fr_alsace', 'ch'], aliases: ['stuttgart'] },
+        { id: 'de_saxony', name: 'Saksonya & Dresden', owner: 'germany', capital: false, industry: 3, terrain: 'plains', lon: 13.74, lat: 51.05, initialUnits: { infantry: 3, armor: 1, air: 0 }, neighbors: ['de_berlin', 'de_magdeburg', 'de_nuremberg', 'de_silesia', 'cz_bohemia'], aliases: ['saxony', 'dresden'] },
+        { id: 'de_hanover', name: 'Hannover & Weser', owner: 'germany', capital: false, industry: 2, terrain: 'plains', lon: 9.73, lat: 52.37, initialUnits: { infantry: 3, armor: 1, air: 0 }, neighbors: ['de_hamburg', 'de_ruhr', 'de_frankfurt', 'de_magdeburg', 'de_berlin', 'nl'], aliases: ['hanover'] },
+        { id: 'de_magdeburg', name: 'Magdeburg & Harz', owner: 'germany', capital: false, industry: 2, terrain: 'plains', lon: 11.63, lat: 52.13, initialUnits: { infantry: 2, armor: 1, air: 0 }, neighbors: ['de_berlin', 'de_hanover', 'de_saxony', 'de_nuremberg'], aliases: ['magdeburg'] },
+        { id: 'de_nuremberg', name: 'Nürnberg & Frankonya', owner: 'germany', capital: false, industry: 2, terrain: 'plains', lon: 11.08, lat: 49.45, initialUnits: { infantry: 3, armor: 1, air: 0 }, neighbors: ['de_frankfurt', 'de_bavaria', 'de_saxony', 'de_magdeburg', 'cz_bohemia'], aliases: ['nuremberg'] },
+        { id: 'de_prussia', name: 'Doğu Prusya & Königsberg', owner: 'germany', capital: false, industry: 3, terrain: 'coastal', lon: 20.51, lat: 54.71, initialUnits: { infantry: 4, armor: 1, air: 1 }, neighbors: ['pl', 'lt'], aliases: ['prussia', 'konigsberg'] },
+        { id: 'de_silesia', name: 'Silezya & Breslau', owner: 'germany', capital: false, industry: 3, terrain: 'plains', lon: 17.03, lat: 51.11, initialUnits: { infantry: 3, armor: 1, air: 0 }, neighbors: ['de_berlin', 'de_saxony', 'pl', 'cz_moravia', 'cz_bohemia'], aliases: ['silesia', 'breslau'] }
+    ],
+    RU: [
+        { id: 'ru_moscow', name: 'Moskova', owner: 'ussr', capital: true, capitalCity: 'Moskova', industry: 7, terrain: 'city', lon: 37.62, lat: 55.75, initialUnits: { infantry: 9, armor: 4, air: 3 }, neighbors: ['ru_smolensk', 'ru_gorky', 'ru_kursk', 'ru_leningrad'], aliases: ['ru', 'ussr', 'moscow'] },
+        { id: 'ru_leningrad', name: 'Leningrad & Neva', owner: 'ussr', capital: false, industry: 5, terrain: 'city', lon: 30.33, lat: 59.93, initialUnits: { infantry: 6, armor: 2, air: 1 }, neighbors: ['ru_moscow', 'ru_smolensk', 'fi', 'ee', 'ru_arkhangelsk'], aliases: ['leningrad'] },
+        { id: 'ru_stalingrad', name: 'Stalingrad & Volga', owner: 'ussr', capital: false, industry: 5, terrain: 'city', lon: 44.52, lat: 48.71, initialUnits: { infantry: 6, armor: 3, air: 1 }, neighbors: ['ru_rostov', 'ru_kursk', 'ru_gorky', 'ru_ural', 'ru_caucasus'], aliases: ['stalingrad'] },
+        { id: 'ru_kiev', name: 'Kiev & Dinyeper', owner: 'ussr', capital: false, industry: 4, terrain: 'plains', lon: 30.52, lat: 50.45, initialUnits: { infantry: 5, armor: 2, air: 1 }, neighbors: ['ru_minsk', 'ru_smolensk', 'ru_kursk', 'ru_kharkov', 'pl', 'ro'], aliases: ['kiev'] },
+        { id: 'ru_kharkov', name: 'Harkov & Donbass', owner: 'ussr', capital: false, industry: 4, terrain: 'plains', lon: 36.23, lat: 50.00, initialUnits: { infantry: 4, armor: 2, air: 0 }, neighbors: ['ru_kiev', 'ru_kursk', 'ru_rostov', 'ru_crimea'], aliases: ['kharkov'] },
+        { id: 'ru_minsk', name: 'Minsk & Belarus', owner: 'ussr', capital: false, industry: 3, terrain: 'plains', lon: 27.57, lat: 53.90, initialUnits: { infantry: 4, armor: 1, air: 0 }, neighbors: ['ru_kiev', 'ru_smolensk', 'pl', 'lt', 'lv'], aliases: ['minsk'] },
+        { id: 'ru_smolensk', name: 'Smolensk & Batı Cephesi', owner: 'ussr', capital: false, industry: 3, terrain: 'plains', lon: 32.05, lat: 54.78, initialUnits: { infantry: 4, armor: 1, air: 0 }, neighbors: ['ru_moscow', 'ru_leningrad', 'ru_minsk', 'ru_kiev', 'ru_kursk'], aliases: ['smolensk'] },
+        { id: 'ru_kursk', name: 'Kursk & Orel', owner: 'ussr', capital: false, industry: 3, terrain: 'plains', lon: 36.19, lat: 51.73, initialUnits: { infantry: 4, armor: 2, air: 0 }, neighbors: ['ru_moscow', 'ru_smolensk', 'ru_kiev', 'ru_kharkov', 'ru_stalingrad'], aliases: ['kursk'] },
+        { id: 'ru_rostov', name: 'Rostov-na-Donu & Azak', owner: 'ussr', capital: false, industry: 3, terrain: 'plains', lon: 39.72, lat: 47.24, initialUnits: { infantry: 3, armor: 1, air: 0 }, neighbors: ['ru_kharkov', 'ru_crimea', 'ru_stalingrad', 'ru_caucasus'], aliases: ['rostov'] },
+        { id: 'ru_crimea', name: 'Kırım & Sivastopol', owner: 'ussr', capital: false, industry: 2, terrain: 'coastal', lon: 34.10, lat: 44.95, initialUnits: { infantry: 3, armor: 0, air: 1 }, neighbors: ['ru_kharkov', 'ru_rostov', 'ro'], aliases: ['crimea', 'sevastopol'] },
+        { id: 'ru_caucasus', name: 'Kafkasya & Grozni', owner: 'ussr', capital: false, industry: 4, terrain: 'mountains', lon: 45.69, lat: 43.32, initialUnits: { infantry: 4, armor: 1, air: 0 }, neighbors: ['ru_rostov', 'ru_stalingrad', 'ge', 'az'], aliases: ['caucasus'] },
+        { id: 'ru_gorky', name: 'Gorki & Volga', owner: 'ussr', capital: false, industry: 3, terrain: 'plains', lon: 44.00, lat: 56.33, initialUnits: { infantry: 3, armor: 1, air: 0 }, neighbors: ['ru_moscow', 'ru_stalingrad', 'ru_ural'], aliases: ['gorky', 'nizhny'] },
+        { id: 'ru_arkhangelsk', name: 'Arhangelsk & Kuzey Kutbu', owner: 'ussr', capital: false, industry: 2, terrain: 'coastal', lon: 40.54, lat: 64.54, initialUnits: { infantry: 2, armor: 0, air: 0 }, neighbors: ['ru_leningrad', 'ru_ural', 'fi'], aliases: ['arkhangelsk'] },
+        { id: 'ru_ural', name: 'Urallar & Sverdlovsk', owner: 'ussr', capital: false, industry: 5, terrain: 'mountains', lon: 48.00, lat: 56.84, initialUnits: { infantry: 5, armor: 3, air: 1 }, neighbors: ['ru_gorky', 'ru_stalingrad', 'ru_arkhangelsk'], aliases: ['ural', 'sverdlovsk'] }
+    ],
+    GB: [
+        { id: 'gb_london', name: 'Londra & Güneydoğu', owner: 'uk', capital: true, capitalCity: 'Londra', industry: 6, terrain: 'city', lon: -0.13, lat: 51.51, initialUnits: { infantry: 6, armor: 2, air: 3 }, neighbors: ['gb_midlands', 'gb_cornwall', 'fr_normandy', 'fr_paris', 'de_ruhr', 'be'], aliases: ['gb', 'uk', 'london'] },
+        { id: 'gb_midlands', name: 'Midlands & Birmingham', owner: 'uk', capital: false, industry: 3, terrain: 'plains', lon: -1.90, lat: 52.48, initialUnits: { infantry: 3, armor: 1, air: 0 }, neighbors: ['gb_london', 'gb_north', 'gb_wales'], aliases: ['midlands', 'birmingham'] },
+        { id: 'gb_north', name: 'Manchester & Yorkshire', owner: 'uk', capital: false, industry: 3, terrain: 'plains', lon: -2.24, lat: 53.48, initialUnits: { infantry: 3, armor: 1, air: 0 }, neighbors: ['gb_midlands', 'gb_scotland', 'gb_wales', 'gb_ulster'], aliases: ['manchester', 'leeds'] },
+        { id: 'gb_scotland', name: 'İskoçya & Edinburgh', owner: 'uk', capital: false, industry: 2, terrain: 'mountains', lon: -3.19, lat: 55.95, initialUnits: { infantry: 3, armor: 0, air: 1 }, neighbors: ['gb_north', 'gb_highlands', 'gb_ulster'], aliases: ['scotland', 'edinburgh'] },
+        { id: 'gb_highlands', name: 'İskoç Dağları & Aberdeen', owner: 'uk', capital: false, industry: 1, terrain: 'mountains', lon: -2.10, lat: 57.15, initialUnits: { infantry: 2, armor: 0, air: 0 }, neighbors: ['gb_scotland', 'is', 'no'], aliases: ['highlands'] },
+        { id: 'gb_wales', name: 'Galler & Cardiff', owner: 'uk', capital: false, industry: 2, terrain: 'mountains', lon: -3.18, lat: 51.48, initialUnits: { infantry: 2, armor: 0, air: 0 }, neighbors: ['gb_midlands', 'gb_north', 'gb_cornwall'], aliases: ['wales', 'cardiff'] },
+        { id: 'gb_cornwall', name: 'Plymouth & Cornwall', owner: 'uk', capital: false, industry: 2, terrain: 'coastal', lon: -4.14, lat: 50.37, initialUnits: { infantry: 2, armor: 0, air: 1 }, neighbors: ['gb_london', 'gb_wales', 'fr_brittany'], aliases: ['cornwall', 'plymouth'] },
+        { id: 'gb_ulster', name: 'Kuzey İrlanda & Belfast', owner: 'uk', capital: false, industry: 1, terrain: 'plains', lon: -5.93, lat: 54.60, initialUnits: { infantry: 2, armor: 0, air: 0 }, neighbors: ['ie', 'gb_scotland', 'gb_north'], aliases: ['ulster', 'belfast'] }
+    ],
+    FR: [
+        { id: 'fr_paris', name: 'Paris & Île-de-France', owner: 'france', capital: true, capitalCity: 'Paris', industry: 6, terrain: 'city', lon: 2.35, lat: 48.86, initialUnits: { infantry: 6, armor: 2, air: 2 }, neighbors: ['fr_normandy', 'fr_burgundy', 'fr_lyon', 'fr_bordeaux', 'be', 'gb_london'], aliases: ['fr', 'france', 'paris'] },
+        { id: 'fr_normandy', name: 'Normandiya & Cherbourg', owner: 'france', capital: false, industry: 2, terrain: 'coastal', lon: -0.37, lat: 49.18, initialUnits: { infantry: 3, armor: 1, air: 0 }, neighbors: ['fr_paris', 'fr_brittany', 'fr_bordeaux', 'gb_london'], aliases: ['normandy'] },
+        { id: 'fr_brittany', name: 'Bretonya & Brest', owner: 'france', capital: false, industry: 2, terrain: 'coastal', lon: -4.48, lat: 48.39, initialUnits: { infantry: 3, armor: 0, air: 1 }, neighbors: ['fr_normandy', 'fr_bordeaux', 'gb_cornwall'], aliases: ['brittany', 'brest'] },
+        { id: 'fr_bordeaux', name: 'Akitanya & Bordeaux', owner: 'france', capital: false, industry: 3, terrain: 'plains', lon: -0.58, lat: 44.84, initialUnits: { infantry: 3, armor: 1, air: 0 }, neighbors: ['fr_paris', 'fr_normandy', 'fr_brittany', 'fr_toulouse', 'es_bilbao'], aliases: ['bordeaux'] },
+        { id: 'fr_marseille', name: 'Marsilya & Provence', owner: 'france', capital: false, industry: 3, terrain: 'coastal', lon: 5.37, lat: 43.30, initialUnits: { infantry: 3, armor: 1, air: 1 }, neighbors: ['fr_lyon', 'fr_toulouse', 'it_turin'], aliases: ['marseille', 'provence'] },
+        { id: 'fr_lyon', name: 'Lyon & Rhône', owner: 'france', capital: false, industry: 3, terrain: 'plains', lon: 4.83, lat: 45.76, initialUnits: { infantry: 3, armor: 1, air: 0 }, neighbors: ['fr_paris', 'fr_burgundy', 'fr_marseille', 'fr_alsace', 'ch', 'it_turin'], aliases: ['lyon'] },
+        { id: 'fr_alsace', name: 'Alsas-Loren & Strazburg', owner: 'france', capital: false, industry: 3, terrain: 'plains', lon: 7.75, lat: 48.58, initialUnits: { infantry: 4, armor: 1, air: 0 }, neighbors: ['fr_burgundy', 'fr_lyon', 'de_ruhr', 'de_frankfurt', 'de_stuttgart', 'ch'], aliases: ['alsace', 'strasbourg'] },
+        { id: 'fr_toulouse', name: 'Midi & Toulouse', owner: 'france', capital: false, industry: 2, terrain: 'plains', lon: 1.44, lat: 43.60, initialUnits: { infantry: 2, armor: 0, air: 0 }, neighbors: ['fr_bordeaux', 'fr_marseille', 'es_barcelona', 'es_zaragoza'], aliases: ['toulouse'] },
+        { id: 'fr_burgundy', name: 'Burgonya & Dijon', owner: 'france', capital: false, industry: 2, terrain: 'plains', lon: 5.04, lat: 47.32, initialUnits: { infantry: 2, armor: 0, air: 0 }, neighbors: ['fr_paris', 'fr_lyon', 'fr_alsace', 'be'], aliases: ['burgundy', 'dijon'] }
+    ],
+    IT: [
+        { id: 'it_rome', name: 'Roma & Lazio', owner: 'italy', capital: true, capitalCity: 'Roma', industry: 5, terrain: 'city', lon: 12.49, lat: 41.90, initialUnits: { infantry: 5, armor: 2, air: 1 }, neighbors: ['it_naples', 'it_venice', 'it_milan', 'it_sardinia'], aliases: ['it', 'italy', 'rome'] },
+        { id: 'it_milan', name: 'Milano & Lombardiya', owner: 'italy', capital: false, industry: 4, terrain: 'city', lon: 9.19, lat: 45.46, initialUnits: { infantry: 4, armor: 2, air: 1 }, neighbors: ['it_turin', 'it_venice', 'it_rome', 'ch', 'at_tyrol'], aliases: ['milan'] },
+        { id: 'it_venice', name: 'Venedik & Veneto', owner: 'italy', capital: false, industry: 3, terrain: 'coastal', lon: 12.33, lat: 45.44, initialUnits: { infantry: 3, armor: 1, air: 0 }, neighbors: ['it_milan', 'it_rome', 'at_vienna', 'at_tyrol', 'si', 'hr'], aliases: ['venice'] },
+        { id: 'it_turin', name: 'Torino & Piyemonte', owner: 'italy', capital: false, industry: 2, terrain: 'mountains', lon: 7.68, lat: 45.07, initialUnits: { infantry: 3, armor: 1, air: 0 }, neighbors: ['it_milan', 'fr_lyon', 'fr_marseille', 'ch'], aliases: ['turin'] },
+        { id: 'it_naples', name: 'Napoli & Campania', owner: 'italy', capital: false, industry: 3, terrain: 'coastal', lon: 14.27, lat: 40.85, initialUnits: { infantry: 3, armor: 1, air: 0 }, neighbors: ['it_rome', 'it_calabria'], aliases: ['naples'] },
+        { id: 'it_calabria', name: 'Taranto & Calabria', owner: 'italy', capital: false, industry: 2, terrain: 'coastal', lon: 16.59, lat: 39.00, initialUnits: { infantry: 2, armor: 0, air: 0 }, neighbors: ['it_naples', 'it_sicily', 'al', 'gr'], aliases: ['calabria', 'taranto'] },
+        { id: 'it_sicily', name: 'Sicilya & Palermo', owner: 'italy', capital: false, industry: 2, terrain: 'coastal', lon: 13.36, lat: 38.12, initialUnits: { infantry: 3, armor: 0, air: 1 }, neighbors: ['it_calabria', 'mt'], aliases: ['sicily'] },
+        { id: 'it_sardinia', name: 'Sardinya & Cagliari', owner: 'italy', capital: false, industry: 1, terrain: 'coastal', lon: 9.11, lat: 39.22, initialUnits: { infantry: 2, armor: 0, air: 0 }, neighbors: ['it_rome'], aliases: ['sardinia'] }
+    ],
+    ES: [
+        { id: 'es_madrid', name: 'Madrid & Kastilya', owner: 'spain', capital: true, capitalCity: 'Madrid', industry: 5, terrain: 'city', lon: -3.70, lat: 40.42, initialUnits: { infantry: 5, armor: 2, air: 1 }, neighbors: ['es_seville', 'es_valencia', 'es_zaragoza', 'es_bilbao', 'pt'], aliases: ['es', 'spain', 'madrid'] },
+        { id: 'es_barcelona', name: 'Barselona & Katalonya', owner: 'spain', capital: false, industry: 3, terrain: 'coastal', lon: 2.17, lat: 41.38, initialUnits: { infantry: 3, armor: 1, air: 1 }, neighbors: ['es_zaragoza', 'es_valencia', 'fr_toulouse'], aliases: ['barcelona', 'catalonia'] },
+        { id: 'es_seville', name: 'Sevilla & Endülüs', owner: 'spain', capital: false, industry: 3, terrain: 'plains', lon: -5.98, lat: 37.38, initialUnits: { infantry: 3, armor: 1, air: 0 }, neighbors: ['es_madrid', 'es_valencia', 'pt'], aliases: ['seville', 'andalusia'] },
+        { id: 'es_valencia', name: 'Valensiya & Levante', owner: 'spain', capital: false, industry: 2, terrain: 'coastal', lon: -0.38, lat: 39.47, initialUnits: { infantry: 2, armor: 0, air: 0 }, neighbors: ['es_madrid', 'es_barcelona', 'es_seville', 'es_zaragoza'], aliases: ['valencia'] },
+        { id: 'es_bilbao', name: 'Bask & Bilbao', owner: 'spain', capital: false, industry: 2, terrain: 'mountains', lon: -2.93, lat: 43.26, initialUnits: { infantry: 3, armor: 0, air: 0 }, neighbors: ['es_madrid', 'es_galicia', 'es_zaragoza', 'fr_bordeaux'], aliases: ['bilbao', 'basque'] },
+        { id: 'es_galicia', name: 'Galiçya & Coruña', owner: 'spain', capital: false, industry: 2, terrain: 'coastal', lon: -8.41, lat: 43.37, initialUnits: { infantry: 2, armor: 0, air: 0 }, neighbors: ['es_bilbao', 'pt'], aliases: ['galicia'] },
+        { id: 'es_zaragoza', name: 'Aragon & Zaragoza', owner: 'spain', capital: false, industry: 2, terrain: 'plains', lon: -0.88, lat: 41.65, initialUnits: { infantry: 2, armor: 0, air: 0 }, neighbors: ['es_madrid', 'es_barcelona', 'es_bilbao', 'es_valencia', 'fr_toulouse'], aliases: ['zaragoza', 'aragon'] }
+    ],
+    AT: [
+        { id: 'at_vienna', name: 'Avusturya & Viyana', owner: 'germany', capital: false, industry: 3, terrain: 'city', lon: 16.37, lat: 48.21, initialUnits: { infantry: 3, armor: 1, air: 0 }, neighbors: ['de_bavaria', 'at_tyrol', 'cz_moravia', 'sk', 'hu', 'si'], aliases: ['at', 'austria', 'vienna'] },
+        { id: 'at_tyrol', name: 'Tirol & Alpler', owner: 'germany', capital: false, industry: 1, terrain: 'mountains', lon: 11.40, lat: 47.26, initialUnits: { infantry: 2, armor: 0, air: 0 }, neighbors: ['de_bavaria', 'at_vienna', 'it_milan', 'it_venice', 'ch'], aliases: ['tyrol'] }
+    ],
+    CZ: [
+        { id: 'cz_bohemia', name: 'Bohemya & Prag', owner: 'germany', capital: false, industry: 3, terrain: 'plains', lon: 14.43, lat: 50.08, initialUnits: { infantry: 3, armor: 1, air: 0 }, neighbors: ['de_saxony', 'de_silesia', 'de_nuremberg', 'cz_moravia'], aliases: ['cz', 'czechia', 'bohemia', 'prague'] },
+        { id: 'cz_moravia', name: 'Moravya & Brno', owner: 'germany', capital: false, industry: 2, terrain: 'plains', lon: 16.61, lat: 49.20, initialUnits: { infantry: 2, armor: 0, air: 0 }, neighbors: ['cz_bohemia', 'de_silesia', 'at_vienna', 'sk', 'pl'], aliases: ['moravia', 'brno'] }
+    ]
+};
+
+/**
+ * Parses GeoJSON Europe map into full game regions and subdivided provinces
+ * @param {Object} geoJsonData
  * @param {Object} [projectionConfig]
  * @returns {{ regions: Object, regionList: Array, dimensions: Object, projection: MercatorProjection }}
  */
@@ -656,7 +757,6 @@ export function buildGeoJsonMap(geoJsonData = EUROPE_GEOJSON, projectionConfig =
         }
 
         if (!meta) {
-            // Fallback default for unexpected feature
             meta = {
                 id: iso2.toLowerCase() || `region_${regionList.length}`,
                 name: name || iso2,
@@ -669,12 +769,76 @@ export function buildGeoJsonMap(geoJsonData = EUROPE_GEOJSON, projectionConfig =
             };
         }
 
-        // Parse geometry with Mercator projection
+        // Parse outer geometry with Mercator projection
         const parsed = parseGeoGeometry(f.geometry, projection);
 
+        // 1. If country has multiple provinces defined, subdivide the polygon seamlessly
+        if (PROVINCE_DEFINITIONS[iso2]) {
+            const provDefs = PROVINCE_DEFINITIONS[iso2];
+            const subdividedGeoms = subdivideGeometryWithSeeds(parsed.projectedPolygons, provDefs, projection);
+
+            for (const pDef of provDefs) {
+                const pGeom = subdividedGeoms[pDef.id] || {
+                    centroid: projection.project(pDef.lon, pDef.lat),
+                    bounds: parsed.bounds,
+                    path2d: parsed.path2d,
+                    svgPath: parsed.svgPath,
+                    projectedPolygons: parsed.projectedPolygons,
+                    polygon: parsed.projectedPolygons[0]?.[0] || []
+                };
+
+                const provObj = {
+                    id: pDef.id,
+                    code: iso2,
+                    countryId: iso2.toLowerCase(),
+                    fips: fips,
+                    name: pDef.name,
+                    geoName: name,
+                    owner: pDef.owner,
+                    capital: pDef.capital || false,
+                    capitalCity: pDef.capitalCity || null,
+                    industry: pDef.industry || 1,
+                    terrain: pDef.terrain || 'plains',
+                    initialUnits: { ...pDef.initialUnits },
+                    neighbors: [...pDef.neighbors],
+                    aliases: pDef.aliases ? [...pDef.aliases] : [],
+
+                    x: pGeom.centroid[0],
+                    y: pGeom.centroid[1],
+                    bounds: pGeom.bounds,
+
+                    path2d: pGeom.path2d || parsed.path2d,
+                    svgPath: pGeom.svgPath || parsed.svgPath,
+                    projectedPolygons: pGeom.projectedPolygons || parsed.projectedPolygons,
+                    polygon: pGeom.polygon || (parsed.projectedPolygons[0]?.[0] || []),
+                    countryPath2d: parsed.path2d
+                };
+
+                regions[provObj.id] = provObj;
+                regionList.push(provObj);
+
+                // Register aliases (e.g. 'ankara' -> 'tr_ankara', 'berlin' -> 'de_berlin', 'tr' -> 'tr_ankara')
+                if (pDef.aliases) {
+                    for (const alias of pDef.aliases) {
+                        if (alias !== provObj.id && !(alias in regions)) {
+                            Object.defineProperty(regions, alias, {
+                                value: provObj,
+                                enumerable: false,
+                                writable: true,
+                                configurable: true
+                            });
+                        }
+                    }
+                }
+            }
+            continue;
+        }
+
+        // 2. Sovereign / single-territory nation
         const regionObj = {
             id: meta.id,
             code: iso2,
+            countryId: iso2.toLowerCase(),
             fips: fips,
             name: meta.name,
             geoName: name,
@@ -687,23 +851,20 @@ export function buildGeoJsonMap(geoJsonData = EUROPE_GEOJSON, projectionConfig =
             neighbors: [...meta.neighbors],
             aliases: meta.aliases ? [...meta.aliases] : [],
 
-            // Spatial coordinates
             x: parsed.centroid[0],
             y: parsed.centroid[1],
             bounds: parsed.bounds,
 
-            // Canvas Vector Geometry
             path2d: parsed.path2d,
             svgPath: parsed.svgPath,
             projectedPolygons: parsed.projectedPolygons,
-            // Fallback polygon (primary outer ring)
-            polygon: parsed.projectedPolygons[0]?.[0] || []
+            polygon: parsed.projectedPolygons[0]?.[0] || [],
+            countryPath2d: parsed.path2d
         };
 
         regions[regionObj.id] = regionObj;
         regionList.push(regionObj);
 
-        // Register non-enumerable aliases (e.g. 'berlin' -> 'de', 'london' -> 'gb', etc.)
         if (meta.aliases) {
             for (const alias of meta.aliases) {
                 if (alias !== regionObj.id && !(alias in regions)) {
@@ -714,6 +875,20 @@ export function buildGeoJsonMap(geoJsonData = EUROPE_GEOJSON, projectionConfig =
                         configurable: true
                     });
                 }
+            }
+        }
+    }
+
+    // Guarantee 100% bidirectional neighbor connections and canonical alias resolution
+    for (const r of regionList) {
+        r.neighbors = r.neighbors.map(nId => regions[nId]?.id || nId);
+        r.neighbors = [...new Set(r.neighbors)].filter(nId => nId !== r.id);
+    }
+    for (const r of regionList) {
+        for (const nbrId of r.neighbors) {
+            const target = regions[nbrId];
+            if (target && !target.neighbors.includes(r.id)) {
+                target.neighbors.push(r.id);
             }
         }
     }

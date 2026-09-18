@@ -1266,4 +1266,168 @@ body::after {
     cursor: pointer;
 }
 
+/* ==========================================================================
+   DIFFICULTY SELECTOR PILLS
+   ========================================================================== */
+.difficulty-pills-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 6px;
+}
+
+.diff-pill {
+    flex: 1;
+    justify-content: center;
+    padding: 8px 10px;
+    font-size: 0.84rem;
+    font-family: var(--font-heading);
+    letter-spacing: 0.8px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(15, 23, 42, 0.6);
+    color: var(--text-muted);
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.diff-pill:hover {
+    background: rgba(56, 189, 248, 0.12);
+    border-color: rgba(56, 189, 248, 0.4);
+    color: var(--text-primary);
+}
+
+.diff-pill.active[data-difficulty="easy"] {
+    background: rgba(16, 185, 129, 0.2);
+    border-color: #10b981;
+    color: #6ee7b7;
+    box-shadow: 0 0 12px rgba(16, 185, 129, 0.35);
+}
+
+.diff-pill.active[data-difficulty="normal"] {
+    background: rgba(56, 189, 248, 0.2);
+    border-color: var(--accent-cyan);
+    color: #bae6fd;
+    box-shadow: 0 0 12px rgba(56, 189, 248, 0.35);
+}
+
+.diff-pill.active[data-difficulty="hard"] {
+    background: rgba(239, 68, 68, 0.25);
+    border-color: var(--accent-red);
+    color: #fca5a5;
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.4);
+}
+
+/* ==========================================================================
+   DIPLOMACY & ALLIANCE PANEL
+   ========================================================================== */
+.diplomacy-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 6px;
+    max-height: 380px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.diplomacy-card {
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: border-color 0.2s;
+}
+
+.diplomacy-card:hover {
+    border-color: rgba(56, 189, 248, 0.35);
+}
+
+.diplomacy-card.is-allied {
+    border-color: rgba(56, 189, 248, 0.5);
+    background: rgba(14, 32, 60, 0.75);
+}
+
+.dip-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.dip-faction-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.dip-faction-name {
+    font-family: var(--font-tactical);
+    font-size: 0.98rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.dip-status-badge {
+    font-size: 0.7rem;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.dip-status-badge.independent {
+    background: rgba(148, 163, 184, 0.15);
+    color: #cbd5e1;
+    border: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+.dip-status-badge.allied {
+    background: rgba(56, 189, 248, 0.2);
+    color: #38bdf8;
+    border: 1px solid rgba(56, 189, 248, 0.5);
+}
+
+.dip-status-badge.pact {
+    background: rgba(245, 158, 11, 0.2);
+    color: #fbbf24;
+    border: 1px solid rgba(245, 158, 11, 0.5);
+}
+
+.dip-metrics-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}
+
+.dip-bar-track {
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    overflow: hidden;
+    margin: 2px 0;
+}
+
+.dip-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+.dip-actions-row {
+    display: flex;
+    gap: 6px;
+    margin-top: 2px;
+}
+
+.btn-dip-action {
+    flex: 1;
+    padding: 5px 8px;
+    font-size: 0.74rem;
+    justify-content: center;
+}
+
 

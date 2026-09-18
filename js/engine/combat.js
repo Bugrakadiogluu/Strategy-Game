@@ -159,21 +159,47 @@ export class CombatEngine {
                 if (roll >= 4) defHits++;
             }
 
+            // Bot difficulty modifiers
+            const difficulty = defenderInfo.difficulty || attackerInfo.difficulty || 'normal';
+            let effectiveAttHits = attHits;
+            let effectiveDefHits = defHits;
+
+            if (attackerInfo.isAI && difficulty === 'easy') {
+                effectiveAttHits = Math.max(0, Math.round(attHits * 0.75));
+            } else if (attackerInfo.isAI && difficulty === 'hard') {
+                effectiveAttHits = Math.ceil(attHits * 1.25);
+            }
+
+            if (defenderInfo.isAI && difficulty === 'easy') {
+                effectiveDefHits = Math.max(0, Math.round(defHits * 0.75));
+            } else if (defenderInfo.isAI && difficulty === 'hard') {
+                effectiveDefHits = Math.ceil(defHits * 1.25);
+            }
+
+            // Capital Occupied Debuff: If defender's capital is under enemy occupation, defender takes 2x damage!
+            if (defenderInfo.capitalOccupied) {
+                effectiveAttHits = effectiveAttHits * 2;
+            }
+
             // Casualties applied simultaneously
-            const roundAttLosses = this._distributeCasualties(attUnits, defHits);
-            const roundDefLosses = this._distributeCasualties(defUnits, attHits);
+            const roundAttLosses = this._distributeCasualties(attUnits, effectiveDefHits);
+            const roundDefLosses = this._distributeCasualties(defUnits, effectiveAttHits);
 
             rounds.push({
                 round: roundNumber,
-                attackerHits: attHits,
-                defenderHits: defHits,
+                attackerHits: effectiveAttHits,
+                defenderHits: effectiveDefHits,
                 attackerLosses: roundAttLosses,
                 defenderLosses: roundDefLosses,
                 attackerRemaining: { ...attUnits },
                 defenderRemaining: { ...defUnits }
             });
 
-            battleLog.push(`[Tur ${roundNumber}] Taarruz İsabeti: ${attHits} (Kayıp verdirildi: ${roundDefLosses.infantry + roundDefLosses.armor + roundDefLosses.air}) | Karşı Ateş: ${defHits} (Taarruz Kaybı: ${roundAttLosses.infantry + roundAttLosses.armor + roundAttLosses.air})`);
+            let logMsg = `[Tur ${roundNumber}] Taarruz İsabeti: ${effectiveAttHits} (Kayıp verdirildi: ${roundDefLosses.infantry + roundDefLosses.armor + roundDefLosses.air}) | Karşı Ateş: ${effectiveDefHits} (Taarruz Kaybı: ${roundAttLosses.infantry + roundAttLosses.armor + roundAttLosses.air})`;
+            if (defenderInfo.capitalOccupied) {
+                logMsg += ` ⚠️ [Başkent İşgal Zafiyeti: 2x Hasar!]`;
+            }
+            battleLog.push(logMsg);
 
             roundNumber++;
         }
