@@ -7,3 +7,4 @@ Thumbs.db
 .idea/
 scratch/
 test_result.json
+node_modules/
