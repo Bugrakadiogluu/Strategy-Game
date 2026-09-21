@@ -13,6 +13,7 @@ import { SoundEngine } from './ui/sound.js';
 import { HUD } from './ui/hud.js';
 import { i18n } from './i18n/translations.js';
 import { getFactionInsignia } from './ui/icons.js';
+import { analytics } from './analytics.js';
 
 class WW2GameApp {
     constructor() {
@@ -112,6 +113,7 @@ class WW2GameApp {
         if (!factionId || factionId === 'neutral') return;
         this.userFactionId = factionId;
         this.sound.playClick();
+        analytics.trackFactionSelected(factionId);
 
         const factionSelect = document.getElementById('lobby-faction-select');
         if (factionSelect) factionSelect.value = factionId;
@@ -155,6 +157,7 @@ class WW2GameApp {
         const currentTurnFaction = this.gameState.getCurrentFaction();
         const clickedRegion = this.gameState.regions[regionId];
         this.sound.playClick();
+        analytics.trackRegionClicked(regionId, clickedRegion?.name, clickedRegion?.owner);
 
         // 1. If no origin selected yet:
         if (!this.selectedOriginId) {
@@ -437,6 +440,9 @@ class WW2GameApp {
         // Trigger visual artillery animation
         this.renderer.addCombatAnimation(fromId, toId, false);
         this.sound.playArtillery();
+        const fromR = this.gameState.regions[fromId];
+        const toR = this.gameState.regions[toId];
+        analytics.trackCombatInitiated(fromR?.owner, toR?.owner, fromId, toId);
 
         // Brief delay so projectile flies before battle modal pops up
         setTimeout(() => {
@@ -465,9 +471,17 @@ class WW2GameApp {
                 });
             }
 
+            analytics.trackCombatResult(
+                result.conquered ? 'victory' : 'defeat',
+                fromR?.owner, toR?.owner,
+                result.report?.attackerLosses || 0,
+                result.report?.defenderLosses || 0
+            );
+
             if (result.winner) {
                 this.sound.playVictory();
                 this.hud.showGameOverModal(result.winner);
+                analytics.trackGameOver(result.winner, this.gameState.turnNumber, 'combat_victory');
             }
         }, 500);
     }
@@ -499,6 +513,8 @@ class WW2GameApp {
 
     advancePhaseOnHost() {
         const next = this.gameState.nextPhase();
+        analytics.trackTurnCompleted(this.gameState.turnNumber, this.gameState.getCurrentFaction()?.id);
+        analytics.trackPhaseChange(this.gameState.currentPhase, next);
         this.selectedOriginId = null;
         this.selectedTargetId = null;
         this.renderer.clearSelection();
@@ -555,6 +571,7 @@ class WW2GameApp {
         const winner = this.gameState.checkVictoryConditions();
         if (winner) {
             this.hud.showGameOverModal(winner);
+            analytics.trackGameOver(winner, this.gameState.turnNumber, 'ai_victory');
             return;
         }
 
@@ -1164,6 +1181,7 @@ class WW2GameApp {
                 this.sound.playClick();
                 const lang = btn.getAttribute('data-lang');
                 i18n.setLanguage(lang);
+                analytics.trackLanguageChange(lang);
                 updateSelectedModeUI();
             });
         });
@@ -1223,6 +1241,7 @@ class WW2GameApp {
 
             this.isGameStarted = true;
             this.gameState.startGame(this.userFactionId);
+            analytics.trackGameStart(this.userFactionId, 'singleplayer');
             modal.classList.remove('visible');
 
             document.getElementById('hud-room-code').textContent = 'OFFLINE';
